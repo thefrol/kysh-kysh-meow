@@ -46,8 +46,8 @@ func updateHandler(w http.ResponseWriter, r *http.Request, params URLParams) {
 var mux *http.ServeMux
 
 func init() {
+	//так можно и вообще роутинг убрать #TODO
 	mux = http.NewServeMux()
-	mux.Handle("/", http.NotFoundHandler()) // отвечает на все запросы - не найдено 404
 	mux.Handle("/update/", makeHandler(updateHandler))
 }
 
