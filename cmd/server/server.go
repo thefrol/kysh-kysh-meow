@@ -13,10 +13,16 @@ func updateHandler(w http.ResponseWriter, r *http.Request) {
 	//переписать бы интерфейс так, чтобы он сразу на входе парсил строчку с командами
 	if r.Method != http.MethodPost {
 		w.WriteHeader(http.StatusNotFound)
-		io.WriteString(w, "Мяу!")
+		io.WriteString(w, "Мяу! Мы поддерживаем только POST-запросы")
+		return
+	}
+	if r.Header.Get("Content-Type") != "text/plain" {
+		w.WriteHeader(http.StatusNotFound)
+		io.WriteString(w, "Мяу! Мы поддерживаем только Content-Type:text/plain")
 		return
 	}
 	io.WriteString(w, "^.^ мур!")
+	w.Header().Add("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusOK)
 }
 
