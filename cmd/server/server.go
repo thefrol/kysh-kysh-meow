@@ -40,13 +40,12 @@ func updateHandler(w http.ResponseWriter, r *http.Request, params URLParams) {
 	}
 	io.WriteString(w, "^.^ мур!")
 	w.Header().Add("Content-Type", "text/plain")
-	w.WriteHeader(http.StatusOK)
 }
 
 var mux *http.ServeMux
 
 func init() {
-	//так можно и вообще роутинг убрать #TODO
+	//так можно и вообще роутинг убрать
 	mux = http.NewServeMux()
 	mux.Handle("/update/", makeHandler(updateHandler))
 }
