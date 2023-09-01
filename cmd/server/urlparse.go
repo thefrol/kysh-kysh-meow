@@ -13,7 +13,7 @@ type URLParams struct {
 	Value string
 }
 
-var validPath = regexp.MustCompile(`^/update/(?P<type>\w+)/(?P<name>\w+)/(?P<value>[+-]?[0-9]+(\.[0-9]+)?([Ee][+-]?[0-9]+)?)$`)
+var validPath = regexp.MustCompile(`^/update/(?P<type>\w+)/(?P<name>\w+)/(?P<value>[^/]+)$`) //float=[+-]?[0-9]+(\.[0-9]+)?([Ee][+-]?[0-9]+)?
 
 func ParseUrl(url string) (u *URLParams, e error) {
 	groupNames := validPath.SubexpNames()
