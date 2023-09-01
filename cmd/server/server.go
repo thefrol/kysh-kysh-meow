@@ -35,12 +35,13 @@ func updateHandler(w http.ResponseWriter, r *http.Request, params URLParams) {
 		fmt.Printf("GET request at %v\n", r.URL.Path)
 		return
 	}
-	if r.Header.Get("Content-Type") != "text/plain" {
-		w.WriteHeader(http.StatusNotFound)
-		fmt.Printf("Wront content type at %v\n", r.URL.Path)
-		io.WriteString(w, "Мяу! Мы поддерживаем только Content-Type:text/plain")
-		return
-	}
+	// Пройти автотесты
+	// if r.Header.Get("Content-Type") != "text/plain" {
+	// 	w.WriteHeader(http.StatusNotFound)
+	// 	fmt.Printf("Wront content type at %v\n", r.URL.Path)
+	// 	io.WriteString(w, "Мяу! Мы поддерживаем только Content-Type:text/plain")
+	// 	return
+	// }
 	io.WriteString(w, "^.^ мур!")
 	w.Header().Add("Content-Type", "text/plain")
 	fmt.Printf("200(OK) at request to %v\n", r.URL.Path)
