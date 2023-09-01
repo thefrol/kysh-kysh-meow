@@ -18,6 +18,7 @@ func makeHandler(fn updateHandleFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		urlparams, err := ParseUrl(r.URL.Path)
 		if err != nil {
+			fmt.Printf("Cant match url %v\n", r.URL.Path)
 			http.NotFound(w, r)
 			return
 		}
@@ -31,15 +32,18 @@ func updateHandler(w http.ResponseWriter, r *http.Request, params URLParams) {
 		//можно использовать http.NotFound
 		w.WriteHeader(http.StatusNotFound)
 		io.WriteString(w, "Мяу! Мы поддерживаем только POST-запросы")
+		fmt.Printf("GET request at %v\n", r.URL.Path)
 		return
 	}
 	if r.Header.Get("Content-Type") != "text/plain" {
 		w.WriteHeader(http.StatusNotFound)
+		fmt.Printf("Wront content type at %v\n", r.URL.Path)
 		io.WriteString(w, "Мяу! Мы поддерживаем только Content-Type:text/plain")
 		return
 	}
 	io.WriteString(w, "^.^ мур!")
 	w.Header().Add("Content-Type", "text/plain")
+	fmt.Printf("200(OK) at request to %v\n", r.URL.Path)
 }
 
 var mux *http.ServeMux
