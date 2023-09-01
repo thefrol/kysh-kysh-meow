@@ -16,6 +16,22 @@ type updateHandleFunc func(http.ResponseWriter, *http.Request, URLParams)
 // в функцию обработчик updateHandleFunc
 func makeHandler(fn updateHandleFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// проверки можно отправить в makeHandler
+		if r.Method != http.MethodPost {
+			//можно использовать http.NotFound
+			w.WriteHeader(http.StatusNotFound)
+			io.WriteString(w, "Мяу! Мы поддерживаем только POST-запросы")
+			fmt.Printf("GET request at %v\n", r.URL.Path)
+			return
+		}
+		// Пройти автотесты
+		// if r.Header.Get("Content-Type") != "text/plain" {
+		// 	w.WriteHeader(http.StatusNotFound)
+		// 	fmt.Printf("Wront content type at %v\n", r.URL.Path)
+		// 	io.WriteString(w, "Мяу! Мы поддерживаем только Content-Type:text/plain")
+		// 	return
+		// }
+
 		urlparams, err := ParseUrl(r.URL.Path)
 		if err != nil {
 			fmt.Printf("Cant match url %v\n", r.URL.Path)
@@ -27,21 +43,6 @@ func makeHandler(fn updateHandleFunc) http.HandlerFunc {
 }
 
 func updateHandler(w http.ResponseWriter, r *http.Request, params URLParams) {
-	// проверки можно отправить в makeHandler
-	if r.Method != http.MethodPost {
-		//можно использовать http.NotFound
-		w.WriteHeader(http.StatusNotFound)
-		io.WriteString(w, "Мяу! Мы поддерживаем только POST-запросы")
-		fmt.Printf("GET request at %v\n", r.URL.Path)
-		return
-	}
-	// Пройти автотесты
-	// if r.Header.Get("Content-Type") != "text/plain" {
-	// 	w.WriteHeader(http.StatusNotFound)
-	// 	fmt.Printf("Wront content type at %v\n", r.URL.Path)
-	// 	io.WriteString(w, "Мяу! Мы поддерживаем только Content-Type:text/plain")
-	// 	return
-	// }
 	io.WriteString(w, "^.^ мур!")
 	w.Header().Add("Content-Type", "text/plain")
 	fmt.Printf("200(OK) at request to %v\n", r.URL.Path)
