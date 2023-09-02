@@ -42,18 +42,14 @@ func makeHandler(fn updateHandleFunc) http.HandlerFunc {
 	}
 }
 
-func updateHandler(w http.ResponseWriter, r *http.Request, params URLParams) {
-	io.WriteString(w, "^.^ мур!")
-	w.Header().Add("Content-Type", "text/plain")
-	fmt.Printf("200(OK) at request to %v\n", r.URL.Path)
-}
-
 var mux *http.ServeMux
 
 func init() {
 	//так можно и вообще роутинг убрать
 	mux = http.NewServeMux()
-	mux.Handle("/update/", makeHandler(updateHandler))
+	mux.Handle("/update/counter/", makeHandler(updateCounter))
+	mux.Handle("/update/gauge/", makeHandler(updateGauge))
+	mux.Handle("/update/", makeHandler(updateUnknownType))
 }
 
 func main() {
