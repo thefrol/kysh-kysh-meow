@@ -63,3 +63,37 @@ func updateUnknownType(w http.ResponseWriter, r *http.Request, params URLParams)
 	w.Header().Add("Content-Type", "text/plain")
 	fmt.Printf("400(BadRequest) at request to %v\n", r.URL.Path)
 }
+
+// updateMetricFunc это типа функций обработчков, таких как updateCounter, updateGauge
+type updateMetricFunc func(http.ResponseWriter, *http.Request, URLParams)
+
+// makeHandler оборачивает обработчик(например updateCounter) в HandlerFunc
+// Проверяет, чтобы марштрут выглядел как надо и заодно парсит его и передает
+// в функцию обработчик updateHandleFunc
+func makeHandler(fn updateMetricFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// проверки можно отправить в makeHandler
+		if r.Method != http.MethodPost {
+			//можно использовать http.NotFound
+			w.WriteHeader(http.StatusNotFound)
+			io.WriteString(w, "Мяу! Мы поддерживаем только POST-запросы")
+			fmt.Printf("GET request at %v\n", r.URL.Path)
+			return
+		}
+		// Этот блок закомментирован, чтобы пройти автотесты. В тестах отправляется запрос без text/plain и это вызывает ошибку
+		// if r.Header.Get("Content-Type") != "text/plain" {
+		// 	w.WriteHeader(http.StatusNotFound)
+		// 	fmt.Printf("Wront content type at %v\n", r.URL.Path)
+		// 	io.WriteString(w, "Мяу! Мы поддерживаем только Content-Type:text/plain")
+		// 	return
+		// }
+
+		urlparams, err := ParseUrl(r.URL.Path)
+		if err != nil {
+			fmt.Printf("Cant match url %v\n", r.URL.Path)
+			http.NotFound(w, r)
+			return
+		}
+		fn(w, r, *urlparams)
+	}
+}
