@@ -5,6 +5,12 @@ type MemStore struct {
 	gauges   map[string]Gauge
 }
 
+func New() (m MemStore) {
+	m.counters = make(map[string]Counter)
+	m.gauges = make(map[string]Gauge)
+	return
+}
+
 // Возвращает значание именнованного счетчика, и булево значение: удалось ли счетчик найти
 func (m MemStore) Counter(name string) (Counter, bool) {
 	val, ok := m.counters[name] //Можно ли сделать в одну строчку #MENTOR
