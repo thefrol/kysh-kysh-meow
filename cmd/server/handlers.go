@@ -88,7 +88,7 @@ func makeHandler(fn updateMetricFunc) http.HandlerFunc {
 		// 	return
 		// }
 
-		urlparams, err := ParseUrl(r.URL.Path)
+		urlparams, err := ParseURL(r.URL.Path)
 		if err != nil {
 			fmt.Printf("Cant match url %v\n", r.URL.Path)
 			http.NotFound(w, r)
