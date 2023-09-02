@@ -21,18 +21,18 @@ func init() {
 // приходящее значение: int64
 // поведение: складывать с предыдущим значением, если оно известно
 func updateCounter(w http.ResponseWriter, r *http.Request, params URLParams) {
-	value, err := strconv.ParseInt(params.Value, 10, 64)
+	value, err := strconv.ParseInt(params.Value(), 10, 64)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Header().Add("Content-Type", "text/plain")
-		fmt.Fprintf(w, "^0^ Ошибка значение, не могу пропарсить %v в %T", params.Value, value)
+		fmt.Fprintf(w, "^0^ Ошибка значение, не могу пропарсить %v в %T", params.Value(), value)
 	}
-	old, _ := store.Counter(params.Name)
+	old, _ := store.Counter(params.Name())
 	// по сути нам не надо обрабатывать случай, если значение небыло установлено. Оно ноль, прибавим новое значение и все четко
 	new := old + storage.Counter(value)
-	store.SetCounter(params.Name, new)
+	store.SetCounter(params.Name(), new)
 
-	fmt.Fprintf(w, "^.^ мур! Меняем Counter %v на %v. Новое значение %v", params.Name, value, new)
+	fmt.Fprintf(w, "^.^ мур! Меняем Counter %v на %v. Новое значение %v", params.Name(), value, new)
 	w.Header().Add("Content-Type", "text/plain")
 	fmt.Printf("200(OK) at request to %v\n", r.URL.Path)
 }
@@ -42,15 +42,15 @@ func updateCounter(w http.ResponseWriter, r *http.Request, params URLParams) {
 // приходящее значение: float64
 // поведение: устанавливать новое значение
 func updateGauge(w http.ResponseWriter, r *http.Request, params URLParams) {
-	value, err := strconv.ParseFloat(params.Value, 64)
+	value, err := strconv.ParseFloat(params.Value(), 64)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Header().Add("Content-Type", "text/plain")
-		fmt.Fprintf(w, "^0^ Ошибка значение, не могу пропарсить %v в %T", params.Value, value)
+		fmt.Fprintf(w, "^0^ Ошибка значение, не могу пропарсить %v в %T", params.Value(), value)
 	}
-	store.SetGauge(params.Name, storage.Gauge(value))
+	store.SetGauge(params.Name(), storage.Gauge(value))
 
-	fmt.Fprintf(w, "^.^ мур! меняем Gauge %v на %v.", params.Name, value)
+	fmt.Fprintf(w, "^.^ мур! меняем Gauge %v на %v.", params.Name(), value)
 	w.Header().Add("Content-Type", "text/plain")
 	fmt.Printf("200(OK) at request to %v\n", r.URL.Path)
 }
@@ -94,6 +94,6 @@ func makeHandler(fn updateMetricFunc) http.HandlerFunc {
 			http.NotFound(w, r)
 			return
 		}
-		fn(w, r, *urlparams)
+		fn(w, r, urlparams)
 	}
 }
