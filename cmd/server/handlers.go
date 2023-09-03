@@ -9,7 +9,7 @@ import (
 	"github.com/thefrol/kysh-kysh-meow/internal/storage"
 )
 
-var store storage.MemStore
+var store storage.Storager
 
 func init() {
 	//Создать хранилище
