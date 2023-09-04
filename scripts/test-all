@@ -1,4 +1,0 @@
-#!/bin/bash
-go build -o ./cmd/server/server ./cmd/server
-go build -o ./cmd/agent/agent ./cmd/agent
-./metricstest -test.run=^TestIteration2[AB]*$ -binary-path=./cmd/server/server -agent-binary-path=./cmd/agent/agent
