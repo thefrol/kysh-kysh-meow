@@ -1,9 +1,7 @@
 #!/bin/bash
 go build -o ./cmd/server/server ./cmd/server
 go build -o ./cmd/agent/agent ./cmd/agent
-./metricstest -test.run=^TestIteration2[AB]*$ -agent-binary-path=./cmd/agent/agent -source-path=. &
-sleep 2
-./cmd/agent/agent
+./metricstest -test.run=^TestIteration2[AB]*$ -agent-binary-path=./cmd/agent/agent -source-path=. -binary-path=./cmd/server/server
 
 
 # а можно запускать тесты в зависимости от имени активного git бранча! 
