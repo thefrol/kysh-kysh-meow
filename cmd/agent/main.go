@@ -2,12 +2,19 @@ package main
 
 import (
 	"fmt"
-	"runtime"
+
+	"github.com/thefrol/kysh-kysh-meow/internal/storage"
 )
 
+var store storage.Storager
+
+func init() {
+	store = storage.New()
+}
+
 func main() {
-	var m runtime.MemStats
-	runtime.ReadMemStats(&m)
-	ma, _ := getFieldsFloat(m)
-	fmt.Printf("%+v", ma)
+
+	saveMemStats(store, nil)
+	fmt.Println(store.Gauge("Alloc"))
+	fmt.Println(store.Gauge("HeapSys"))
 }
