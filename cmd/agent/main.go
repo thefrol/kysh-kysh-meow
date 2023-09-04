@@ -26,13 +26,16 @@ func main() {
 		return
 	}
 	fmt.Printf("Необязательные метрики памяти будут проигнорированы: %v\n", exclude)
+
 	//основной цикл
 	saveMemStats(store, exclude)
+	saveAdditionalStats(store)
+	updateCounter(store)
+
 	err = sendStorageMetrics(store, server)
 	if err != nil {
 		fmt.Println("Попытка отправить метрики завершилось с  ошибками:")
 		fmt.Print(err)
 	}
-	fmt.Println(store.Gauge("Alloc"))
-	fmt.Println(store.Gauge("HeapSys"))
+
 }
