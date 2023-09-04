@@ -12,7 +12,7 @@ storage.SetCounter("testCounter", val)
 // и аналогично Gauge, SetGauge
 ```
 
-Если добавлять тип, нужно создавать новый интерфейс и новый тип
+Если добавлять тип, нужно создавать новый интерфейс и новый тип, и ещё имплементировать Stringer для типа
 ```go
 type NewType newtype
 
@@ -20,6 +20,10 @@ type NewTyper interface{
 	NewTyper(name string)
 	SetNewTyper(name string, value NewType)
 }
+
+func (n NewType) String() string{
+
+}// NewType должен поддерживать интерфейс Stringer теперь
 ```
 
 И ещё добавить в конструктор, и ещё добавить поля в `MemStore`, короче тоже не просто все
