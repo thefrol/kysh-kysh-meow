@@ -79,13 +79,13 @@ func getStructFields(s interface{}) (names []string, err error) {
 }
 
 // Difference убирает из слайса элекменты другого слайса
-func Difference[T comparable](from []T, exclude []T) []T {
-	for i, v := range from { //как это все поэлегантней то сделать
-		if contains[T](exclude, v) {
-			remove[T](from, i)
+func Difference[T comparable](from []T, exclude []T) (diff []T) {
+	for _, v := range from { //как это все поэлегантней то сделать
+		if !contains[T](exclude, v) {
+			diff = append(diff, v)
 		}
 	}
-	return from //#TODO check if changes original slice #test
+	return
 }
 
 // contains созвращает True, если переданный слайс содержит элемент value
@@ -109,10 +109,4 @@ func containsSlice[T comparable](a []T, b []T) bool {
 		}
 	}
 	return true
-}
-
-// remove убирает элемент из слайса под номером i
-func remove[T any](s []T, i int) []T {
-	s[i] = s[len(s)-1]
-	return s[:len(s)-1]
 }
