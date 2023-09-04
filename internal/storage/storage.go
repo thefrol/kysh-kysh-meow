@@ -21,6 +21,14 @@ func (m MemStore) SetCounter(name string, value Counter) {
 	m.counters[name] = value
 }
 
+func (m MemStore) ListCounters() (keys []string) {
+	//keys = make([]string, 0, len(m.counters)) не такая плохая идея
+	for k := range m.counters {
+		keys = append(keys, k)
+	}
+	return
+}
+
 func (m MemStore) Gauge(name string) (Gauge, bool) {
 	val, ok := m.gauges[name] //Можно ли сделать в одну строчку #MENTOR
 	return val, ok
@@ -28,6 +36,14 @@ func (m MemStore) Gauge(name string) (Gauge, bool) {
 
 func (m MemStore) SetGauge(name string, value Gauge) {
 	m.gauges[name] = value
+}
+
+func (m MemStore) ListGauges() (keys []string) {
+	//keys = make([]string, 0, len(m.counters)) не такая плохая идея
+	for k := range m.gauges {
+		keys = append(keys, k)
+	}
+	return
 }
 
 // Проверка, что MemStore соответсвует нужному интерфейсу

@@ -18,7 +18,8 @@ type NewType newtype
 
 type NewTyper interface{
 	NewTyper(name string)
-	SetNewTyper(name string, value NewType)
+	SetNewType(name string, value NewType)
+	ListNewType() [string]
 }
 
 func (n NewType) String() string{
