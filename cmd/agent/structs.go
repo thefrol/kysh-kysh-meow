@@ -3,6 +3,8 @@ package main
 import (
 	"errors"
 	"reflect"
+
+	"github.com/thefrol/kysh-kysh-meow/internal/slices"
 )
 
 var (
@@ -63,32 +65,9 @@ func getStructFields(s interface{}) (names []string, err error) {
 // Difference убирает из слайса элекменты другого слайса
 func Difference[T comparable](from []T, exclude []T) (diff []T) {
 	for _, v := range from { //как это все поэлегантней то сделать
-		if !contains[T](exclude, v) {
+		if !slices.Contains[T](exclude, v) {
 			diff = append(diff, v)
 		}
 	}
 	return
-}
-
-// contains созвращает True, если переданный слайс содержит элемент value
-func contains[T comparable](s []T, value T) bool {
-	for _, v := range s {
-		if v == value {
-			return true
-		}
-	}
-	return false
-}
-
-// containsSlice
-func containsSlice[T comparable](a []T, b []T) bool {
-	if len(b) > len(a) {
-		return false // b is bigger
-	}
-	for _, vb := range b {
-		if !contains[T](a, vb) {
-			return false
-		}
-	}
-	return true
 }
