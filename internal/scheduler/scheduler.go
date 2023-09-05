@@ -54,7 +54,7 @@ func (j *Job) Elapsed() bool {
 
 // Run Запускает функцию
 func (j *Job) Run() {
-	j.function()
 	t := time.Now()
+	j.function()
 	j.lastCall = t
 }
