@@ -82,7 +82,7 @@ func makeHandler(fn updateMetricFunc) http.HandlerFunc {
 			return
 		}
 		// Этот блок закомментирован, чтобы пройти автотесты. В тестах отправляется запрос без text/plain и это вызывает ошибку
-		// if r.Header.Get("Content-Type") != "text/plain" {
+		// if slices.Contains(r.Header("Content-Type"),"text/plain)" { // возможно это все щеё неправильно. Мне приходило такое "text/plain; encoging: utf8"
 		// 	w.WriteHeader(http.StatusNotFound)
 		// 	fmt.Printf("Wront content type at %v\n", r.URL.Path)
 		// 	io.WriteString(w, "Мяу! Мы поддерживаем только Content-Type:text/plain")
