@@ -41,6 +41,9 @@ func sendStorageMetrics(store storage.Storager, url string) error {
 func sendMetric(host, metric, name string, value fmt.Stringer) error {
 	url := fmt.Sprintf("%s/update/%s/%s/%s", host, metric, name, value)
 	_, err := http.Post(url, "text/plain", nil)
+	// if err == nil {
+	// 	defer r.Body.Close()
+	// }
 	time.Sleep(200 * time.Millisecond) //защита от map concurrent write
 	return err
 }
