@@ -129,6 +129,8 @@ func Test_sendStorageMetrics(t *testing.T) {
 			server := testServer{}
 			startedOk := true
 			go func() {
+				// можно переписать в http.NewServer без го-рутины
+				// defer server.Stop() #todo
 				fmt.Println("Starting testServer")
 				err := http.ListenAndServe(tt.serverHost, &server)
 				if err != nil {
