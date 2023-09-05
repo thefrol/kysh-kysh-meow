@@ -78,12 +78,12 @@ func Test_updateCounter(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			r := httptest.NewRequest(tt.method, tt.route, nil)
-
 			w := httptest.NewRecorder()
 			handler := makeHandler(updateCounter)
 			handler(w, r)
 
 			result := w.Result()
+			defer result.Body.Close()
 
 			assert.Equal(t, tt.response.code, result.StatusCode)
 			assert.Contains(t, result.Header.Get("Content-Type"), tt.response.ContentType)
@@ -203,12 +203,12 @@ func Test_updateGauge(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			r := httptest.NewRequest(tt.method, tt.route, nil)
-
 			w := httptest.NewRecorder()
 			handler := makeHandler(updateGauge)
 			handler(w, r)
 
 			result := w.Result()
+			defer result.Body.Close()
 
 			assert.Equal(t, tt.response.code, result.StatusCode)
 			assert.Contains(t, result.Header.Get("Content-Type"), tt.response.ContentType)
@@ -276,12 +276,12 @@ func Test_updateUnknownType(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			r := httptest.NewRequest(tt.method, tt.route, nil)
-
 			w := httptest.NewRecorder()
 			handler := makeHandler(updateUnknownType)
 			handler(w, r)
 
 			result := w.Result()
+			defer result.Body.Close()
 
 			assert.Equal(t, tt.response.code, result.StatusCode)
 			assert.Contains(t, result.Header.Get("Content-Type"), tt.response.ContentType)
