@@ -30,13 +30,19 @@ func FieldsFloat(s interface{}, exclude []string) (m map[string]float64, err err
 
 	m = make(map[string]float64)
 	for i := 0; i < r.NumField(); i++ {
-		switch v := r.Field(i).Interface().(type) { // if is convertible
+		switch v := r.Field(i).Interface().(type) { // if is convertible #TODO
 		case int64:
+			m[r.Type().Field(i).Name] = float64(v)
+		case int32:
 			m[r.Type().Field(i).Name] = float64(v)
 		case uint64:
 			m[r.Type().Field(i).Name] = float64(v)
+		case uint32:
+			m[r.Type().Field(i).Name] = float64(v)
 		case float64:
 			m[r.Type().Field(i).Name] = v
+		case float32:
+			m[r.Type().Field(i).Name] = float64(v)
 		default:
 			continue
 		}
