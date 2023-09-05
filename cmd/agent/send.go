@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/thefrol/kysh-kysh-meow/internal/storage"
 )
@@ -40,5 +41,6 @@ func sendStorageMetrics(store storage.Storager, url string) error {
 func sendMetric(host, metric, name string, value fmt.Stringer) error {
 	url := fmt.Sprintf("%s/update/%s/%s/%s", host, metric, name, value)
 	_, err := http.Post(url, "text/plain", nil)
+	time.Sleep(200 * time.Millisecond) //защита от map concurrent write
 	return err
 }
