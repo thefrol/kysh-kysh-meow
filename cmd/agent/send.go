@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"net/http"
 	"time"
 
@@ -42,7 +43,13 @@ func sendMetric(host, metric, name string, value fmt.Stringer) error {
 	url := fmt.Sprintf("%s/update/%s/%s/%s", host, metric, name, value)
 	r, err := http.Post(url, "text/plain", nil)
 	if err == nil {
+		//прочитать тело и закрыть запрос, чтобы переиспользовать открытые tcp соединия
+		_, err := io.Copy(io.Discard, r.Body)
 		defer r.Body.Close()
+		if err != nil {
+			return err
+		}
+
 	}
 	time.Sleep(200 * time.Millisecond) //защита от map concurrent write
 	return err
