@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/thefrol/kysh-kysh-meow/internal/scheduler"
 	"github.com/thefrol/kysh-kysh-meow/internal/storage"
 )
 
@@ -33,7 +34,7 @@ func main() {
 	fmt.Printf("Необязательные метрики памяти будут проигнорированы: %v\n", exclude)
 
 	// запуск планировщика
-	c := Chron{}
+	c := scheduler.New()
 	//собираем данные раз в pollingInterval
 	c.AddJob(pollingInterval, func() {
 		saveMemStats(store, exclude)

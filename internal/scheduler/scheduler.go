@@ -1,4 +1,4 @@
-package main
+package scheduler
 
 import (
 	"fmt"
@@ -10,6 +10,11 @@ import (
 // Задания могут выполнится позднее, но никогда раньше
 type Chron struct {
 	jobs []*Job
+}
+
+// New создает новый планировщик Chron
+func New() Chron {
+	return Chron{}
 }
 
 // Serve запускает запланированные работы, и занимает текущий поток
