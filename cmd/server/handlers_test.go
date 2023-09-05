@@ -10,7 +10,7 @@ import (
 )
 
 //что такое test main?
-func TestUpdate(t *testing.T) {
+func Test_updateCounter(t *testing.T) {
 	type testResponse struct {
 		code        int
 		ContentType string
@@ -93,7 +93,7 @@ func TestUpdate(t *testing.T) {
 
 }
 
-func TestUpdateGauge(t *testing.T) {
+func Test_updateGauge(t *testing.T) {
 	type testResponse struct {
 		code        int
 		ContentType string
@@ -218,7 +218,7 @@ func TestUpdateGauge(t *testing.T) {
 
 }
 
-func TestUpdateUnknownType(t *testing.T) {
+func Test_updateUnknownType(t *testing.T) {
 	type testResponse struct {
 		code        int
 		ContentType string

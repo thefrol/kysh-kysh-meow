@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestUrlParsing(t *testing.T) {
+func Test_ParseURL(t *testing.T) {
 	type metric struct {
 		t     string //type
 		name  string
