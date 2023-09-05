@@ -25,3 +25,13 @@ func СontainsSlice[T comparable](sl []T, b []T) bool {
 	}
 	return true
 }
+
+// Difference убирает из слайса элекменты другого слайса
+func Difference[T comparable](from []T, exclude []T) (diff []T) {
+	for _, v := range from { //как это все поэлегантней то сделать
+		if !Contains[T](exclude, v) {
+			diff = append(diff, v)
+		}
+	}
+	return
+}

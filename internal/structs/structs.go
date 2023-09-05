@@ -6,8 +6,6 @@ package structs
 import (
 	"errors"
 	"reflect"
-
-	"github.com/thefrol/kysh-kysh-meow/internal/slices"
 )
 
 var (
@@ -63,14 +61,4 @@ func FieldNames(s interface{}) (names []string, err error) {
 		names = append(names, r.Type().Field(i).Name)
 	}
 	return names, nil
-}
-
-// Difference убирает из слайса элекменты другого слайса
-func Difference[T comparable](from []T, exclude []T) (diff []T) {
-	for _, v := range from { //как это все поэлегантней то сделать
-		if !slices.Contains[T](exclude, v) {
-			diff = append(diff, v)
-		}
-	}
-	return
 }

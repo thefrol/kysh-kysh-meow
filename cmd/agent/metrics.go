@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"runtime"
 
+	"github.com/thefrol/kysh-kysh-meow/internal/slices"
 	"github.com/thefrol/kysh-kysh-meow/internal/structs"
 )
 
@@ -44,7 +45,7 @@ func parseMetrics() (lost []string, exclude []string, err error) {
 	if err != nil {
 		return nil, nil, fmt.Errorf("can't retrieve fields from MemStats")
 	}
-	lost = structs.Difference[string](metricsMem, fields)
-	exclude = structs.Difference[string](fields, metricsMem)
+	lost = slices.Difference[string](metricsMem, fields)
+	exclude = slices.Difference[string](fields, metricsMem)
 	return lost, exclude, nil
 }
