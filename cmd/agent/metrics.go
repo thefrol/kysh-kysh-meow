@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"runtime"
+
+	"github.com/thefrol/kysh-kysh-meow/internal/structs"
 )
 
 var metricsMem = []string{
@@ -38,11 +40,11 @@ var metricsMem = []string{
 // В случае ошибки вернет ошибку третим параметром
 func parseMetrics() (lost []string, exclude []string, err error) {
 	m := runtime.MemStats{} // по хорошему тут бы получать какой-то пустой элемент, и чтобы getFields работала только с типом!
-	fields, err := getStructFields(m)
+	fields, err := structs.FieldNames(m)
 	if err != nil {
 		return nil, nil, fmt.Errorf("can't retrieve fields from MemStats")
 	}
-	lost = Difference[string](metricsMem, fields)
-	exclude = Difference[string](fields, metricsMem)
+	lost = structs.Difference[string](metricsMem, fields)
+	exclude = structs.Difference[string](fields, metricsMem)
 	return lost, exclude, nil
 }

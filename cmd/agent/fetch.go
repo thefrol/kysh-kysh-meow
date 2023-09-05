@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/thefrol/kysh-kysh-meow/internal/storage"
+	"github.com/thefrol/kysh-kysh-meow/internal/structs"
 )
 
 const (
@@ -18,7 +19,7 @@ const (
 func saveMemStats(store storage.Storager, exclude []string) error {
 	m := runtime.MemStats{}
 	runtime.ReadMemStats(&m)
-	stats, err := getFieldsFloat(m, exclude)
+	stats, err := structs.FieldsFloat(m, exclude)
 	if err != nil {
 		return err
 	}

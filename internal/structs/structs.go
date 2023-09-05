@@ -1,4 +1,7 @@
-package main
+// structs содержит инструменты рефлекции для работы со структурами
+// 	FieldsFloat: возвращает мапу из полей, которые можно преобразовать во float64
+// 	FieldNames: возвращает коллекцию имен полей
+package structs
 
 import (
 	"errors"
@@ -16,7 +19,7 @@ var (
 // Возвращены будут только поля с именами, неуказанными в exclude
 // Если exclude=nil, то фильтрации не производится
 // Возвращает ошибку в случае ошибки
-func getFieldsFloat(s interface{}, exclude []string) (m map[string]float64, err error) {
+func FieldsFloat(s interface{}, exclude []string) (m map[string]float64, err error) {
 	r := reflect.ValueOf(s)
 	if reflect.Indirect(r).Kind() != reflect.Struct { // будет что потестить // make a restricting interface!
 		return nil, ErrorNotStruct
@@ -51,7 +54,7 @@ func getFieldsFloat(s interface{}, exclude []string) (m map[string]float64, err 
 	return m, nil
 }
 
-func getStructFields(s interface{}) (names []string, err error) {
+func FieldNames(s interface{}) (names []string, err error) {
 	r := reflect.ValueOf(s)
 	if reflect.Indirect(r).Kind() != reflect.Struct { // будет что потестить // make a restricting interface!
 		return nil, ErrorNotStruct
