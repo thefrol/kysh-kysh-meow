@@ -18,7 +18,12 @@ func init() {
 		r.Post("/{type:counter}/{name}/{value}", makeHandler(updateCounter))
 		r.Post("/{type:gauge}/{name}/{value}", makeHandler(updateGauge))
 		r.Post("/{type}/{name}/{value}", makeHandler(updateUnknownType))
-		r.Get("/", makeHandler(updateUnknownType))
+	})
+
+	router.MethodNotAllowed(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Content-Type", "text/plain")
+		w.WriteHeader(404)
+		w.Write([]byte("^0^ оуууоо! такой метод недоступен"))
 	})
 
 }
