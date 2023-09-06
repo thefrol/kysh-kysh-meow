@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/thefrol/kysh-kysh-meow/internal/metrica"
@@ -83,6 +84,35 @@ func getValue(w http.ResponseWriter, r *http.Request, params URLParams) {
 	}
 
 	w.Write([]byte(value.String()))
+}
+
+// listMetrics выводит список всех известных на данный момент метрик
+func listMetrics(w http.ResponseWriter, r *http.Request) {
+	b := strings.Builder{}
+	const indent = "    "
+
+	cl := store.ListCounters()
+	gl := store.ListGauges()
+
+	if len(cl)+len(gl) == 0 {
+		b.WriteString("No metrics stored")
+		w.Write([]byte(b.String()))
+		return
+	}
+	if len(cl) > 0 {
+		fmt.Fprintln(&b, "Counters:")
+		for _, v := range cl {
+			fmt.Fprintln(&b, indent, v)
+		}
+
+	}
+	if len(gl) > 0 {
+		fmt.Fprintln(&b, "Gauges:")
+		for _, v := range gl {
+			fmt.Fprintln(&b, indent, v)
+		}
+	}
+	w.Write([]byte(b.String()))
 }
 
 // updateMetricFunc это типа функций обработчков, таких как updateCounter, updateGauge
