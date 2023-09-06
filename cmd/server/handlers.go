@@ -8,19 +8,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/thefrol/kysh-kysh-meow/internal/metrica"
-	"github.com/thefrol/kysh-kysh-meow/internal/storage"
 )
-
-var store storage.Storager
-
-func init() {
-	//Создать хранилище
-	store = storage.New()
-}
-
-func UpdateHandler(w http.ResponseWriter, r *http.Request) {
-
-}
 
 // updateCounter отвечает за маршрут, по которому будет обновляться счетчик типа counter
 // иначе говоря за URL вида: /update/counter/<name>/<value>
