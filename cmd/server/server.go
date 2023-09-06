@@ -6,18 +6,24 @@ package main
 import (
 	"fmt"
 	"net/http"
+
+	"github.com/go-chi/chi/v5"
 )
 
-var mux *http.ServeMux
+var router chi.Router
 
 func init() {
-	mux = http.NewServeMux()
-	mux.Handle("/update/counter/", makeHandler(updateCounter))
-	mux.Handle("/update/gauge/", makeHandler(updateGauge))
-	mux.Handle("/update/", makeHandler(updateUnknownType))
+	router = chi.NewRouter()
+	router.Route("/update", func(r chi.Router) {
+		r.Post("/{type:counter}/{name}/{value}", makeHandler(updateCounter))
+		r.Post("/{type:gauge}/{name}/{value}", makeHandler(updateGauge))
+		r.Post("/{type}/{name}/{value}", makeHandler(updateUnknownType))
+		r.Get("/", makeHandler(updateUnknownType))
+	})
+
 }
 
 func main() {
 	fmt.Println("^.^ Мяу, это сервер!")
-	http.ListenAndServe(":8080", mux)
+	http.ListenAndServe(":8080", router)
 }

@@ -2,7 +2,10 @@ module github.com/thefrol/kysh-kysh-meow
 
 go 1.18
 
-require github.com/stretchr/testify v1.8.4
+require (
+	github.com/go-chi/chi/v5 v5.0.10
+	github.com/stretchr/testify v1.8.4
+)
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
