@@ -39,14 +39,6 @@ func saveAdditionalStats(store storage.Storager) error {
 	return nil
 }
 
-// updateCounter обновляет счетчики, записывает их в указанное хранилище
-// 	PollCount - счетчик, который идёт с нуля, и увеличивается с каждой итерацией
-func updateCounter(store storage.Storager) error {
-	count, _ := store.Counter(metricPollCount)
-	store.SetCounter(metricPollCount, count+metrica.Counter(1))
-	return nil
-}
-
 // parseMetrics возвращает метрики, не найденные в выдаче runtime(lost) и список несохраняемых метрик(excluded).
 // В случае ошибки вернет ошибку третим параметром
 func parseMetrics() (lost []string, exclude []string, err error) {

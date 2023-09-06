@@ -83,7 +83,8 @@ func Test_saveAdditionalStats(t *testing.T) {
 
 func Test_updateCounter(t *testing.T) {
 	type args struct {
-		store storage.Storager
+		store       storage.Storager
+		counterName string
 	}
 	tests := []struct {
 		name          string
@@ -95,7 +96,7 @@ func Test_updateCounter(t *testing.T) {
 	}{
 		{
 			name:          "zero runs",
-			args:          args{store: storage.New()},
+			args:          args{store: storage.New(), counterName: metricPollCount},
 			wantErr:       false,
 			runsCount:     0,
 			counterValues: map[string]metrica.Counter{},
@@ -103,7 +104,7 @@ func Test_updateCounter(t *testing.T) {
 		},
 		{
 			name:          "one run",
-			args:          args{store: storage.New()},
+			args:          args{store: storage.New(), counterName: metricPollCount},
 			wantErr:       false,
 			runsCount:     1,
 			counterValues: map[string]metrica.Counter{metricPollCount: metrica.Counter(1)},
@@ -111,7 +112,7 @@ func Test_updateCounter(t *testing.T) {
 		},
 		{
 			name:          "three runs",
-			args:          args{store: storage.New()},
+			args:          args{store: storage.New(), counterName: metricPollCount},
 			wantErr:       false,
 			runsCount:     3,
 			counterValues: map[string]metrica.Counter{metricPollCount: metrica.Counter(3)},
@@ -123,7 +124,7 @@ func Test_updateCounter(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 
 			for i := 0; i < tt.runsCount; i++ {
-				if err := updateCounter(tt.args.store); (err != nil) != tt.wantErr {
+				if err := incrementCounter(tt.args.store, tt.args.counterName); (err != nil) != tt.wantErr {
 					t.Errorf("saveMemStats() error = %v, wantErr %v", err, tt.wantErr)
 				}
 			}
