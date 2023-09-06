@@ -71,10 +71,12 @@ func getMetric(w http.ResponseWriter, r *http.Request, params URLParams) {
 		value, found = store.Gauge(params.name)
 	default:
 		http.NotFound(w, r)
+		return
 	}
 
 	if !found {
 		http.NotFound(w, r)
+		return
 	}
 
 	w.Write([]byte(value.String()))
