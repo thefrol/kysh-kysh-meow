@@ -79,8 +79,7 @@ func Test_updateCounter(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			r := httptest.NewRequest(tt.method, tt.route, nil)
 			w := httptest.NewRecorder()
-			handler := makeHandler(updateCounter)
-			handler(w, r)
+			router.ServeHTTP(w, r)
 
 			result := w.Result()
 			defer result.Body.Close()
@@ -204,8 +203,7 @@ func Test_updateGauge(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			r := httptest.NewRequest(tt.method, tt.route, nil)
 			w := httptest.NewRecorder()
-			handler := makeHandler(updateGauge)
-			handler(w, r)
+			router.ServeHTTP(w, r)
 
 			result := w.Result()
 			defer result.Body.Close()
@@ -277,8 +275,7 @@ func Test_updateUnknownType(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			r := httptest.NewRequest(tt.method, tt.route, nil)
 			w := httptest.NewRecorder()
-			handler := makeHandler(updateUnknownType)
-			handler(w, r)
+			router.ServeHTTP(w, r)
 
 			result := w.Result()
 			defer result.Body.Close()
