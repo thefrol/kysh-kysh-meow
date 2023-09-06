@@ -1,23 +1,25 @@
 package storage
 
+import "github.com/thefrol/kysh-kysh-meow/internal/metrica"
+
 type MemStore struct {
-	counters map[string]Counter
-	gauges   map[string]Gauge
+	counters map[string]metrica.Counter
+	gauges   map[string]metrica.Gauge
 }
 
 func New() (m MemStore) {
-	m.counters = make(map[string]Counter)
-	m.gauges = make(map[string]Gauge)
+	m.counters = make(map[string]metrica.Counter)
+	m.gauges = make(map[string]metrica.Gauge)
 	return
 }
 
 // Возвращает значание именнованного счетчика, и булево значение: удалось ли счетчик найти
-func (m MemStore) Counter(name string) (Counter, bool) {
+func (m MemStore) Counter(name string) (metrica.Counter, bool) {
 	val, ok := m.counters[name] //Можно ли сделать в одну строчку #MENTOR
 	return val, ok
 }
 
-func (m MemStore) SetCounter(name string, value Counter) {
+func (m MemStore) SetCounter(name string, value metrica.Counter) {
 	m.counters[name] = value
 }
 
@@ -29,12 +31,12 @@ func (m MemStore) ListCounters() (keys []string) {
 	return
 }
 
-func (m MemStore) Gauge(name string) (Gauge, bool) {
+func (m MemStore) Gauge(name string) (metrica.Gauge, bool) {
 	val, ok := m.gauges[name] //Можно ли сделать в одну строчку #MENTOR
 	return val, ok
 }
 
-func (m MemStore) SetGauge(name string, value Gauge) {
+func (m MemStore) SetGauge(name string, value metrica.Gauge) {
 	m.gauges[name] = value
 }
 

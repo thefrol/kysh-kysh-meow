@@ -7,7 +7,7 @@
 Сделан в стиле языка `Go`, метрики вызываются геттерами и сеттерами
 
 ```go
-val,ok:=storage.Counter("testCounter")
+val,ok:=metrica.Counter("testCounter")
 storage.SetCounter("testCounter", val)
 // и аналогично Gauge, SetGauge
 ```
@@ -106,7 +106,7 @@ w. Header().Write()
 w.Header().Get()
 ```
 
-так у нас могло бы быть `storage.Counter().Get()`, где 
+так у нас могло бы быть `metrica.Counter().Get()`, где 
 
 ```
 func (m MemStorage) Counter() MetricStorage(int64){

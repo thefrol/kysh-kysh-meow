@@ -6,6 +6,7 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/thefrol/kysh-kysh-meow/internal/metrica"
 	"github.com/thefrol/kysh-kysh-meow/internal/storage"
 	"github.com/thefrol/kysh-kysh-meow/internal/structs"
 )
@@ -24,19 +25,19 @@ func saveMemStats(store storage.Storager, exclude []string) error {
 		return err
 	}
 	for key, value := range stats {
-		store.SetGauge(key, storage.Gauge(value)) //#TODO SetGauges()
+		store.SetGauge(key, metrica.Gauge(value)) //#TODO SetGauges()
 	}
 	return nil
 }
 
 func saveAdditionalStats(store storage.Storager) error {
-	store.SetGauge(metricRandomValue, storage.Gauge(randomFloat64()))
+	store.SetGauge(metricRandomValue, metrica.Gauge(randomFloat64()))
 	return nil
 }
 
 func updateCounter(store storage.Storager) error {
 	count, _ := store.Counter(metricPollCount)
-	store.SetCounter(metricPollCount, count+storage.Counter(1))
+	store.SetCounter(metricPollCount, count+metrica.Counter(1))
 	return nil
 }
 

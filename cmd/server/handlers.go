@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/thefrol/kysh-kysh-meow/internal/metrica"
 	"github.com/thefrol/kysh-kysh-meow/internal/storage"
 )
 
@@ -29,7 +30,7 @@ func updateCounter(w http.ResponseWriter, r *http.Request, params URLParams) {
 	}
 	old, _ := store.Counter(params.Name())
 	// по сути нам не надо обрабатывать случай, если значение небыло установлено. Оно ноль, прибавим новое значение и все четко
-	new := old + storage.Counter(value)
+	new := old + metrica.Counter(value)
 	store.SetCounter(params.Name(), new)
 	w.Header().Add("Content-Type", "text/plain")
 	fmt.Fprintf(w, "^.^ мур! Меняем Counter %v на %v. Новое значение %v", params.Name(), value, new)
@@ -48,7 +49,7 @@ func updateGauge(w http.ResponseWriter, r *http.Request, params URLParams) {
 		w.WriteHeader(http.StatusBadRequest)
 		fmt.Fprintf(w, "^0^ Ошибка значение, не могу пропарсить %v в %T", params.Value(), value)
 	}
-	store.SetGauge(params.Name(), storage.Gauge(value))
+	store.SetGauge(params.Name(), metrica.Gauge(value))
 	w.Header().Add("Content-Type", "text/plain")
 	fmt.Fprintf(w, "^.^ мур! меняем Gauge %v на %v.", params.Name(), value)
 

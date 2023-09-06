@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/thefrol/kysh-kysh-meow/internal/metrica"
 	"github.com/thefrol/kysh-kysh-meow/internal/storage"
 )
 
@@ -89,7 +90,7 @@ func Test_updateCounter(t *testing.T) {
 		args          args
 		wantErr       bool
 		runsCount     int
-		counterValues map[string]storage.Counter //проверяет значение этого счетчика
+		counterValues map[string]metrica.Counter //проверяет значение этого счетчика
 		foundValues   map[string]bool            // проверяет наличие такого счетчика,
 	}{
 		{
@@ -97,7 +98,7 @@ func Test_updateCounter(t *testing.T) {
 			args:          args{store: storage.New()},
 			wantErr:       false,
 			runsCount:     0,
-			counterValues: map[string]storage.Counter{},
+			counterValues: map[string]metrica.Counter{},
 			foundValues:   map[string]bool{metricPollCount: false},
 		},
 		{
@@ -105,7 +106,7 @@ func Test_updateCounter(t *testing.T) {
 			args:          args{store: storage.New()},
 			wantErr:       false,
 			runsCount:     1,
-			counterValues: map[string]storage.Counter{metricPollCount: storage.Counter(1)},
+			counterValues: map[string]metrica.Counter{metricPollCount: metrica.Counter(1)},
 			foundValues:   nil,
 		},
 		{
@@ -113,7 +114,7 @@ func Test_updateCounter(t *testing.T) {
 			args:          args{store: storage.New()},
 			wantErr:       false,
 			runsCount:     3,
-			counterValues: map[string]storage.Counter{metricPollCount: storage.Counter(3)},
+			counterValues: map[string]metrica.Counter{metricPollCount: metrica.Counter(3)},
 			foundValues:   nil,
 		},
 	}
