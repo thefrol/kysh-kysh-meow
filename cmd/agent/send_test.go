@@ -54,7 +54,7 @@ func Test_sendMetric(t *testing.T) {
 			if !startedOk {
 				t.Fatalf("Cant start test server")
 			}
-			if err := sendMetric("http://"+tt.serverHost, tt.args.metric, tt.args.name, tt.args.value); (err != nil) != tt.wantErr {
+			if err := doRequest("http://"+tt.serverHost, tt.args.metric, tt.args.name, tt.args.value); (err != nil) != tt.wantErr {
 				t.Errorf("sendMetric() error = %v, wantErr %v", err, tt.wantErr)
 			}
 			time.Sleep(1 * time.Second)

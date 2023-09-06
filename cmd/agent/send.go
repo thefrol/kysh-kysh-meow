@@ -15,7 +15,7 @@ func sendStorageMetrics(store storage.Storager, url string) error {
 	var errors []error
 	for _, key := range store.ListCounters() {
 		value, _ := store.Counter(key)
-		err := sendMetric(url, "counter", key, value) //#TODO counter to some const
+		err := doRequest(url, "counter", key, value) //#TODO counter to some const
 		if err != nil {
 			errors = append(errors, err)
 		}
@@ -23,7 +23,7 @@ func sendStorageMetrics(store storage.Storager, url string) error {
 
 	for _, key := range store.ListGauges() {
 		value, _ := store.Gauge(key)
-		err := sendMetric(url, "gauge", key, value) //#TODO counter to some const
+		err := doRequest(url, "gauge", key, value) //#TODO counter to some const
 		if err != nil {
 			errors = append(errors, err)
 		}
@@ -39,7 +39,8 @@ func sendStorageMetrics(store storage.Storager, url string) error {
 	return nil
 }
 
-func sendMetric(host, metric, name string, value fmt.Stringer) error {
+// doRequest создает запрос на сервер по нужному марштуру для обновления указанной метрики
+func doRequest(host, metric, name string, value fmt.Stringer) error {
 	url := fmt.Sprintf("%s/update/%s/%s/%s", host, metric, name, value)
 	r, err := http.Post(url, "text/plain", nil)
 	if err == nil {

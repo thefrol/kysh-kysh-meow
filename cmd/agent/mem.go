@@ -1,5 +1,6 @@
 package main
 
+// Список сохраняемых метрик из пакета runtime
 var metricsMem = []string{
 	"Alloc",
 	"BuckHashSys",

@@ -32,11 +32,15 @@ func saveMemStats(store storage.Storager, exclude []string) error {
 	return nil
 }
 
+// saveAdditionalStats сохраняет дополнительные метрики в указанное хранилище:
+// 	RandomValue: тип Gauge, содержит в себе случайное значение
 func saveAdditionalStats(store storage.Storager) error {
 	store.SetGauge(metricRandomValue, metrica.Gauge(randomFloat64()))
 	return nil
 }
 
+// updateCounter обновляет счетчики, записывает их в указанное хранилище
+// 	PollCount - счетчик, который идёт с нуля, и увеличивается с каждой итерацией
 func updateCounter(store storage.Storager) error {
 	count, _ := store.Counter(metricPollCount)
 	store.SetCounter(metricPollCount, count+metrica.Counter(1))
@@ -56,6 +60,7 @@ func parseMetrics() (lost []string, exclude []string, err error) {
 	return lost, exclude, nil
 }
 
+// randomFloat64 возвращает случайное число типа float64
 func randomFloat64() float64 {
 	s := rand.NewSource(int64(time.Now().Nanosecond()))
 	r := rand.New(s)
