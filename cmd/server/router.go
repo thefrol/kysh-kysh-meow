@@ -18,7 +18,13 @@ func MeowRouter() (router chi.Router) {
 	router.MethodNotAllowed(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Content-Type", "text/plain")
 		w.WriteHeader(404)
-		w.Write([]byte("^0^ оуууоо! такой метод или андрес недоступен"))
+		w.Write([]byte("^0^ оуууоо! такой метод не дотупен по этому адресу"))
+	})
+
+	router.NotFound(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Content-Type", "text/plain")
+		w.WriteHeader(404)
+		w.Write([]byte("^0^ оуууоо! Нет такой страницы"))
 	})
 
 	return router
