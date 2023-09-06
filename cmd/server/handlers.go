@@ -65,11 +65,31 @@ func updateGauge(w http.ResponseWriter, r *http.Request, params URLParams) {
 
 // updateGauge отвечает за маршрут, по которому будет обновляться счетчик неизвестного типа
 // без разбора возвращаем 400(Bad Request)
+// #TODO переименовать в BadRequest
 func updateUnknownType(w http.ResponseWriter, r *http.Request, params URLParams) {
 	w.Header().Add("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusBadRequest) //обязательно за вызова w.Write() #INSIGHT добавить в README
 	io.WriteString(w, "Фшшш! Я не знаю такой тип счетчика")
 	fmt.Printf("400(BadRequest) at request to %v\n", r.URL.Path)
+}
+
+func getMetric(w http.ResponseWriter, r *http.Request, params URLParams) {
+	var value fmt.Stringer
+	var found bool
+	switch params.metric {
+	case "counter":
+		value, found = store.Counter(params.name)
+	case "gauge":
+		value, found = store.Gauge(params.name)
+	default:
+		http.NotFound(w, r)
+	}
+
+	if !found {
+		http.NotFound(w, r)
+	}
+
+	w.Write([]byte(value.String()))
 }
 
 // updateMetricFunc это типа функций обработчков, таких как updateCounter, updateGauge
