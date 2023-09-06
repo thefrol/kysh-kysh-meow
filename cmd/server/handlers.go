@@ -61,7 +61,10 @@ func updateUnknownType(w http.ResponseWriter, r *http.Request, params URLParams)
 	fmt.Printf("400(BadRequest) at request to %v\n", r.URL.Path)
 }
 
-func getMetric(w http.ResponseWriter, r *http.Request, params URLParams) {
+// getValue возвращает значение уже записанной метрики,
+// если метрика ранее не была записана, возвращает http.StatusNotFound
+// если попытка обратиться к метрике несуществующего типа http.StatusNotFound
+func getValue(w http.ResponseWriter, r *http.Request, params URLParams) {
 	var value fmt.Stringer
 	var found bool
 	switch params.metric {

@@ -8,7 +8,7 @@ import (
 
 func MeowRouter() (router chi.Router) {
 	router = chi.NewRouter()
-	router.Get("/value/{type}/{name}", makeHandler(getMetric))
+	router.Get("/value/{type}/{name}", makeHandler(getValue))
 	router.Route("/update", func(r chi.Router) {
 		r.Post("/{type:counter}/{name}/{value}", makeHandler(updateCounter))
 		r.Post("/{type:gauge}/{name}/{value}", makeHandler(updateGauge))
