@@ -79,7 +79,7 @@ func Test_updateCounter(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			r := httptest.NewRequest(tt.method, tt.route, nil)
 			w := httptest.NewRecorder()
-			router.ServeHTTP(w, r)
+			MeowRouter().ServeHTTP(w, r)
 
 			result := w.Result()
 			defer result.Body.Close()
@@ -203,7 +203,7 @@ func Test_updateGauge(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			r := httptest.NewRequest(tt.method, tt.route, nil)
 			w := httptest.NewRecorder()
-			router.ServeHTTP(w, r)
+			MeowRouter().ServeHTTP(w, r)
 
 			result := w.Result()
 			defer result.Body.Close()
@@ -275,7 +275,7 @@ func Test_updateUnknownType(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			r := httptest.NewRequest(tt.method, tt.route, nil)
 			w := httptest.NewRecorder()
-			router.ServeHTTP(w, r)
+			MeowRouter().ServeHTTP(w, r)
 
 			result := w.Result()
 			defer result.Body.Close()
