@@ -1,17 +1,12 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"time"
 
 	"github.com/thefrol/kysh-kysh-meow/internal/scheduler"
 	"github.com/thefrol/kysh-kysh-meow/internal/storage"
-)
-
-const server = "http://localhost:8080"
-const (
-	pollInterval   = 2 * time.Second
-	reportInterval = 10 * time.Second
 )
 
 var store storage.Storager
@@ -21,10 +16,12 @@ func init() {
 }
 
 func main() {
+	flag.Parse()
+
 	// запуск планировщика
 	c := scheduler.New()
 	//собираем данные раз в pollingInterval
-	c.AddJob(pollInterval, func() {
+	c.AddJob(time.Duration(*pollIntervalSeconds)*time.Second, func() {
 		//Обновляем данные в хранилище
 		fetchMemStats(store)
 		fetchAdditionalStats(store)
@@ -32,9 +29,9 @@ func main() {
 		incrementCounter(store, metricPollCount)
 	})
 	// отправляем данные раз в sendingInterval
-	c.AddJob(reportInterval, func() {
+	c.AddJob(time.Duration(*reportIntervalSeconds)*time.Second, func() {
 		//отправляем на сервер
-		err := sendStorageMetrics(store, server)
+		err := sendStorageMetrics(store, "http://"+*addr)
 		if err != nil {
 			fmt.Println("Попытка отправить метрики завершилась с  ошибками:")
 			fmt.Print(err)
