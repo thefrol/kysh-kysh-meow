@@ -21,24 +21,12 @@ func init() {
 }
 
 func main() {
-	//проверка метрик
-	lost, exclude, err := parseMetrics()
-	if err != nil {
-		fmt.Printf("Проверка метрик выдала ошибку: %v", err)
-		return
-	}
-	if len(lost) > 0 {
-		fmt.Printf("Невозможно получить следующие необходимые метрики памяти: %v", lost) // lost не работает так как желаемо, ибо список полей MemStats воозвращается без оглядки на то, какое количество полей я умею обрабатывать
-		return
-	}
-	fmt.Printf("Необязательные метрики памяти будут проигнорированы: %v\n", exclude)
-
 	// запуск планировщика
 	c := scheduler.New()
 	//собираем данные раз в pollingInterval
 	c.AddJob(pollInterval, func() {
-		saveMemStats(store, exclude)
-		saveAdditionalStats(store)
+		fetchMemStats(store)
+		fetchAdditionalStats(store)
 		// Увеличиваем PollCount
 		incrementCounter(store, metricPollCount)
 	})

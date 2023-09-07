@@ -2,15 +2,12 @@
 package main
 
 import (
-	"fmt"
 	"math/rand"
 	"runtime"
 	"time"
 
 	"github.com/thefrol/kysh-kysh-meow/internal/metrica"
-	"github.com/thefrol/kysh-kysh-meow/internal/slices"
 	"github.com/thefrol/kysh-kysh-meow/internal/storage"
-	"github.com/thefrol/kysh-kysh-meow/internal/structs"
 )
 
 const (
@@ -18,38 +15,45 @@ const (
 	metricRandomValue = "RandomValue"
 )
 
-// fetchStats собирает метрики мамяти и сохраняет их в хранилище, исключая ненужные exclude
-func saveMemStats(store storage.Storager, exclude []string) error {
+// fetchMemStats собирает метрики мамяти и сохраняет их в хранилище store
+func fetchMemStats(s storage.Storager) {
 	m := runtime.MemStats{}
 	runtime.ReadMemStats(&m)
-	stats, err := structs.FieldsFloat(m, exclude)
-	if err != nil {
-		return err
-	}
-	for key, value := range stats {
-		store.SetGauge(key, metrica.Gauge(value)) //#TODO SetGauges()
-	}
-	return nil
+
+	s.SetGauge("Alloc", metrica.Gauge(m.Alloc))
+	s.SetGauge("BuckHashSys", metrica.Gauge(m.BuckHashSys))
+	s.SetGauge("Frees", metrica.Gauge(m.Frees))
+	s.SetGauge("GCCPUFraction", metrica.Gauge(m.GCCPUFraction))
+	s.SetGauge("GCSys", metrica.Gauge(m.GCSys))
+	s.SetGauge("HeapAlloc", metrica.Gauge(m.HeapAlloc))
+	s.SetGauge("HeapIdle", metrica.Gauge(m.HeapIdle))
+	s.SetGauge("HeapInuse", metrica.Gauge(m.HeapInuse))
+	s.SetGauge("HeapObjects", metrica.Gauge(m.HeapObjects))
+	s.SetGauge("HeapSys", metrica.Gauge(m.HeapSys))
+	s.SetGauge("LastGC", metrica.Gauge(m.LastGC))
+	s.SetGauge("Lookups", metrica.Gauge(m.Lookups))
+	s.SetGauge("MCacheInuse", metrica.Gauge(m.MCacheInuse))
+	s.SetGauge("MCacheSys", metrica.Gauge(m.MCacheSys))
+	s.SetGauge("MSpanInuse", metrica.Gauge(m.MSpanInuse))
+	s.SetGauge("MSpanSys", metrica.Gauge(m.MSpanSys))
+	s.SetGauge("Mallocs", metrica.Gauge(m.Mallocs))
+	s.SetGauge("NextGC", metrica.Gauge(m.NextGC))
+	s.SetGauge("NumForcedGC", metrica.Gauge(m.NumForcedGC))
+	s.SetGauge("NumGC", metrica.Gauge(m.NumGC))
+	s.SetGauge("OtherSys", metrica.Gauge(m.OtherSys))
+	s.SetGauge("PauseTotalNs", metrica.Gauge(m.PauseTotalNs))
+	s.SetGauge("StackInuse", metrica.Gauge(m.StackInuse))
+	s.SetGauge("StackSys", metrica.Gauge(m.StackSys))
+	s.SetGauge("Sys", metrica.Gauge(m.Sys))
+	s.SetGauge("TotalAlloc", metrica.Gauge(m.TotalAlloc))
+	// тут, конечно тоже можно наошибаться, и может рефлексия поможет для тестов
+	// но тут уже можно взять сторонний набор
 }
 
-// saveAdditionalStats сохраняет дополнительные метрики в указанное хранилище:
+// fetchAdditionalStats сохраняет дополнительные метрики в указанное хранилище:
 // 	RandomValue: тип Gauge, содержит в себе случайное значение
-func saveAdditionalStats(store storage.Storager) error {
-	store.SetGauge(metricRandomValue, metrica.Gauge(randomFloat64()))
-	return nil
-}
-
-// parseMetrics возвращает метрики, не найденные в выдаче runtime(lost) и список несохраняемых метрик(excluded).
-// В случае ошибки вернет ошибку третим параметром
-func parseMetrics() (lost []string, exclude []string, err error) {
-	m := runtime.MemStats{} // по хорошему тут бы получать какой-то пустой элемент, и чтобы getFields работала только с типом!
-	fields, err := structs.FieldNames(m)
-	if err != nil {
-		return nil, nil, fmt.Errorf("can't retrieve fields from MemStats")
-	}
-	lost = slices.Difference[string](metricsMem, fields)
-	exclude = slices.Difference[string](fields, metricsMem)
-	return lost, exclude, nil
+func fetchAdditionalStats(s storage.Storager) {
+	s.SetGauge(metricRandomValue, metrica.Gauge(randomFloat64()))
 }
 
 // randomFloat64 возвращает случайное число типа float64
