@@ -9,10 +9,39 @@ import (
 	"github.com/thefrol/kysh-kysh-meow/internal/storage"
 )
 
-func Test_saveMemStats(t *testing.T) {
+// Список сохраняемых метрик из пакета runtime
+var metricsMem = []string{
+	"Alloc",
+	"BuckHashSys",
+	"Frees",
+	"GCCPUFraction",
+	"GCSys",
+	"HeapAlloc",
+	"HeapIdle",
+	"HeapInuse",
+	"HeapObjects",
+	"HeapSys",
+	"LastGC",
+	"Lookups",
+	"MCacheInuse",
+	"MCacheSys",
+	"MSpanInuse",
+	"MSpanSys",
+	"Mallocs",
+	"NextGC",
+	"NumForcedGC",
+	"NumGC",
+	"OtherSys",
+	"PauseTotalNs",
+	"StackInuse",
+	"StackSys",
+	"Sys",
+	"TotalAlloc",
+}
+
+func Test_fetchMemStats(t *testing.T) {
 	type args struct {
-		store   storage.Storager
-		exclude []string
+		store storage.Storager
 	}
 	tests := []struct {
 		name           string
@@ -32,9 +61,7 @@ func Test_saveMemStats(t *testing.T) {
 	for _, tt := range tests {
 
 		t.Run(tt.name, func(t *testing.T) {
-			if err := saveMemStats(tt.args.store, tt.args.exclude); (err != nil) != tt.wantErr {
-				t.Errorf("saveMemStats() error = %v, wantErr %v", err, tt.wantErr)
-			}
+			fetchMemStats(tt.args.store)
 			if tt.memValuesCount >= 0 {
 				assert.Equal(t, tt.memValuesCount, CountValues(tt.args.store))
 			}
@@ -48,7 +75,7 @@ func Test_saveMemStats(t *testing.T) {
 	}
 }
 
-func Test_saveAdditionalStats(t *testing.T) {
+func Test_fetchAdditionalStats(t *testing.T) {
 	type args struct {
 		store storage.Storager
 	}
@@ -68,9 +95,7 @@ func Test_saveAdditionalStats(t *testing.T) {
 	for _, tt := range tests {
 
 		t.Run(tt.name, func(t *testing.T) {
-			if err := saveAdditionalStats(tt.args.store); (err != nil) != tt.wantErr {
-				t.Errorf("saveMemStats() error = %v, wantErr %v", err, tt.wantErr)
-			}
+			fetchAdditionalStats(tt.args.store)
 			for _, v := range tt.fieldsFound {
 				_, gaugeFound := tt.args.store.Gauge(v)
 				_, counterFound := tt.args.store.Counter(v)
@@ -124,9 +149,7 @@ func Test_updateCounter(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 
 			for i := 0; i < tt.runsCount; i++ {
-				if err := incrementCounter(tt.args.store, tt.args.counterName); (err != nil) != tt.wantErr {
-					t.Errorf("saveMemStats() error = %v, wantErr %v", err, tt.wantErr)
-				}
+				incrementCounter(tt.args.store, tt.args.counterName)
 			}
 			for k, expect := range tt.counterValues {
 				real, ok := tt.args.store.Counter(k)
