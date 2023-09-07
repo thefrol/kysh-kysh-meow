@@ -16,7 +16,7 @@ func init() {
 }
 
 func main() {
-	flag.Parse()
+	configure()
 
 	// запуск планировщика
 	c := scheduler.New()
@@ -44,4 +44,9 @@ func main() {
 
 	c.Serve(200 * time.Millisecond)
 
+}
+
+func configure() {
+	flag.Parse()
+	loadEnv()
 }
