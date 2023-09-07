@@ -25,6 +25,7 @@ func main() {
 	c := scheduler.New()
 	//собираем данные раз в pollingInterval
 	c.AddJob(pollInterval, func() {
+		//Обновляем данные в хранилище
 		fetchMemStats(store)
 		fetchAdditionalStats(store)
 		// Увеличиваем PollCount
@@ -32,6 +33,7 @@ func main() {
 	})
 	// отправляем данные раз в sendingInterval
 	c.AddJob(reportInterval, func() {
+		//отправляем на сервер
 		err := sendStorageMetrics(store, server)
 		if err != nil {
 			fmt.Println("Попытка отправить метрики завершилась с  ошибками:")
