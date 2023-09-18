@@ -74,6 +74,7 @@ func Test_fetchMemStats(t *testing.T) {
 	}
 }
 
+// Test_fetchAdditionalStats проверяет, что случайная величина так же хорошо сохраняется в хранилище
 func Test_fetchAdditionalStats(t *testing.T) {
 	type args struct {
 		store storage.Storager
@@ -94,7 +95,7 @@ func Test_fetchAdditionalStats(t *testing.T) {
 	for _, tt := range tests {
 
 		t.Run(tt.name, func(t *testing.T) {
-			FetchAdditionalStats(tt.args.store)
+			FetchMemStats(tt.args.store)
 			for _, v := range tt.fieldsFound {
 				_, gaugeFound := tt.args.store.Gauge(v)
 				_, counterFound := tt.args.store.Counter(v)

@@ -44,17 +44,11 @@ func FetchMemStats(s storage.Storager) {
 	s.SetGauge("Sys", metrica.Gauge(m.Sys))
 	s.SetGauge("TotalAlloc", metrica.Gauge(m.TotalAlloc))
 
-	// тут, конечно тоже можно наошибаться, и может рефлексия поможет для тестов
-	// но тут уже можно взять сторонний набор
-}
-
-// fetchAdditionalStats сохраняет дополнительные метрики в указанное хранилище:
-//
-//	RandomValue: тип Gauge, содержит в себе случайное значение
-func FetchAdditionalStats(s storage.Storager) {
-
 	// случайное значение
 	s.SetGauge(randomValueName, metrica.Gauge(randomFloat64()))
+
+	// тут, конечно тоже можно наошибаться, и может рефлексия поможет для тестов
+	// но тут уже можно взять сторонний набор
 }
 
 // randomFloat64 возвращает случайное число типа float64
