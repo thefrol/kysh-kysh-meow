@@ -13,7 +13,7 @@ import (
 const randomValueName = "RandomValue"
 
 // fetchMemStats собирает метрики мамяти и сохраняет их в хранилище store
-func FetchMemStats(s storage.Storager) {
+func Fetch(s storage.Storager) {
 	m := runtime.MemStats{}
 	runtime.ReadMemStats(&m)
 
@@ -45,15 +45,15 @@ func FetchMemStats(s storage.Storager) {
 	s.SetGauge("TotalAlloc", metrica.Gauge(m.TotalAlloc))
 
 	// случайное значение
-	s.SetGauge(randomValueName, metrica.Gauge(randomFloat64()))
+	s.SetGauge(randomValueName, randomGauge())
 
 	// тут, конечно тоже можно наошибаться, и может рефлексия поможет для тестов
 	// но тут уже можно взять сторонний набор
 }
 
-// randomFloat64 возвращает случайное число типа float64
-func randomFloat64() float64 {
+// randomGauge возвращает случайное число типа float64
+func randomGauge() metrica.Gauge {
 	s := rand.NewSource(int64(time.Now().Nanosecond()))
 	r := rand.New(s)
-	return r.Float64()
+	return metrica.Gauge(r.Float64())
 }

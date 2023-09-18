@@ -60,7 +60,7 @@ func Test_fetchMemStats(t *testing.T) {
 	for _, tt := range tests {
 
 		t.Run(tt.name, func(t *testing.T) {
-			FetchMemStats(tt.args.store)
+			Fetch(tt.args.store)
 			if tt.memValuesCount >= 0 {
 				assert.Equal(t, tt.memValuesCount, CountValues(tt.args.store))
 			}
@@ -95,7 +95,7 @@ func Test_fetchAdditionalStats(t *testing.T) {
 	for _, tt := range tests {
 
 		t.Run(tt.name, func(t *testing.T) {
-			FetchMemStats(tt.args.store)
+			Fetch(tt.args.store)
 			for _, v := range tt.fieldsFound {
 				_, gaugeFound := tt.args.store.Gauge(v)
 				_, counterFound := tt.args.store.Counter(v)

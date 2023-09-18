@@ -24,7 +24,7 @@ func main() {
 	//собираем данные раз в pollingInterval
 	c.AddJob(time.Duration(*pollIntervalSeconds)*time.Second, func() {
 		//Обновляем данные в хранилище
-		stats.FetchMemStats(store)
+		stats.Fetch(store)
 		// Увеличиваем PollCount
 		incrementCounter(store, metricPollCount)
 	})
