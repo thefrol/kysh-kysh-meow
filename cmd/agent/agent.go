@@ -1,7 +1,6 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"time"
 
@@ -17,21 +16,21 @@ func init() {
 }
 
 func main() {
-	configure()
+	config := configure()
 
 	// запуск планировщика
 	c := scheduler.New()
 	//собираем данные раз в pollingInterval
-	c.AddJob(time.Duration(*pollIntervalSeconds)*time.Second, func() {
+	c.AddJob(time.Duration(config.PollingInterval)*time.Second, func() {
 		//Обновляем данные в хранилище
 		stats.Fetch(store)
 		// Увеличиваем PollCount
 		incrementCounter(store, metricPollCount)
 	})
-	// отправляем данные раз в sendingInterval
-	c.AddJob(time.Duration(*reportIntervalSeconds)*time.Second, func() {
+	// отправляем данные раз в repostInterval
+	c.AddJob(time.Duration(config.ReportInterval)*time.Second, func() {
 		//отправляем на сервер
-		err := sendStorageMetrics(store, "http://"+*addr)
+		err := sendStorageMetrics(store, "http://"+config.Addr)
 		if err != nil {
 			fmt.Println("Попытка отправить метрики завершилась с  ошибками:")
 			fmt.Print(err)
@@ -44,9 +43,4 @@ func main() {
 
 	c.Serve(200 * time.Millisecond)
 
-}
-
-func configure() {
-	flag.Parse()
-	loadEnv()
 }
