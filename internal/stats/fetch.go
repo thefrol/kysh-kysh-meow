@@ -12,7 +12,7 @@ import (
 
 const randomValueName = "RandomValue"
 
-// fetchMemStats собирает метрики мамяти и сохраняет их в хранилище store
+// Fetch собирает метрики мамяти и сохраняет их в хранилище store
 func Fetch(s storage.Storager) {
 	m := runtime.MemStats{}
 	runtime.ReadMemStats(&m)
