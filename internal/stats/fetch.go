@@ -1,4 +1,3 @@
-// stats собирает метрики из памяти, и выдает их удобной мапой
 package stats
 
 import (
@@ -9,8 +8,6 @@ import (
 	"github.com/thefrol/kysh-kysh-meow/internal/metrica"
 	"github.com/thefrol/kysh-kysh-meow/internal/storage"
 )
-
-const randomValueName = "RandomValue"
 
 // Fetch собирает метрики мамяти и сохраняет их в хранилище store
 func Fetch(s storage.Storager) {
@@ -46,9 +43,6 @@ func Fetch(s storage.Storager) {
 
 	// случайное значение
 	s.SetGauge(randomValueName, randomGauge())
-
-	// тут, конечно тоже можно наошибаться, и может рефлексия поможет для тестов
-	// но тут уже можно взять сторонний набор
 }
 
 // randomGauge возвращает случайное число типа float64

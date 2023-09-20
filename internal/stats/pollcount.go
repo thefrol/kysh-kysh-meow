@@ -5,10 +5,6 @@ import (
 	"github.com/thefrol/kysh-kysh-meow/internal/storage"
 )
 
-const (
-	metricPollCount = "PollCount"
-)
-
 // incrementCounter обновляет PollCount счетчик в хранилище, добавляет ему единицу
 func IncrementCounter(store storage.Storager, name string) {
 	count, _ := store.Counter(metricPollCount)
