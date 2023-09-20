@@ -8,14 +8,6 @@ import (
 	//"github.com/octago/sflags/gen/gflag" сделать свой репозиторий и залить его всем в ПР
 )
 
-func init() {
-	flag.Usage = func() {
-		print("server")
-		flag.PrintDefaults()
-		fmt.Println("^-^")
-	}
-}
-
 type config struct {
 	Addr            string `env:"ADDRESS" flag:"~a" desc:"(строка) адрес сервера в формате host:port"`
 	ReportInterval  int    `env:"REPORT_INTERVAL" flag:"~r" desc:"(число, секунды) частота отправки данных на сервер"`
@@ -39,4 +31,12 @@ func configure(defaults config) (cfg config) {
 	env.Parse(&cfg)
 
 	return
+}
+
+func init() {
+	flag.Usage = func() {
+		print("server")
+		flag.PrintDefaults()
+		fmt.Println("^-^")
+	}
 }
