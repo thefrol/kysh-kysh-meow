@@ -13,8 +13,8 @@ type config struct {
 
 // configure парсит командную строку и переменные окружения, чтобы выдать структуру с конфигурацией сервера.
 // В приоритете переменные окружения,
-func configure(defaultServer string) (cfg config) {
-	flag.StringVar(&cfg.Addr, "a", defaultServer, "[адрес:порт] устанавливает адрес сервера ")
+func configure(defaults config) (cfg config) {
+	flag.StringVar(&cfg.Addr, "a", defaults.Addr, "[адрес:порт] устанавливает адрес сервера ")
 
 	flag.Parse()
 	env.Parse(&cfg)

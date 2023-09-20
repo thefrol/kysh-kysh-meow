@@ -17,8 +17,12 @@ func init() {
 	store = storage.New()
 }
 
+var defaultConfig = config{
+	Addr: ":8080",
+}
+
 func main() {
-	cfg := configure(":8080")
+	cfg := configure(defaultConfig)
 
 	fmt.Printf("^.^ Мяу, сервер работает по адресу %v!\n", cfg.Addr)
 	err := http.ListenAndServe(cfg.Addr, MeowRouter())
