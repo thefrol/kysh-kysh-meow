@@ -4,7 +4,6 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"net/http"
 
@@ -19,16 +18,11 @@ func init() {
 }
 
 func main() {
-	configure()
+	cfg := configure(":8080")
 
-	fmt.Printf("^.^ Мяу, сервер работает по адресу %v!\n", *addr)
-	err := http.ListenAndServe(*addr, MeowRouter())
+	fmt.Printf("^.^ Мяу, сервер работает по адресу %v!\n", cfg.Addr)
+	err := http.ListenAndServe(cfg.Addr, MeowRouter())
 	if err != nil {
 		fmt.Printf("^0^ не могу запустить сервер: %v \n", err)
 	}
-}
-
-func configure() {
-	flag.Parse()
-	loadEnv()
 }
