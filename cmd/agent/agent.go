@@ -16,7 +16,8 @@ func init() {
 }
 
 func main() {
-	config := configure()
+	config := configure(defaultConfig)
+	fmt.Printf("%+v\n", config)
 
 	// запуск планировщика
 	c := scheduler.New()

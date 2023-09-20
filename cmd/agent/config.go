@@ -27,14 +27,23 @@ type config struct {
 	PollingInterval int    `env:"POLLING_INTERVAL"`
 }
 
+var defaultConfig = config{
+	Addr:            defaultServer,
+	ReportInterval:  defaultReportIntervalSeconds,
+	PollingInterval: defaultPollIntervalSeconds,
+}
+
 // configure переписывает глобальные параметры настроек адреса и интервалов отправки и опроса
 // если такие назначены
-func configure() (cfg config) {
+func configure(defaults config) (cfg config) {
 	//togo default config можно тоже объявить конфиг структурой, или передать в функцию!
+	flag.IntVar(&cfg.PollingInterval, "p", defaults.PollingInterval, "число, частота опроса метрик")
+	flag.IntVar(&cfg.ReportInterval, "r", defaults.ReportInterval, "число, частота отправки данных на сервер")
+	flag.StringVar(&cfg.Addr, "a", defaults.Addr, "строка, адрес сервера в формате host:port")
 
-	cfg.PollingInterval = *flag.Int("p", defaultPollIntervalSeconds, "число, частота опроса метрик")
-	cfg.ReportInterval = *flag.Int("r", defaultReportIntervalSeconds, "число, частота отправки данных на сервер")
-	cfg.Addr = *flag.String("a", defaultServer, "строка, адрес сервера в формате host:port")
+	flag.Parse()
+
+	fmt.Printf("in configure()=%+v\n", cfg)
 
 	env.Parse(&cfg)
 
