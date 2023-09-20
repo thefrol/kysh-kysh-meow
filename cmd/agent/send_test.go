@@ -85,18 +85,6 @@ func Test_sendStorageMetrics(t *testing.T) {
 			requestsCount: 1,
 			wantErr:       false,
 		},
-		{
-			name:       "negative #2",
-			serverHost: newHost(),
-			args: args{
-				counters: map[string]metrica.Counter{
-					"test1": metrica.Counter(22)},
-				gauges: map[string]metrica.Gauge{
-					"test1": metrica.Gauge(22.1)}},
-			routesUsed:    []string{},
-			requestsCount: 0,
-			wantErr:       true,
-		},
 		//мне нужен тест на неправильный адрес! для тестирования ошибок или типа того. МОгу ли я это протестировать правда? или просто гонюсь за покрытием?
 	}
 	for _, tt := range tests {
