@@ -38,17 +38,17 @@ func Test_sendMetric(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ts := testServer{}
-			s := httptest.NewServer(&ts)
-			defer s.Close()
+			handler := testHandler{}
+			server := httptest.NewServer(&handler)
+			defer server.Close()
 
-			if err := doRequest(s.URL, tt.args.metric, tt.args.name, tt.args.value); (err != nil) != tt.wantErr {
+			if err := doRequest(server.URL, tt.args.metric, tt.args.name, tt.args.value); (err != nil) != tt.wantErr {
 				t.Errorf("sendMetric() error = %v, wantErr %v", err, tt.wantErr)
 			}
 
-			assert.Equal(t, tt.requestsCount, ts.NumRequests(), "Wrong requests count")
+			assert.Equal(t, tt.requestsCount, handler.NumRequests(), "Wrong requests count")
 			//assert.Contains(t, server.routesUsed(), tt.routesUsed, "Not all required routes used") // не срабатывает, пишешь {"1"} not containg {"1"}
-			assert.True(t, slices.СontainsSlice[string](ts.routesUsed(), tt.routesUsed))
+			assert.True(t, slices.СontainsSlice[string](handler.routesUsed(), tt.routesUsed))
 		})
 	}
 }
@@ -60,7 +60,6 @@ func Test_sendStorageMetrics(t *testing.T) {
 	}
 	tests := []struct {
 		name          string
-		serverHost    string
 		args          args
 		routesUsed    []string
 		requestsCount int //если меньше одного, то не проверяется
@@ -76,8 +75,7 @@ func Test_sendStorageMetrics(t *testing.T) {
 			wantErr:       false,
 		},
 		{
-			name:       "positive #2 gauge",
-			serverHost: newHost(),
+			name: "positive #2 gauge",
 			args: args{
 				gauges: map[string]metrica.Gauge{
 					"test1": metrica.Gauge(22.1)}},
@@ -85,7 +83,6 @@ func Test_sendStorageMetrics(t *testing.T) {
 			requestsCount: 1,
 			wantErr:       false,
 		},
-		//мне нужен тест на неправильный адрес! для тестирования ошибок или типа того. МОгу ли я это протестировать правда? или просто гонюсь за покрытием?
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -100,48 +97,48 @@ func Test_sendStorageMetrics(t *testing.T) {
 			}
 
 			// Запускаем сервак
-			ts := testServer{}
-			s := httptest.NewServer(&ts)
-			defer s.Close()
+			handler := testHandler{}
+			server := httptest.NewServer(&handler)
+			defer server.Close()
 
-			if err := sendStorageMetrics(store, s.URL); (err != nil) != tt.wantErr {
+			if err := sendStorageMetrics(store, server.URL); (err != nil) != tt.wantErr {
 				t.Errorf("sendMetric() error = %v, wantErr %v", err, tt.wantErr)
 			}
 
-			assert.Equal(t, tt.requestsCount, ts.NumRequests(), "Wrong requests count")
+			assert.Equal(t, tt.requestsCount, handler.NumRequests(), "Wrong requests count")
 			//assert.Contains(t, server.routesUsed(), tt.routesUsed, "Not all required routes used") // не срабатывает, пишешь {"1"} not containg {"1"}
 			for _, v := range tt.routesUsed {
-				found, err := ts.containsRouteRegexp(v)
+				found, err := handler.containsRoute(v)
 				assert.NoError(t, err)
-				assert.Truef(t, found, "routesUsed %v must contain %v", ts.routesUsed(), v)
+				assert.Truef(t, found, "routesUsed %v must contain %v", handler.routesUsed(), v)
 			}
 		})
 	}
 }
 
-// Хендлеры сервера вынести в отдельный пакет и тестировать их тут #TODO
-
-// testServer простая структура, которая запоминает по каким адресам к ней делали запросы
-// используется в тестировании
-type testServer struct {
+// testHandler простая структура, которая запоминает по каким адресам к ней делали запросы
+// используется в тестировании.
+type testHandler struct {
 	requests []*http.Request
 }
 
 // ServerHTTP отвечает на запросы к серверы, исполяет интерфейс http.Handle
-func (server *testServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (server *testHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("got a request")
 	server.requests = append(server.requests, r)
 }
 
 // routesUsed возвращает марштуры по которым проходили запросы
-func (server testServer) routesUsed() (routes []string) {
+func (server testHandler) routesUsed() (routes []string) {
 	for _, r := range server.requests {
 		routes = append(routes, r.URL.Path)
 	}
 	return
 }
 
-func (server testServer) containsRouteRegexp(pattern string) (bool, error) {
+// containsRoute возвращает true, если в принятых сервером маршрутах находится такой.
+// Задается регулярным вырежаением pattern
+func (server testHandler) containsRoute(pattern string) (bool, error) {
 	for _, r := range server.requests {
 		found, err := regexp.MatchString(pattern, r.URL.Path)
 		if err != nil {
@@ -155,7 +152,7 @@ func (server testServer) containsRouteRegexp(pattern string) (bool, error) {
 }
 
 // возвращает количество полученных запросов
-func (server testServer) NumRequests() int {
+func (server testHandler) NumRequests() int {
 	return len(server.requests)
 }
 
@@ -166,16 +163,4 @@ type stringerWrap struct {
 
 func (s stringerWrap) String() string {
 	return s.text
-}
-
-var freeport int = 8081
-
-func newHost() (url string) {
-	freeport++
-	url = lastHost()
-	return
-}
-
-func lastHost() string {
-	return fmt.Sprintf("localhost:%v", freeport)
 }
