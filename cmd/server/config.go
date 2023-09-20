@@ -15,6 +15,8 @@ type config struct {
 // В приоритете переменные окружения,
 func configure(defaultServer string) (cfg config) {
 	flag.StringVar(&cfg.Addr, "a", defaultServer, "[адрес:порт] устанавливает адрес сервера ")
+
+	flag.Parse()
 	env.Parse(&cfg)
 	return
 }
