@@ -14,8 +14,8 @@ type config struct {
 	PollingInterval int    `env:"POLLING_INTERVAL" flag:"~p" desc:"(число, секунды) частота отпроса метрик"`
 }
 
-// configure переписывает глобальные параметры настроек адреса и интервалов отправки и опроса
-// если такие назначены
+// configure парсит настройки адреса сервера, и частоты опроса и отправки
+// из командной строки и переменных окружения. В приоритете переменные окружения
 func configure(defaults config) (cfg config) {
 	// todo
 	// сделать репозиторий sflags домашним, чтобы он мог устанавливаться от меня хотя бы
@@ -34,6 +34,7 @@ func configure(defaults config) (cfg config) {
 }
 
 func init() {
+	// добавляет смайлик кота в конец справки
 	flag.Usage = func() {
 		print("server")
 		flag.PrintDefaults()
