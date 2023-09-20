@@ -3,9 +3,9 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"net/http/httptest"
 	"regexp"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/thefrol/kysh-kysh-meow/internal/metrica"
@@ -30,7 +30,6 @@ func Test_sendMetric(t *testing.T) {
 	}{
 		{
 			name:          "positive #1",
-			serverHost:    newHost(),
 			args:          args{metric: "counter", name: "test1", value: stringerWrap{"1234"}},
 			routesUsed:    []string{"/update/counter/test1/1234"},
 			requestsCount: 1,
@@ -39,36 +38,23 @@ func Test_sendMetric(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			server := testServer{}
-			startedOk := true
-			go func() {
-				fmt.Println("Starting testServer")
-				err := http.ListenAndServe(tt.serverHost, &server)
-				if err != nil {
-					t.Errorf("Cant start a testServer:%v", err)
-					startedOk = false
-				}
-			}()
-			time.Sleep(1 * time.Second)
+			ts := testServer{}
+			s := httptest.NewServer(&ts)
+			defer s.Close()
 
-			if !startedOk {
-				t.Fatalf("Cant start test server")
-			}
-			if err := doRequest("http://"+tt.serverHost, tt.args.metric, tt.args.name, tt.args.value); (err != nil) != tt.wantErr {
+			if err := doRequest(s.URL, tt.args.metric, tt.args.name, tt.args.value); (err != nil) != tt.wantErr {
 				t.Errorf("sendMetric() error = %v, wantErr %v", err, tt.wantErr)
 			}
-			time.Sleep(1 * time.Second)
 
-			assert.Equal(t, tt.requestsCount, server.NumRequests(), "Wrong requests count")
+			assert.Equal(t, tt.requestsCount, ts.NumRequests(), "Wrong requests count")
 			//assert.Contains(t, server.routesUsed(), tt.routesUsed, "Not all required routes used") // не срабатывает, пишешь {"1"} not containg {"1"}
-			assert.True(t, slices.СontainsSlice[string](server.routesUsed(), tt.routesUsed))
+			assert.True(t, slices.СontainsSlice[string](ts.routesUsed(), tt.routesUsed))
 		})
 	}
 }
 
 func Test_sendStorageMetrics(t *testing.T) {
 	type args struct {
-		host     string
 		counters map[string]metrica.Counter
 		gauges   map[string]metrica.Gauge
 	}
@@ -81,10 +67,8 @@ func Test_sendStorageMetrics(t *testing.T) {
 		wantErr       bool
 	}{
 		{
-			name:       "positive #1 counter",
-			serverHost: newHost(),
+			name: "positive #1 counter",
 			args: args{
-				host: "http://" + lastHost(),
 				counters: map[string]metrica.Counter{
 					"test1": metrica.Counter(22)}},
 			routesUsed:    []string{"/update/counter/test1/.*"},
@@ -95,7 +79,6 @@ func Test_sendStorageMetrics(t *testing.T) {
 			name:       "positive #2 gauge",
 			serverHost: newHost(),
 			args: args{
-				host: "http://" + lastHost(),
 				gauges: map[string]metrica.Gauge{
 					"test1": metrica.Gauge(22.1)}},
 			routesUsed:    []string{"/update/gauge/test1/.*"},
@@ -106,7 +89,6 @@ func Test_sendStorageMetrics(t *testing.T) {
 			name:       "negative #2",
 			serverHost: newHost(),
 			args: args{
-				host: "http://unkown_host",
 				counters: map[string]metrica.Counter{
 					"test1": metrica.Counter(22)},
 				gauges: map[string]metrica.Gauge{
@@ -120,41 +102,30 @@ func Test_sendStorageMetrics(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			store := storage.New()
+
+			// устанавливаем значения счетчиков
 			for k, v := range tt.args.counters {
 				store.SetCounter(k, v)
 			}
-
 			for k, v := range tt.args.gauges {
 				store.SetGauge(k, v)
 			}
-			server := testServer{}
-			startedOk := true
-			go func() {
-				// можно переписать в http.NewServer без го-рутины
-				// defer server.Stop() #todo
-				fmt.Println("Starting testServer")
-				err := http.ListenAndServe(tt.serverHost, &server)
-				if err != nil {
-					t.Errorf("Cant start a testServer:%v", err)
-					startedOk = false
-				}
-			}()
-			time.Sleep(1 * time.Second)
 
-			if !startedOk {
-				t.Fatalf("Cant start test server")
-			}
-			if err := sendStorageMetrics(store, tt.args.host); (err != nil) != tt.wantErr {
+			// Запускаем сервак
+			ts := testServer{}
+			s := httptest.NewServer(&ts)
+			defer s.Close()
+
+			if err := sendStorageMetrics(store, s.URL); (err != nil) != tt.wantErr {
 				t.Errorf("sendMetric() error = %v, wantErr %v", err, tt.wantErr)
 			}
-			time.Sleep(1 * time.Second)
 
-			assert.Equal(t, tt.requestsCount, server.NumRequests(), "Wrong requests count")
+			assert.Equal(t, tt.requestsCount, ts.NumRequests(), "Wrong requests count")
 			//assert.Contains(t, server.routesUsed(), tt.routesUsed, "Not all required routes used") // не срабатывает, пишешь {"1"} not containg {"1"}
 			for _, v := range tt.routesUsed {
-				found, err := server.containsRouteRegexp(v)
+				found, err := ts.containsRouteRegexp(v)
 				assert.NoError(t, err)
-				assert.Truef(t, found, "routesUsed %v must contain %v", server.routesUsed(), v)
+				assert.Truef(t, found, "routesUsed %v must contain %v", ts.routesUsed(), v)
 			}
 		})
 	}
@@ -200,7 +171,7 @@ func (server testServer) NumRequests() int {
 	return len(server.requests)
 }
 
-// stringerWrap Обертка для интерфейса стрингер, чтобы текст можно было использвоать в полях для Stringer
+// stringerWrap позволяет использовать интерфейс стрингер в полях структуры. Позволяя запихивать туда люую переменную, которую можно обратить в строку
 type stringerWrap struct {
 	text string
 }
