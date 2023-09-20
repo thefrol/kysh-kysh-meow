@@ -7,12 +7,6 @@ import (
 	"github.com/caarlos0/env/v6"
 )
 
-const (
-	defaultServer                = "localhost:8080"
-	defaultPollIntervalSeconds   = 2
-	defaultReportIntervalSeconds = 10
-)
-
 func init() {
 	flag.Usage = func() {
 		print("server")
@@ -27,12 +21,6 @@ type config struct {
 	PollingInterval int    `env:"POLLING_INTERVAL"`
 }
 
-var defaultConfig = config{
-	Addr:            defaultServer,
-	ReportInterval:  defaultReportIntervalSeconds,
-	PollingInterval: defaultPollIntervalSeconds,
-}
-
 // configure переписывает глобальные параметры настроек адреса и интервалов отправки и опроса
 // если такие назначены
 func configure(defaults config) (cfg config) {
@@ -42,8 +30,6 @@ func configure(defaults config) (cfg config) {
 	flag.StringVar(&cfg.Addr, "a", defaults.Addr, "строка, адрес сервера в формате host:port")
 
 	flag.Parse()
-
-	fmt.Printf("in configure()=%+v\n", cfg)
 
 	env.Parse(&cfg)
 

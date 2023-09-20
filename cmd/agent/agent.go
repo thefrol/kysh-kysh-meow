@@ -15,9 +15,14 @@ func init() {
 	store = storage.New()
 }
 
+var defaultConfig = config{
+	Addr:            "localhost:8080",
+	ReportInterval:  10,
+	PollingInterval: 2,
+}
+
 func main() {
 	config := configure(defaultConfig)
-	fmt.Printf("%+v\n", config)
 
 	// запуск планировщика
 	c := scheduler.New()
