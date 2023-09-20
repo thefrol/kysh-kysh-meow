@@ -51,10 +51,10 @@ func Test_dropCounter(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 
 			for i := 0; i < tt.runsCount; i++ {
-				IncrementCounter(tt.args.store, tt.args.counterName)
+				incrementCounter(tt.args.store, tt.args.counterName)
 			}
 
-			DropCounter(tt.args.store, tt.args.counterName)
+			dropCounter(tt.args.store, tt.args.counterName)
 			for k, expect := range tt.counterValues {
 				real, ok := tt.args.store.Counter(k)
 				assert.Truef(t, ok, "Not found counter %v", k)
@@ -112,7 +112,7 @@ func Test_updateCounter(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 
 			for i := 0; i < tt.runsCount; i++ {
-				IncrementCounter(tt.args.store, tt.args.counterName)
+				incrementCounter(tt.args.store, tt.args.counterName)
 			}
 			for k, expect := range tt.counterValues {
 				real, ok := tt.args.store.Counter(k)

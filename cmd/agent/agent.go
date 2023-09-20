@@ -22,10 +22,8 @@ func main() {
 	c := scheduler.New()
 	//собираем данные раз в pollingInterval
 	c.AddJob(time.Duration(config.PollingInterval)*time.Second, func() {
-		//Обновляем данные в хранилище
+		//Обновляем данные в хранилище, тут же увеличиваем счетчик
 		stats.Fetch(store)
-		// Увеличиваем PollCount
-		stats.IncrementCounter(store, stats.MetricPollCount)
 	})
 	// отправляем данные раз в repostInterval
 	c.AddJob(time.Duration(config.ReportInterval)*time.Second, func() {
@@ -38,7 +36,7 @@ func main() {
 		// Сбрасываем PollCount
 		// #TODO: в таком случае нужно проверить, что счетчик реально отправился,
 		//		а не просто, или нам пофигу?)
-		stats.DropCounter(store, stats.MetricPollCount)
+		stats.DropPollCount(store)
 	})
 
 	c.Serve(200 * time.Millisecond)

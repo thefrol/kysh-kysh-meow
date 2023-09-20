@@ -43,6 +43,9 @@ func Fetch(s storage.Storager) {
 
 	// случайное значение
 	s.SetGauge(randomValueName, randomGauge())
+
+	// Добавить ко счетчику опросов
+	incrementPollCount(s)
 }
 
 // randomGauge возвращает случайное число типа float64

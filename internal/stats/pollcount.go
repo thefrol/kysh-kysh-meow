@@ -5,14 +5,23 @@ import (
 	"github.com/thefrol/kysh-kysh-meow/internal/storage"
 )
 
+// DropPoll сбрасывает значение счетчика опросов памяти в указанном хранилище
+// dropCounter сбраcывает счетчик
+func DropPollCount(store storage.Storager) {
+	dropCounter(store, metricPollCount)
+}
+func incrementPollCount(store storage.Storager) {
+	incrementCounter(store, metricPollCount)
+}
+
 // incrementCounter обновляет PollCount счетчик в хранилище, добавляет ему единицу
-func IncrementCounter(store storage.Storager, name string) {
+func incrementCounter(store storage.Storager, name string) {
 	count, _ := store.Counter(metricPollCount)
 	store.SetCounter(metricPollCount, count+metrica.Counter(1))
 }
 
-// incrementCounter сбравыем счетчик
-func DropCounter(store storage.Storager, name string) {
+// dropCounter сбраcывает счетчик
+func dropCounter(store storage.Storager, name string) {
 	_, found := store.Counter(metricPollCount)
 	if !found {
 		//если такого счетчика нет, то и не сбрасываем ничего

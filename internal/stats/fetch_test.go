@@ -1,4 +1,3 @@
-// fetchStats собирает метрики из памяти, и выдает их удобной мапой
 package stats
 
 import (
