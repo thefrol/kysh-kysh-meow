@@ -24,7 +24,6 @@ func configure(defaults config) (cfg config) {
 func init() {
 	// добавляет смайлик кота в конец справки
 	flag.Usage = func() {
-		print("server")
 		flag.PrintDefaults()
 		fmt.Println("^-^")
 	}

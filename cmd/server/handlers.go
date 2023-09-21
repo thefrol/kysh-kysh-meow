@@ -2,13 +2,13 @@ package main
 
 import (
 	"fmt"
-	"io"
 	"net/http"
 	"strconv"
 	"strings"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/thefrol/kysh-kysh-meow/internal/metrica"
+	"github.com/thefrol/kysh-kysh-meow/internal/ololog"
 )
 
 // updateCounter отвечает за маршрут, по которому будет обновляться счетчик типа counter
@@ -20,7 +20,8 @@ func updateCounter(w http.ResponseWriter, r *http.Request, params URLParams) {
 	if err != nil {
 		w.Header().Add("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintf(w, "^0^ Ошибка значение, не могу пропарсить %v в %T", params.value, value)
+		http.Error(w, "^0^ Ошибка значение, не могу пропарсить значение", http.StatusBadRequest)
+		ololog.Error().Str("location", "hanlders").Msgf("^0^ Ошибка значения, не могу пропарсить %v в %T", params.value, value)
 		return
 	}
 	old, _ := store.Counter(params.name)
@@ -28,9 +29,7 @@ func updateCounter(w http.ResponseWriter, r *http.Request, params URLParams) {
 	new := old + metrica.Counter(value)
 	store.SetCounter(params.name, new)
 	w.Header().Add("Content-Type", "text/plain")
-	fmt.Fprintf(w, "^.^ мур! Меняем Counter %v на %v. Новое значение %v", params.name, value, new)
-
-	fmt.Printf("200(OK) at request to %v\n", r.URL.Path)
+	ololog.Info().Str("location", "handlers").Fields(params).Msgf("^.^ мур! Меняем Counter %v на %v. Новое значение %v", params.name, value, new)
 }
 
 // updateGauge отвечает за маршрут, по которому будет обновляться метрика типа gauge
@@ -41,15 +40,13 @@ func updateGauge(w http.ResponseWriter, r *http.Request, params URLParams) {
 	value, err := strconv.ParseFloat(params.value, 64)
 	if err != nil {
 		w.Header().Add("Content-Type", "text/plain")
-		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintf(w, "^0^ Ошибка значение, не могу пропарсить %v в %T", params.value, value)
+		http.Error(w, "^0^ Ошибка значение, не могу пропарсить значение", http.StatusBadRequest)
+		ololog.Error().Str("location", "hanlders").Msgf("^0^ Ошибка значения, не могу пропарсить %v в %T", params.value, value)
 		return
 	}
 	store.SetGauge(params.name, metrica.Gauge(value))
 	w.Header().Add("Content-Type", "text/plain")
-	fmt.Fprintf(w, "^.^ мур! меняем Gauge %v на %v.", params.name, value)
-
-	fmt.Printf("200(OK) at request to %v\n", r.URL.Path)
+	ololog.Info().Str("location", "handlers").Fields(params).Msgf("^.^ мур! меняем Gauge %v на %v.", params.name, value)
 }
 
 // updateGauge отвечает за маршрут, по которому будет обновляться счетчик неизвестного типа
@@ -57,9 +54,8 @@ func updateGauge(w http.ResponseWriter, r *http.Request, params URLParams) {
 // #TODO переименовать в BadRequest
 func updateUnknownType(w http.ResponseWriter, r *http.Request, params URLParams) {
 	w.Header().Add("Content-Type", "text/plain")
-	w.WriteHeader(http.StatusBadRequest) //обязательно за вызова w.Write() #INSIGHT добавить в README
-	io.WriteString(w, "Фшшш! Я не знаю такой тип счетчика")
-	fmt.Printf("400(BadRequest) at request to %v\n", r.URL.Path)
+	http.Error(w, "Фшшш! Я не знаю такой тип счетчика", http.StatusBadRequest)
+	ololog.Info().Str("location", "handlers").Fields(params).Msgf("Фшшш плохой запрос %v\n", r.URL.Path)
 }
 
 // getValue возвращает значение уже записанной метрики,

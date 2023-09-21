@@ -14,6 +14,11 @@
 // на выходе отдаст
 //
 //	{"level":"info","band":"Tame Impala","rating":10,"time":1695268557,"message":"Крутейшая банда"}
+//
+// Так же любой пакет может создать некий поджурнал с нужными параметрами вот так
+//
+//	var localLog=ololog.Log().With().Str("foo", "bar").Logger()
+//	localLog.Info().Msg("Info message") // {"level":"info", "location":"handlers","message":"Info message"}
 package ololog
 
 // Вообще, конечно хотелось бы, чтобы этот пакет имел такие функции

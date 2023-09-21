@@ -4,9 +4,9 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
 
+	"github.com/thefrol/kysh-kysh-meow/internal/ololog"
 	"github.com/thefrol/kysh-kysh-meow/internal/storage"
 )
 
@@ -24,9 +24,9 @@ var defaultConfig = config{
 func main() {
 	cfg := configure(defaultConfig)
 
-	fmt.Printf("^.^ Мяу, сервер работает по адресу %v!\n", cfg.Addr)
+	ololog.Info().Msgf("^.^ Мяу, сервер запускается по адресу %v!", cfg.Addr)
 	err := http.ListenAndServe(cfg.Addr, MeowRouter())
 	if err != nil {
-		fmt.Printf("^0^ не могу запустить сервер: %v \n", err)
+		ololog.Error().Msgf("^0^ не могу запустить сервер: %v \n", err)
 	}
 }

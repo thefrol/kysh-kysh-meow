@@ -6,6 +6,8 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
+// todo hlog.FromRequest(r).Info() !!!
+
 func MeowRouter() (router chi.Router) {
 	router = chi.NewRouter()
 
