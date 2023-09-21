@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/thefrol/kysh-kysh-meow/internal/report"
 	"github.com/thefrol/kysh-kysh-meow/internal/scheduler"
 	"github.com/thefrol/kysh-kysh-meow/internal/stats"
 	"github.com/thefrol/kysh-kysh-meow/internal/storage"
@@ -34,7 +35,7 @@ func main() {
 	// отправляем данные раз в repostInterval
 	c.AddJob(time.Duration(config.ReportInterval)*time.Second, func() {
 		//отправляем на сервер
-		err := sendStorageMetrics(store, "http://"+config.Addr)
+		err := report.WithSimpleProtocol(store, "http://"+config.Addr)
 		if err != nil {
 			fmt.Println("Попытка отправить метрики завершилась с  ошибками:")
 			fmt.Print(err)

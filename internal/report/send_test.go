@@ -1,4 +1,4 @@
-package main
+package report_test
 
 import (
 	"fmt"
@@ -9,6 +9,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/thefrol/kysh-kysh-meow/internal/metrica"
+	"github.com/thefrol/kysh-kysh-meow/internal/report"
 	"github.com/thefrol/kysh-kysh-meow/internal/slices"
 	"github.com/thefrol/kysh-kysh-meow/internal/storage"
 )
@@ -42,7 +43,7 @@ func Test_sendMetric(t *testing.T) {
 			server := httptest.NewServer(&handler)
 			defer server.Close()
 
-			if err := doRequest(server.URL, tt.args.metric, tt.args.name, tt.args.value); (err != nil) != tt.wantErr {
+			if err := report.DoRequest(server.URL, tt.args.metric, tt.args.name, tt.args.value); (err != nil) != tt.wantErr {
 				t.Errorf("sendMetric() error = %v, wantErr %v", err, tt.wantErr)
 			}
 
@@ -53,7 +54,7 @@ func Test_sendMetric(t *testing.T) {
 	}
 }
 
-func Test_sendStorageMetrics(t *testing.T) {
+func Test_sendRoutes(t *testing.T) {
 	type args struct {
 		counters map[string]metrica.Counter
 		gauges   map[string]metrica.Gauge
@@ -101,7 +102,7 @@ func Test_sendStorageMetrics(t *testing.T) {
 			server := httptest.NewServer(&handler)
 			defer server.Close()
 
-			if err := sendStorageMetrics(store, server.URL); (err != nil) != tt.wantErr {
+			if err := report.WithSimpleProtocol(store, server.URL); (err != nil) != tt.wantErr {
 				t.Errorf("sendMetric() error = %v, wantErr %v", err, tt.wantErr)
 			}
 
