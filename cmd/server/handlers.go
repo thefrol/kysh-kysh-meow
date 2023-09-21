@@ -8,7 +8,6 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/thefrol/kysh-kysh-meow/internal/metrica"
-	"github.com/thefrol/kysh-kysh-meow/internal/ololog"
 )
 
 // updateCounter отвечает за маршрут, по которому будет обновляться счетчик типа counter
@@ -28,7 +27,6 @@ func updateCounter(w http.ResponseWriter, r *http.Request, params URLParams) {
 	new := old + metrica.Counter(value)
 	store.SetCounter(params.name, new)
 	w.Header().Add("Content-Type", "text/plain")
-	ololog.Info().Str("location", "handlers").Fields(params).Msgf("^.^ мур! Меняем Counter %v на %v. Новое значение %v", params.name, value, new)
 }
 
 // updateGauge отвечает за маршрут, по которому будет обновляться метрика типа gauge
