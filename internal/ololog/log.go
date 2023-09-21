@@ -2,29 +2,28 @@ package ololog
 
 import (
 	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 )
 
 func Log() *zerolog.Event {
-	return log.Log()
+	return lgr.Log()
 }
 
 func Info() *zerolog.Event {
-	return log.Info()
+	return lgr.Info()
 }
 
 func Debug() *zerolog.Event {
-	return log.Debug()
+	return lgr.Debug()
 }
 
 func Warn() *zerolog.Event {
-	return log.Warn()
+	return lgr.Warn()
 }
 
 func Error() *zerolog.Event {
-	return log.Error()
+	return lgr.Error()
 }
 
 func Fatal() *zerolog.Event {
-	return log.Fatal()
+	return lgr.Fatal()
 }
