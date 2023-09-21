@@ -11,6 +11,8 @@ import (
 func MeowRouter() (router chi.Router) {
 	router = chi.NewRouter()
 
+	router.Use(MeowLogging())
+
 	router.Get("/", listMetrics)
 	router.Get("/value/{type}/{name}", makeHandler(getValue))
 	router.Route("/update", func(r chi.Router) {
