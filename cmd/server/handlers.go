@@ -20,8 +20,7 @@ func updateCounter(w http.ResponseWriter, r *http.Request, params URLParams) {
 	if err != nil {
 		w.Header().Add("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusBadRequest)
-		http.Error(w, "^0^ Ошибка значение, не могу пропарсить значение", http.StatusBadRequest)
-		ololog.Error().Str("location", "hanlders").Msgf("^0^ Ошибка значения, не могу пропарсить %v в %T", params.value, value)
+		http.Error(w, "^0^ Ошибка значения, не могу пропарсить", http.StatusBadRequest)
 		return
 	}
 	old, _ := store.Counter(params.name)
@@ -40,13 +39,11 @@ func updateGauge(w http.ResponseWriter, r *http.Request, params URLParams) {
 	value, err := strconv.ParseFloat(params.value, 64)
 	if err != nil {
 		w.Header().Add("Content-Type", "text/plain")
-		http.Error(w, "^0^ Ошибка значение, не могу пропарсить значение", http.StatusBadRequest)
-		ololog.Error().Str("location", "hanlders").Msgf("^0^ Ошибка значения, не могу пропарсить %v в %T", params.value, value)
+		http.Error(w, "^0^ Ошибка значения, не могу пропарсить", http.StatusBadRequest)
 		return
 	}
 	store.SetGauge(params.name, metrica.Gauge(value))
 	w.Header().Add("Content-Type", "text/plain")
-	ololog.Info().Str("location", "handlers").Fields(params).Msgf("^.^ мур! меняем Gauge %v на %v.", params.name, value)
 }
 
 // updateGauge отвечает за маршрут, по которому будет обновляться счетчик неизвестного типа
@@ -55,7 +52,6 @@ func updateGauge(w http.ResponseWriter, r *http.Request, params URLParams) {
 func updateUnknownType(w http.ResponseWriter, r *http.Request, params URLParams) {
 	w.Header().Add("Content-Type", "text/plain")
 	http.Error(w, "Фшшш! Я не знаю такой тип счетчика", http.StatusBadRequest)
-	ololog.Info().Str("location", "handlers").Fields(params).Msgf("Фшшш плохой запрос %v\n", r.URL.Path)
 }
 
 // getValue возвращает значение уже записанной метрики,
@@ -64,6 +60,7 @@ func updateUnknownType(w http.ResponseWriter, r *http.Request, params URLParams)
 func getValue(w http.ResponseWriter, r *http.Request, params URLParams) {
 	var value fmt.Stringer
 	var found bool
+
 	switch params.metric {
 	case "counter":
 		value, found = store.Counter(params.name)
