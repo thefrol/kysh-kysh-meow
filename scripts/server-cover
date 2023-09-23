@@ -1,0 +1,7 @@
+#!/bin/bash
+# Этот скрипт позволяет протестировать сервер, вывести его покрытие в браузере
+# удаляет все лишние файлы
+t="./.cover-profile.$$"
+go test ./cmd/server -coverprofile $t
+go tool cover -html=$t
+rm $t
