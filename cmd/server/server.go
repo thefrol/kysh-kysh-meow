@@ -4,6 +4,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"net/http"
 
@@ -18,6 +19,10 @@ func init() {
 }
 
 func main() {
-	fmt.Println("^.^ Мяу, это сервер!")
-	http.ListenAndServe(":8080", MeowRouter())
+	flag.Parse()
+	fmt.Printf("^.^ Мяу, сервер работает по адресу %v!\n", *addr)
+	err := http.ListenAndServe(*addr, MeowRouter())
+	if err != nil {
+		fmt.Printf("^0^ не могу запустить сервер: %v \n", err)
+	}
 }
