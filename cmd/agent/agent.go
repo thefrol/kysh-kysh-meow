@@ -10,8 +10,8 @@ import (
 
 const server = "http://localhost:8080"
 const (
-	pollingInterval = 2 * time.Second
-	sendingInterval = 10 * time.Second
+	pollInterval   = 2 * time.Second
+	reportInterval = 10 * time.Second
 )
 
 var store storage.Storager
@@ -36,18 +36,23 @@ func main() {
 	// запуск планировщика
 	c := scheduler.New()
 	//собираем данные раз в pollingInterval
-	c.AddJob(pollingInterval, func() {
+	c.AddJob(pollInterval, func() {
 		saveMemStats(store, exclude)
 		saveAdditionalStats(store)
-		updateCounter(store)
+		// Увеличиваем PollCount
+		incrementCounter(store, metricPollCount)
 	})
 	// отправляем данные раз в sendingInterval
-	c.AddJob(sendingInterval, func() {
+	c.AddJob(reportInterval, func() {
 		err := sendStorageMetrics(store, server)
 		if err != nil {
-			fmt.Println("Попытка отправить метрики завершилось с  ошибками:")
+			fmt.Println("Попытка отправить метрики завершилась с  ошибками:")
 			fmt.Print(err)
 		}
+		// Сбрасываем PollCount
+		// #TODO: в таком случае нужно проверить, что счетчик реально отправился,
+		//		а не просто, или нам пофигу?)
+		dropCounter(store, metricPollCount)
 	})
 
 	c.Serve(200 * time.Millisecond)

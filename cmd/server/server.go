@@ -6,18 +6,18 @@ package main
 import (
 	"fmt"
 	"net/http"
+
+	"github.com/thefrol/kysh-kysh-meow/internal/storage"
 )
 
-var mux *http.ServeMux
+var store storage.Storager
 
 func init() {
-	mux = http.NewServeMux()
-	mux.Handle("/update/counter/", makeHandler(updateCounter))
-	mux.Handle("/update/gauge/", makeHandler(updateGauge))
-	mux.Handle("/update/", makeHandler(updateUnknownType))
+	//Создать хранилище
+	store = storage.New()
 }
 
 func main() {
 	fmt.Println("^.^ Мяу, это сервер!")
-	http.ListenAndServe(":8080", mux)
+	http.ListenAndServe(":8080", MeowRouter())
 }

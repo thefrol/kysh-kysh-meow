@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/thefrol/kysh-kysh-meow/internal/metrica"
 	"github.com/thefrol/kysh-kysh-meow/internal/storage"
 )
 
@@ -82,38 +83,39 @@ func Test_saveAdditionalStats(t *testing.T) {
 
 func Test_updateCounter(t *testing.T) {
 	type args struct {
-		store storage.Storager
+		store       storage.Storager
+		counterName string
 	}
 	tests := []struct {
 		name          string
 		args          args
 		wantErr       bool
 		runsCount     int
-		counterValues map[string]storage.Counter //проверяет значение этого счетчика
+		counterValues map[string]metrica.Counter //проверяет значение этого счетчика
 		foundValues   map[string]bool            // проверяет наличие такого счетчика,
 	}{
 		{
 			name:          "zero runs",
-			args:          args{store: storage.New()},
+			args:          args{store: storage.New(), counterName: metricPollCount},
 			wantErr:       false,
 			runsCount:     0,
-			counterValues: map[string]storage.Counter{},
+			counterValues: map[string]metrica.Counter{},
 			foundValues:   map[string]bool{metricPollCount: false},
 		},
 		{
 			name:          "one run",
-			args:          args{store: storage.New()},
+			args:          args{store: storage.New(), counterName: metricPollCount},
 			wantErr:       false,
 			runsCount:     1,
-			counterValues: map[string]storage.Counter{metricPollCount: storage.Counter(1)},
+			counterValues: map[string]metrica.Counter{metricPollCount: metrica.Counter(1)},
 			foundValues:   nil,
 		},
 		{
 			name:          "three runs",
-			args:          args{store: storage.New()},
+			args:          args{store: storage.New(), counterName: metricPollCount},
 			wantErr:       false,
 			runsCount:     3,
-			counterValues: map[string]storage.Counter{metricPollCount: storage.Counter(3)},
+			counterValues: map[string]metrica.Counter{metricPollCount: metrica.Counter(3)},
 			foundValues:   nil,
 		},
 	}
@@ -122,7 +124,7 @@ func Test_updateCounter(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 
 			for i := 0; i < tt.runsCount; i++ {
-				if err := updateCounter(tt.args.store); (err != nil) != tt.wantErr {
+				if err := incrementCounter(tt.args.store, tt.args.counterName); (err != nil) != tt.wantErr {
 					t.Errorf("saveMemStats() error = %v, wantErr %v", err, tt.wantErr)
 				}
 			}

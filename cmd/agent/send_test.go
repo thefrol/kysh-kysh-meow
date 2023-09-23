@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/thefrol/kysh-kysh-meow/internal/metrica"
 	"github.com/thefrol/kysh-kysh-meow/internal/slices"
 	"github.com/thefrol/kysh-kysh-meow/internal/storage"
 )
@@ -53,7 +54,7 @@ func Test_sendMetric(t *testing.T) {
 			if !startedOk {
 				t.Fatalf("Cant start test server")
 			}
-			if err := sendMetric("http://"+tt.serverHost, tt.args.metric, tt.args.name, tt.args.value); (err != nil) != tt.wantErr {
+			if err := doRequest("http://"+tt.serverHost, tt.args.metric, tt.args.name, tt.args.value); (err != nil) != tt.wantErr {
 				t.Errorf("sendMetric() error = %v, wantErr %v", err, tt.wantErr)
 			}
 			time.Sleep(1 * time.Second)
@@ -68,8 +69,8 @@ func Test_sendMetric(t *testing.T) {
 func Test_sendStorageMetrics(t *testing.T) {
 	type args struct {
 		host     string
-		counters map[string]storage.Counter
-		gauges   map[string]storage.Gauge
+		counters map[string]metrica.Counter
+		gauges   map[string]metrica.Gauge
 	}
 	tests := []struct {
 		name          string
@@ -84,8 +85,8 @@ func Test_sendStorageMetrics(t *testing.T) {
 			serverHost: newHost(),
 			args: args{
 				host: "http://" + lastHost(),
-				counters: map[string]storage.Counter{
-					"test1": storage.Counter(22)}},
+				counters: map[string]metrica.Counter{
+					"test1": metrica.Counter(22)}},
 			routesUsed:    []string{"/update/counter/test1/.*"},
 			requestsCount: 1,
 			wantErr:       false,
@@ -95,8 +96,8 @@ func Test_sendStorageMetrics(t *testing.T) {
 			serverHost: newHost(),
 			args: args{
 				host: "http://" + lastHost(),
-				gauges: map[string]storage.Gauge{
-					"test1": storage.Gauge(22.1)}},
+				gauges: map[string]metrica.Gauge{
+					"test1": metrica.Gauge(22.1)}},
 			routesUsed:    []string{"/update/gauge/test1/.*"},
 			requestsCount: 1,
 			wantErr:       false,
@@ -106,10 +107,10 @@ func Test_sendStorageMetrics(t *testing.T) {
 			serverHost: newHost(),
 			args: args{
 				host: "http://unkown_host",
-				counters: map[string]storage.Counter{
-					"test1": storage.Counter(22)},
-				gauges: map[string]storage.Gauge{
-					"test1": storage.Gauge(22.1)}},
+				counters: map[string]metrica.Counter{
+					"test1": metrica.Counter(22)},
+				gauges: map[string]metrica.Gauge{
+					"test1": metrica.Gauge(22.1)}},
 			routesUsed:    []string{},
 			requestsCount: 0,
 			wantErr:       true,
@@ -129,6 +130,8 @@ func Test_sendStorageMetrics(t *testing.T) {
 			server := testServer{}
 			startedOk := true
 			go func() {
+				// можно переписать в http.NewServer без го-рутины
+				// defer server.Stop() #todo
 				fmt.Println("Starting testServer")
 				err := http.ListenAndServe(tt.serverHost, &server)
 				if err != nil {

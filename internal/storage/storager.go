@@ -1,5 +1,7 @@
 package storage
 
+import "github.com/thefrol/kysh-kysh-meow/internal/metrica"
+
 // Storager это интерфейс хранилища данных для метрик,
 // Каждый новый тип метрики должен добавлять свой интерфейс сюда
 type Storager interface {
@@ -8,13 +10,13 @@ type Storager interface {
 }
 
 type Gauger interface {
-	SetGauge(name string, v Gauge)
-	Gauge(name string) (Gauge, bool)
+	SetGauge(name string, v metrica.Gauge)
+	Gauge(name string) (metrica.Gauge, bool)
 	ListGauges() []string
 }
 
 type Counterer interface {
-	SetCounter(name string, v Counter)
-	Counter(name string) (Counter, bool)
+	SetCounter(name string, v metrica.Counter)
+	Counter(name string) (metrica.Counter, bool)
 	ListCounters() []string
 }
