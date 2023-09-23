@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/thefrol/kysh-kysh-meow/internal/scheduler"
+	"github.com/thefrol/kysh-kysh-meow/internal/stats"
 	"github.com/thefrol/kysh-kysh-meow/internal/storage"
 )
 
@@ -16,15 +17,15 @@ func init() {
 }
 
 func main() {
-	flag.Parse()
+	configure()
 
 	// запуск планировщика
 	c := scheduler.New()
 	//собираем данные раз в pollingInterval
 	c.AddJob(time.Duration(*pollIntervalSeconds)*time.Second, func() {
 		//Обновляем данные в хранилище
-		fetchMemStats(store)
-		fetchAdditionalStats(store)
+		stats.FetchMemStats(store)
+		stats.FetchAdditionalStats(store)
 		// Увеличиваем PollCount
 		incrementCounter(store, metricPollCount)
 	})
@@ -44,4 +45,9 @@ func main() {
 
 	c.Serve(200 * time.Millisecond)
 
+}
+
+func configure() {
+	flag.Parse()
+	loadEnv()
 }

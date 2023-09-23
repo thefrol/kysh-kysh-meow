@@ -1,5 +1,5 @@
-// fetchStats собирает метрики из памяти, и выдает их удобной мапой
-package main
+// stats собирает метрики из памяти, и выдает их удобной мапой
+package stats
 
 import (
 	"math/rand"
@@ -10,13 +10,10 @@ import (
 	"github.com/thefrol/kysh-kysh-meow/internal/storage"
 )
 
-const (
-	metricPollCount   = "PollCount"
-	metricRandomValue = "RandomValue"
-)
+const randomValueName = "RandomValue"
 
 // fetchMemStats собирает метрики мамяти и сохраняет их в хранилище store
-func fetchMemStats(s storage.Storager) {
+func FetchMemStats(s storage.Storager) {
 	m := runtime.MemStats{}
 	runtime.ReadMemStats(&m)
 
@@ -46,14 +43,18 @@ func fetchMemStats(s storage.Storager) {
 	s.SetGauge("StackSys", metrica.Gauge(m.StackSys))
 	s.SetGauge("Sys", metrica.Gauge(m.Sys))
 	s.SetGauge("TotalAlloc", metrica.Gauge(m.TotalAlloc))
+
 	// тут, конечно тоже можно наошибаться, и может рефлексия поможет для тестов
 	// но тут уже можно взять сторонний набор
 }
 
 // fetchAdditionalStats сохраняет дополнительные метрики в указанное хранилище:
-// 	RandomValue: тип Gauge, содержит в себе случайное значение
-func fetchAdditionalStats(s storage.Storager) {
-	s.SetGauge(metricRandomValue, metrica.Gauge(randomFloat64()))
+//
+//	RandomValue: тип Gauge, содержит в себе случайное значение
+func FetchAdditionalStats(s storage.Storager) {
+
+	// случайное значение
+	s.SetGauge(randomValueName, metrica.Gauge(randomFloat64()))
 }
 
 // randomFloat64 возвращает случайное число типа float64
