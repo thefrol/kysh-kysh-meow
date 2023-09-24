@@ -7,8 +7,62 @@ import (
 	"strings"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/mailru/easyjson"
 	"github.com/thefrol/kysh-kysh-meow/internal/metrica"
+	"github.com/thefrol/kysh-kysh-meow/internal/ololog"
 )
+
+// updateWithJSON позволяет обновить значение счетчика при помощи Джейсон запроса
+func updateWithJSON(w http.ResponseWriter, r *http.Request) {
+	//todo mix of two handlers + save+ response
+	m := metrica.Metrica{}
+	err := easyjson.UnmarshalFromReader(r.Body, &m)
+	if err != nil {
+		ololog.Error().Str("location", "json update handler").Msg("Cant unmarshal data in body")
+		http.Error(w, "bad body", http.StatusBadRequest)
+	}
+	defer r.Body.Close()
+
+	switch m.MType {
+	case metrica.CounterName:
+		old_val, _ := store.Counter(m.ID)
+		val := old_val + metrica.Counter(*m.Delta)
+		store.SetCounter(m.ID, val) // todo: we need update counter!!!
+	case metrica.GaugeName:
+		store.SetGauge(m.ID, metrica.Gauge(*m.Value)) // todo точно надо в структере записать как gauge и counter поля
+	default:
+		ololog.Error().Str("location", "json update handler").Msgf("Cant update metric with type %v, no such metric", m.MType)
+		http.Error(w, "unsupported type", http.StatusBadRequest)
+	}
+
+	// returning можно сделать кой-то отдельной функицей
+	var result metrica.Metrica
+	var found bool
+	switch m.MType {
+	case metrica.CounterName:
+		var c metrica.Counter
+		c, found = store.Counter(m.ID) //todo меня бесит это возвращающее в два параметра, надо сделать функцию Lookup
+		result = c.Metrica(m.ID)
+	case metrica.GaugeName:
+		var g metrica.Gauge
+		g, found = store.Gauge(m.ID)
+		result = g.Metrica(m.ID)
+	default:
+		ololog.Error().Str("location", "json update handler(on return)").Msgf("Cant update metric with type %v, no such metric", m.MType)
+		http.Error(w, "unsupported type", http.StatusBadRequest)
+	}
+
+	if !found {
+		// todo такое ощущение, что нужен какой-то слой логики, везде одно и то же делаю как будто
+		http.Error(w, "returned counter not found", http.StatusBadRequest)
+	}
+
+	_, _, err = easyjson.MarshalToHTTPResponseWriter(&result, w)
+	if err != nil {
+		ololog.Error().Str("location", "json update handler(on return)").Msgf("Cant marshal a return for %v %v", m.MType, m.ID)
+		http.Error(w, "cant marshal result", http.StatusInternalServerError)
+	}
+}
 
 // updateCounter отвечает за маршрут, по которому будет обновляться счетчик типа counter
 // иначе говоря за URL вида: /update/counter/<name>/<value>

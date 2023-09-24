@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	chimiddleware "github.com/go-chi/chi/v5/middleware"
 )
 
 // todo hlog.FromRequest(r).Info() !!!
@@ -17,10 +16,17 @@ func MeowRouter() (router chi.Router) {
 	router.Get("/", listMetrics)
 	router.Get("/value/{type}/{name}", makeHandler(getValue))
 	router.Route("/update", func(r chi.Router) {
-		r.Use(chimiddleware.AllowContentType("text/plain"))
-		r.Post("/{type:counter}/{name}/{value}", makeHandler(updateCounter))
-		r.Post("/{type:gauge}/{name}/{value}", makeHandler(updateGauge))
-		r.Post("/{type}/{name}/{value}", makeHandler(updateUnknownType))
+		//r.Use(chimiddleware.AllowContentType("text/plain"))
+
+		r.
+			//With(chimiddleware.AllowContentType("application/json")).
+			Post("/", updateWithJSON)
+		r.
+			Post("/{type:counter}/{name}/{value}", makeHandler(updateCounter))
+		r.
+			Post("/{type:gauge}/{name}/{value}", makeHandler(updateGauge))
+		r.
+			Post("/{type}/{name}/{value}", makeHandler(updateUnknownType))
 	})
 
 	router.MethodNotAllowed(func(w http.ResponseWriter, r *http.Request) {
