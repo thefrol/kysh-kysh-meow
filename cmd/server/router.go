@@ -14,7 +14,10 @@ func MeowRouter() (router chi.Router) {
 	router.Use(MeowLogging())
 
 	router.Get("/", listMetrics)
-	router.Get("/value/{type}/{name}", makeHandler(getValue))
+	router.Route("/value", func(r chi.Router) {
+		r.Get("/{type}/{name}", makeHandler(getValue))
+		r.Post("/", valueWithJSON)
+	}) // todo как-то поработать с allowContentType
 	router.Route("/update", func(r chi.Router) {
 		//r.Use(chimiddleware.AllowContentType("text/plain"))
 
