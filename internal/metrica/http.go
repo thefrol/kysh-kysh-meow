@@ -11,4 +11,5 @@ type Metrica struct {
 // Metricer используется, чтобы передать метрики по сети. Все метрики должны поддерживать этот интерфейс
 type Metrer interface {
 	Metrica(id string) Metrica
+	ParseMetrica(Metrica)
 }

@@ -17,6 +17,10 @@ func (c Counter) Metrica(id string) Metrica {
 	}
 }
 
+func (c *Counter) ParseMetrica(m Metrica) {
+	*c = Counter(*m.Delta)
+}
+
 // Проверка, что метрика соответсвует нужному интерфейсу
 var _ fmt.Stringer = (*Counter)(nil)
 var _ Metrer = (*Counter)(nil)

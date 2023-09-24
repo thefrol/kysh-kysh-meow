@@ -17,6 +17,10 @@ func (g Gauge) Metrica(id string) Metrica {
 	}
 }
 
+func (g *Gauge) ParseMetrica(incoming Metrica) {
+	*g = Gauge(*incoming.Value)
+}
+
 // Проверка, что метрика соответсвует нужным интерфейсам
 var _ fmt.Stringer = (*Gauge)(nil)
 var _ Metrer = (*Gauge)(nil)
