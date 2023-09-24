@@ -8,5 +8,15 @@ func (g Gauge) String() string {
 	return fmt.Sprint(float64(g))
 }
 
-// Проверка, что метрика соответсвует нужному интерфейсу
+func (g Gauge) Metrica(id string) Metrica {
+	val := float64(g) // todo дпоменять бы типа для Metrica
+	return Metrica{
+		MType: "gauge",
+		ID:    id,
+		Value: &val,
+	}
+}
+
+// Проверка, что метрика соответсвует нужным интерфейсам
 var _ fmt.Stringer = (*Gauge)(nil)
+var _ Metrer = (*Gauge)(nil)
