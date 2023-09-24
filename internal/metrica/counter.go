@@ -2,9 +2,7 @@ package metrica
 
 import "fmt"
 
-type (
-	Counter int64
-)
+type Counter int64
 
 func (c Counter) String() string {
 	return fmt.Sprint(int64(c))
