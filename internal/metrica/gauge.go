@@ -11,7 +11,7 @@ func (g Gauge) String() string {
 func (g Gauge) Metrica(id string) Metrica {
 	val := float64(g) // todo дпоменять бы типа для Metrica
 	return Metrica{
-		MType: "gauge",
+		MType: GaugeName,
 		ID:    id,
 		Value: &val,
 	}

@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/thefrol/kysh-kysh-meow/internal/metrica"
 	"github.com/thefrol/kysh-kysh-meow/internal/storage"
 )
 
@@ -20,7 +21,7 @@ func WithSimpleProtocol(store storage.Storager, url string) error {
 	var errors []error
 	for _, key := range store.ListCounters() {
 		value, _ := store.Counter(key)
-		err := DoRequest(url, "counter", key, value) //#TODO counter to some const
+		err := DoRequest(url, metrica.CounterName, key, value) //#TODO counter to some const
 		if err != nil {
 			errors = append(errors, err)
 		}
@@ -28,7 +29,7 @@ func WithSimpleProtocol(store storage.Storager, url string) error {
 
 	for _, key := range store.ListGauges() {
 		value, _ := store.Gauge(key)
-		err := DoRequest(url, "gauge", key, value) //#TODO counter to some const
+		err := DoRequest(url, metrica.GaugeName, key, value) //#TODO counter to some const
 		if err != nil {
 			errors = append(errors, err)
 		}

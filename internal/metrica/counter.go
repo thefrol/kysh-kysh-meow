@@ -11,7 +11,7 @@ func (c Counter) String() string {
 func (c Counter) Metrica(id string) Metrica {
 	val := int64(c) // todo дпоменять бы типа для Metrica
 	return Metrica{
-		MType: "counter",
+		MType: CounterName,
 		ID:    id,
 		Delta: &val,
 	}

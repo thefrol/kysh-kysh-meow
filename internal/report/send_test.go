@@ -31,7 +31,7 @@ func Test_sendMetric(t *testing.T) {
 	}{
 		{
 			name:          "positive #1",
-			args:          args{metric: "counter", name: "test1", value: stringerWrap{"1234"}},
+			args:          args{metric: metrica.CounterName, name: "test1", value: stringerWrap{"1234"}},
 			routesUsed:    []string{"/update/counter/test1/1234"},
 			requestsCount: 1,
 			wantErr:       false,

@@ -60,9 +60,9 @@ func getValue(w http.ResponseWriter, r *http.Request, params URLParams) {
 	var found bool
 
 	switch params.metric {
-	case "counter":
+	case metrica.CounterName:
 		value, found = store.Counter(params.name)
-	case "gauge":
+	case metrica.GaugeName:
 		value, found = store.Gauge(params.name)
 	default:
 		http.NotFound(w, r)
