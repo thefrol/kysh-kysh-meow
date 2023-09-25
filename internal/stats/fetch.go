@@ -23,6 +23,7 @@ func Fetch(s storage.Storager) {
 	s.SetGauge("HeapIdle", metrica.Gauge(m.HeapIdle))
 	s.SetGauge("HeapInuse", metrica.Gauge(m.HeapInuse))
 	s.SetGauge("HeapObjects", metrica.Gauge(m.HeapObjects))
+	s.SetGauge("HeapReleased", metrica.Gauge(m.HeapReleased))
 	s.SetGauge("HeapSys", metrica.Gauge(m.HeapSys))
 	s.SetGauge("LastGC", metrica.Gauge(m.LastGC))
 	s.SetGauge("Lookups", metrica.Gauge(m.Lookups))
