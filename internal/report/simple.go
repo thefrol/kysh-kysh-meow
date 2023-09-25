@@ -17,6 +17,8 @@ import (
 // Возвращает ошибку, если хотя бы один запрос не отправился. Так же сбрасывает
 // запросы по середине, то есть если второй не отправился - остальные десять он даже
 // и пытаться не будет.
+//
+// Deprecated
 func WithSimpleProtocol(store storage.Storager, url string) error {
 	var errors []error
 	for _, key := range store.ListCounters() {
@@ -46,6 +48,8 @@ func WithSimpleProtocol(store storage.Storager, url string) error {
 }
 
 // DoRequest создает запрос на сервер по нужному марштуру для обновления указанной метрики
+//
+// Deprecated
 func DoRequest(host, metric, name string, value fmt.Stringer) error {
 	url := fmt.Sprintf("%s/update/%s/%s/%s", host, metric, name, value)
 	r, err := http.Post(url, "text/plain", nil)
