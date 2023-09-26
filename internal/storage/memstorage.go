@@ -48,5 +48,19 @@ func (m MemStore) ListGauges() (keys []string) {
 	return
 }
 
+func (m MemStore) Metricas() (list []metrica.Metrica) {
+	for k, c := range m.counters {
+		list = append(list, c.Metrica(k))
+	}
+	for k, g := range m.gauges {
+		list = append(list, g.Metrica(k))
+	}
+	return
+}
+
+// todo
+//
+// У меня может быть стринг интерфейс к хранилищу, и им пользуются всякие ребятки, но другие ребятки им не пользуются. Но дело ли это хранилища,
+// Или можно какую-то надсткойку сделать, например, - новый слой?
 // Проверка, что MemStore соответсвует нужному интерфейсу
 var _ Storager = (*MemStore)(nil)

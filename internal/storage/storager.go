@@ -12,4 +12,6 @@ type Storager interface {
 	SetCounter(name string, v metrica.Counter)
 	Counter(name string) (metrica.Counter, bool)
 	ListCounters() []string
+
+	Metricas() []metrica.Metrica
 }
