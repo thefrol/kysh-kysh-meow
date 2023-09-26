@@ -1,7 +1,9 @@
 package report_test
 
 import (
+	"bytes"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"regexp"
@@ -125,7 +127,16 @@ type testHandler struct {
 
 // ServerHTTP отвечает на запросы к серверы, исполяет интерфейс http.Handle
 func (server *testHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("got a request")
+	bb, _ := io.ReadAll(r.Body)
+	defer r.Body.Close()
+	// чтобы потом можно было прочитать тело запроса,
+	// мы его сохраняем в сцециализированную переменную внутри запроса,
+	// которая работает как замыкаение
+	r.GetBody = func() (io.ReadCloser, error) {
+		return io.NopCloser(bytes.NewBuffer(bb)), nil
+	}
+
+	// добавляем запросы в массив запросов. Теперь каждый такой запрос помнит и тело своего запроса
 	server.requests = append(server.requests, r)
 }
 
