@@ -36,7 +36,7 @@ func main() {
 	// отправляем данные раз в repostInterval
 	c.AddJob(time.Duration(config.ReportInterval)*time.Second, func() {
 		//отправляем на сервер
-		err := report.Send(store, "http://"+path.Join(config.Addr, "update"))
+		err := report.Send(store.Metricas(), "http://"+path.Join(config.Addr, "update"))
 		if err != nil {
 			fmt.Println("Попытка отправить метрики завершилась с  ошибками:")
 			fmt.Print(err)

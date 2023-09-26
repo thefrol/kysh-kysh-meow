@@ -2,8 +2,8 @@ package report
 
 import (
 	"github.com/go-resty/resty/v2"
+	"github.com/thefrol/kysh-kysh-meow/internal/metrica"
 	"github.com/thefrol/kysh-kysh-meow/internal/ololog"
-	"github.com/thefrol/kysh-kysh-meow/internal/storage"
 )
 
 var defaultClient = resty.New() // todo .SetJSONMarshaler(easyjson.Marshal())
@@ -12,8 +12,8 @@ var defaultClient = resty.New() // todo .SetJSONMarshaler(easyjson.Marshal())
 // При возникновении ошибок будет стараться отправить как можно больше метрик,
 // и продолжать работу, то есть, если первая метрика даст сбой, остальные двадцать он все же попытается отправить
 // и вернет ошибку.
-func Send(store storage.Storager, url string) (last_err error) {
-	for _, m := range store.Metricas() {
+func Send(metricas []metrica.Metrica, url string) (last_err error) {
+	for _, m := range metricas {
 		resp, err := defaultClient.R().SetBody(m).Post(url) // todo в данный момент мы не используем тут easyjson
 		if err != nil {
 			ololog.Error().Str("location", "internal/report").Msgf("Не могу отправить сообщение с метрикой [%v]%v, по приничине %+v", m.MType, m.ID, err)
