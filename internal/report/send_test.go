@@ -32,13 +32,23 @@ func TestSend(t *testing.T) {
 				{ID: "Test1", Value: wrapFloat64(9), MType: "gauge"}},
 			wantErr: false,
 		},
+		{
+			name: "unknown metricas",
+			metricas: []metrica.Metrica{
+				{ID: "test1", Value: wrapFloat64(10), MType: "unknown"},
+				{ID: "Test22", Value: wrapFloat64(9), MType: "unknown"}},
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			h := testHandler{}
 			s := httptest.NewServer(&h)
 
-			report.Send(tt.metricas, s.URL)
+			err := report.Send(tt.metricas, s.URL)
+			if tt.wantErr {
+				assert.Error(t, err, "Должна быть ошибка")
+			}
 
 			var sended []metrica.Metrica
 			for _, r := range h.requests {
