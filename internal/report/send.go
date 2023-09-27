@@ -12,6 +12,8 @@ var defaultClient = resty.New() // todo .SetJSONMarshaler(easyjson.Marshal())
 // При возникновении ошибок будет стараться отправить как можно больше метрик,
 // и продолжать работу, то есть, если первая метрика даст сбой, остальные двадцать он все же попытается отправить
 // и вернет ошибку.
+//
+// При возникнвении ошибок возвращается только последняя
 func Send(metricas []metrica.Metrica, url string) (last_err error) {
 	for _, m := range metricas {
 		resp, err := defaultClient.R().SetBody(m).Post(url) // todo в данный момент мы не используем тут easyjson
