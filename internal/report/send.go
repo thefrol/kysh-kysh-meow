@@ -14,12 +14,12 @@ var defaultClient = resty.New() // todo .SetJSONMarshaler(easyjson.Marshal())
 // и вернет ошибку.
 //
 // При возникнвении ошибок возвращается только последняя
-func Send(metricas []metrica.Metrica, url string) (last_err error) {
+func Send(metricas []metrica.Metrica, url string) (lastErr error) {
 	for _, m := range metricas {
 		resp, err := defaultClient.R().SetBody(m).Post(url) // todo в данный момент мы не используем тут easyjson
 		if err != nil {
 			ololog.Error().Str("location", "internal/report").Msgf("Не могу отправить сообщение с метрикой [%v]%v, по приничине %+v", m.MType, m.ID, err)
-			last_err = err
+			lastErr = err
 			continue
 		}
 		defer resp.RawBody().Close()
