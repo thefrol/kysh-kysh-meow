@@ -36,8 +36,8 @@ func updateWithJSON(w http.ResponseWriter, r *http.Request) {
 
 	switch m.MType {
 	case metrica.CounterName:
-		old_val, _ := store.Counter(m.ID)
-		val := old_val + metrica.Counter(*m.Delta)
+		oldVal, _ := store.Counter(m.ID)
+		val := oldVal + metrica.Counter(*m.Delta)
 		store.SetCounter(m.ID, val) // todo: we need update counter!!!
 	case metrica.GaugeName:
 		store.SetGauge(m.ID, metrica.Gauge(*m.Value)) // todo точно надо в структере записать как gauge и counter поля
