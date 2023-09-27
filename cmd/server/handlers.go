@@ -22,10 +22,17 @@ func updateWithJSON(w http.ResponseWriter, r *http.Request) {
 	err := easyjson.UnmarshalFromReader(r.Body, &m)
 	if err != nil {
 		ololog.Error().Str("location", "json update handler").Msg("Cant unmarshal data in body")
-		http.Error(w, "bad body", http.StatusBadRequest)
+		http.Error(w, "^0^ не могу размаршалить тело сообщения", http.StatusBadRequest)
 		return
 	}
 	defer r.Body.Close()
+
+	err = m.Validate()
+	if err != nil {
+		ololog.Error().Str("location", "json update handler(validate metrica)").Msgf("Получена невалидная структура: %+v", err)
+		http.Error(w, "Полученная структура оформлена неправильно: "+err.Error(), http.StatusBadRequest)
+		return
+	}
 
 	switch m.MType {
 	case metrica.CounterName:
