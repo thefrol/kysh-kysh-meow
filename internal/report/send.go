@@ -16,7 +16,13 @@ var defaultClient = resty.New() // todo .SetJSONMarshaler(easyjson.Marshal())
 // При возникнвении ошибок возвращается только последняя
 func Send(metricas []metrica.Metrica, url string) (lastErr error) {
 	for _, m := range metricas {
-		resp, err := defaultClient.R().SetBody(m).Post(url) // todo в данный момент мы не используем тут easyjson
+		buf := new(bytes.Buffer)
+		easyjson.MarshalToWriter(m, buf)
+		// у нас существует очень важный контракт,
+		// что тело сюда передается в формате io.Reader,
+		// тогда могут работать разные мидлвари
+		resp, err := defaultClient.R().SetBody(buf).Post(url) // todo в данный момент мы не используем тут easyjson
+
 		if err != nil {
 			ololog.Error().Str("location", "internal/report").Msgf("Не могу отправить сообщение с метрикой [%v]%v, по приничине %+v", m.MType, m.ID, err)
 			lastErr = err
