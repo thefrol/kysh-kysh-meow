@@ -12,7 +12,13 @@ import (
 func MeowRouter() (router chi.Router) {
 	router = chi.NewRouter()
 
-	router.Use(middleware.MeowLogging())
+	router.Use(middleware.MeowLogging(), middleware.UnGZIP)
+	//todo
+	//
+	// по красоте было бы, если миддлеварь выглядела так router.Use(middleware.Uncompress(Gzip,Deflate,Brotli))
+	// и может uncompress.Brotli, uncompress.GZIP
+	//
+	// а compress вот так compress.GZIP(WithMinLenght(100),WithContentType("text/html")
 
 	router.Get("/", listMetrics)
 	router.Route("/value", func(r chi.Router) {
