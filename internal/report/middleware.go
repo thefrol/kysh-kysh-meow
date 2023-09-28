@@ -34,12 +34,33 @@ func ApplyGZIP(minLenght int, level int) func(c *resty.Client, r *resty.Request)
 			ololog.Warn().Str("location", "agent/middleware/gzip").Msg("Тело сообщение передано не в формате io.Reader, а значит мы не можем его заархивировать. Вообще мы хотим передавать тело сообщения именно ридером")
 			return nil
 		}
-		// todo осталось проверить, что он минимальная длинна достигнута, попробовать прочитать первые сколько то байт
-		// на данный момент сообщения длинной в 20-30 байт стали длинной 50-70 байт
+
+		// теперь мы прочитаем minLenght байт из буфера
+		// Если тело к этому моменту закончится, то отправляем без сжатия
+		// А если нет, то пишем в gzip уже прочитанное, и все остальное
+
+		t := make([]byte, minLenght)
+		n, _ := io.ReadAtLeast(v, t, minLenght)
+		if n < minLenght {
+			// не забудем обрезать буфер. Мы возьмем оттуда
+			// только первые n символов, потому что остальные будут просто нулями
+			// вплоть до minLenght
+			r.SetBody(bytes.NewBuffer(t[:n]))
+			ololog.Info().Msg("Request too short for compressing, sending as is")
+			return nil
+		}
+
+		// тут мы часть буфера прочитали, и хотим прочитать оставшееся, и скомпрессировать все вместе
+
 		b := new(bytes.Buffer)
 		gz, err := gzip.NewWriterLevel(b, level)
 		if err != nil {
 			return fmt.Errorf("cant create compressor")
+		}
+
+		_, err = gz.Write(t)
+		if err != nil {
+			return fmt.Errorf("cant write min lenght buffer back to zipper")
 		}
 		_, err = io.Copy(gz, v)
 		if err != nil {

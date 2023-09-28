@@ -17,7 +17,7 @@ var store storage.Storager
 func init() {
 	store = storage.New()
 
-	report.UseBeforeRequest(report.ApplyGZIP(1023, gzip.BestCompression))
+	report.UseBeforeRequest(report.ApplyGZIP(20, gzip.BestCompression))
 }
 
 var defaultConfig = config{
