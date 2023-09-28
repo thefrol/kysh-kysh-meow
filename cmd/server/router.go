@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/thefrol/kysh-kysh-meow/cmd/server/middleware"
 )
 
 // todo hlog.FromRequest(r).Info() !!!
@@ -11,7 +12,7 @@ import (
 func MeowRouter() (router chi.Router) {
 	router = chi.NewRouter()
 
-	router.Use(MeowLogging())
+	router.Use(middleware.MeowLogging())
 
 	router.Get("/", listMetrics)
 	router.Route("/value", func(r chi.Router) {
