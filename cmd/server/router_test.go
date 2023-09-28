@@ -257,6 +257,16 @@ func Test_MeowRouter(t *testing.T) {
 				code: http.StatusBadRequest,
 			},
 		},
+		{
+			name:     "list all metrics",
+			prePosts: []string{},
+			method:   http.MethodGet,
+			route:    "/",
+			body:     "",
+			response: testResponse{
+				code: http.StatusOK,
+			},
+		},
 	}
 
 	for _, tt := range tests {
