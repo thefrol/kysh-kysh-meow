@@ -32,6 +32,7 @@ func MeowLogging() func(http.Handler) http.Handler {
 			ololog.Info().
 				Str("method", r.Method).
 				Str("uri", r.RequestURI).
+				Bool("gzip", encoded(r, "gzip")).
 				Dur("duration", d).
 				Msg("Request ->")
 
