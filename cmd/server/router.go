@@ -12,7 +12,17 @@ import (
 func MeowRouter() (router chi.Router) {
 	router = chi.NewRouter()
 
-	router.Use(middleware.MeowLogging(), middleware.UnGZIP)
+	//router.Use(middleware.MeowLogging())
+	//router.Use(middleware.UnGZIP)
+	router.Use(middleware.GZIP(
+		middleware.GZIPBestCompression,
+		middleware.ContentTypes("text/plain", "text/html", "application/json", "application/xml"),
+		middleware.StatusCodes(http.StatusOK),
+		middleware.MinLenght(50),
+		// todo
+		//
+		// Хочу чтобы это выглядело так compress.ContentType(...)
+	))
 	//todo
 	//
 	// по красоте было бы, если миддлеварь выглядела так router.Use(middleware.Uncompress(Gzip,Deflate,Brotli))
