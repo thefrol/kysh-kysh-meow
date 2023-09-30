@@ -194,6 +194,13 @@ func getValue(w http.ResponseWriter, r *http.Request, params URLParams) {
 
 // listMetrics выводит список всех известных на данный момент метрик
 func listMetrics(w http.ResponseWriter, r *http.Request) {
+	w.Header().Add("Content-Type", "text/html")
+
+	// TODO
+	//
+	// Нам буфер string.Builder не нужен,
+	// c таким же успехом можно сразу писать
+	// в респонс-вайтер w
 	b := strings.Builder{}
 	const indent = "    "
 

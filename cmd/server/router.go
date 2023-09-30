@@ -12,13 +12,13 @@ import (
 func MeowRouter() (router chi.Router) {
 	router = chi.NewRouter()
 
-	//router.Use(middleware.MeowLogging())
-	//router.Use(middleware.UnGZIP)
+	router.Use(middleware.MeowLogging())
+	router.Use(middleware.UnGZIP) // еще бы сообщать, что такой энкодинг не поддерживается
 	router.Use(middleware.GZIP(
 		middleware.GZIPBestCompression,
 		middleware.ContentTypes("text/plain", "text/html", "application/json", "application/xml"),
 		middleware.StatusCodes(http.StatusOK),
-		middleware.MinLenght(50),
+		middleware.MinLenght(0),
 		// todo
 		//
 		// Хочу чтобы это выглядело так compress.ContentType(...)
