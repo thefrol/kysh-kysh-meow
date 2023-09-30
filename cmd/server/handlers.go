@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"strings"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/mailru/easyjson"
@@ -196,36 +195,29 @@ func getValue(w http.ResponseWriter, r *http.Request, params URLParams) {
 func listMetrics(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Content-Type", "text/html")
 
-	// TODO
-	//
-	// Нам буфер string.Builder не нужен,
-	// c таким же успехом можно сразу писать
-	// в респонс-вайтер w
-	b := strings.Builder{}
+	// todo: сделать это в html-разметке при помощи template
 	const indent = "    "
 
 	cl := store.ListCounters()
 	gl := store.ListGauges()
 
 	if len(cl)+len(gl) == 0 {
-		b.WriteString("No metrics stored")
-		w.Write([]byte(b.String()))
+		w.Write([]byte("No metrics stored"))
 		return
 	}
 	if len(cl) > 0 {
-		fmt.Fprintln(&b, "Counters:")
+		fmt.Fprintln(w, "Counters:")
 		for _, v := range cl {
-			fmt.Fprintln(&b, indent, v)
+			fmt.Fprintln(w, indent, v)
 		}
 
 	}
 	if len(gl) > 0 {
-		fmt.Fprintln(&b, "Gauges:")
+		fmt.Fprintln(w, "Gauges:")
 		for _, v := range gl {
-			fmt.Fprintln(&b, indent, v)
+			fmt.Fprintln(w, indent, v)
 		}
 	}
-	w.Write([]byte(b.String()))
 }
 
 // updateMetricFunc это типа функций обработчков, таких как updateCounter, updateGauge
