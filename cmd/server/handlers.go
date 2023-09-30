@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"text/template"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/mailru/easyjson"
@@ -195,28 +196,40 @@ func getValue(w http.ResponseWriter, r *http.Request, params URLParams) {
 func listMetrics(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Content-Type", "text/html")
 
-	// todo: сделать это в html-разметке при помощи template
-	const indent = "    "
+	t := `
+	{{ if .ListCounters}}
+		Counters
+			<ul> 
+				{{range .ListCounters -}}
+					<li>{{.}}</li>
+				{{ end }}
+			</ul>
+	{{ else }}
+		<p>No Counters</p>
+	{{end}}
+	{{ if .ListGauges}}
+		Gauges
+			<ul> 
+				{{range .ListGauges -}}
+					<li>{{.}}</li>
+				{{ end }}
+			</ul>
+	{{ else }}
+		<p>No Gauges</p>
+	{{end}}
+	`
 
-	cl := store.ListCounters()
-	gl := store.ListGauges()
-
-	if len(cl)+len(gl) == 0 {
-		w.Write([]byte("No metrics stored"))
+	tmpl, err := template.New("simple").Parse(t)
+	if err != nil {
+		ololog.Error().Str("location", "server/handlers/listCounters").Err(err).Msg("Не удается создать и пропарсить HTML шаблон")
+		http.Error(w, "error creating template", http.StatusInternalServerError)
 		return
 	}
-	if len(cl) > 0 {
-		fmt.Fprintln(w, "Counters:")
-		for _, v := range cl {
-			fmt.Fprintln(w, indent, v)
-		}
-
-	}
-	if len(gl) > 0 {
-		fmt.Fprintln(w, "Gauges:")
-		for _, v := range gl {
-			fmt.Fprintln(w, indent, v)
-		}
+	err = tmpl.Execute(w, store)
+	if err != nil {
+		ololog.Error().Str("location", "server/handlers/listCounters").Err(err).Msg("Ошибка запуска шаблона HTML")
+		http.Error(w, "error executing template", http.StatusInternalServerError)
+		return
 	}
 }
 
