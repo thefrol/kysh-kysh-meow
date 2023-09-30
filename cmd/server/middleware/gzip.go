@@ -160,12 +160,6 @@ func (cw *CompressedWriter) Write(bb []byte) (int, error) {
 		// не происходило, а ниже уже начинаются первые записи, значит надо подготовиться
 		// и записать все что потом уже не запишется, например код ответа
 
-		// если мы ничего не писали в статус код, то подразумевается 200
-		// и более того, если лишний раз пробовать писать этот статус, то он будет ругаться
-		if cw.statusCode == 0 {
-			cw.statusCode = 200
-		}
-
 		// либо мы прошли проверки на архивацию checked=true, либо архивания отменилась ignore==true
 		if cw.opts.CheckStatusCode(cw.statusCode) && cw.opts.CheckContentTypes(cw.originalWriter.Header()) {
 			cw.checked = true
@@ -173,10 +167,7 @@ func (cw *CompressedWriter) Write(bb []byte) (int, error) {
 		} else {
 			// мы не будем использовать компрессию, устанавливаем флаг ignore и записываем байты в обернутый врайтер
 			cw.ignore = true
-			if cw.statusCode != 200 {
-				// todo выделить это в какой-то отедльный блок, не нравится что всюду одно это
-				cw.originalWriter.WriteHeader(cw.statusCode)
-			}
+			cw.confirmStatusCode()
 			return cw.originalWriter.Write(bb)
 		}
 	}
@@ -206,9 +197,7 @@ func (cw *CompressedWriter) Write(bb []byte) (int, error) {
 	// не забудем подсказать в заголовках, что мы архивируем содержание
 	cw.originalWriter.Header().Add("Content-Encoding", "gzip")
 	cw.originalWriter.Header().Del("Content-Length")
-	if cw.statusCode != 200 {
-		cw.originalWriter.WriteHeader(cw.statusCode)
-	}
+	cw.confirmStatusCode()
 
 	cw.archiveWriter = gz
 
@@ -253,13 +242,29 @@ func (cw *CompressedWriter) WriteHeader(status int) {
 	cw.statusCode = status
 }
 
+// confirmStatusCode подтвержает полученный статус код, и записывает его
+// в оригинальный врайтер. В отличие от WriteHeader(), который просто запоминает код
+// эта функция  имеет внутреннее значение для мидлвари,  она
+// уже реально записывает статус код на выход.
+//
+// Тут мы проверяем, а не пришел ли нам статус код 0
+// по сути это тот же код 200, просто связанный с ошибками на других уровнях обработки. На это стоит обратить
+// пристальное внимание, но такая ошибка не должна валить сервер
+func (cw *CompressedWriter) confirmStatusCode() {
+	if cw.statusCode == 0 {
+		ololog.Error().Str("location", "server/middleware/gzip").Msg("Кто-то записал мне код статуса 0, вместо 200, это где-то после меня случилось. Я поменял статус код на 200, но нужно обязательно проверить, что-то работает не так")
+		cw.statusCode = 200
+	}
+	if cw.statusCode != 200 {
+		cw.originalWriter.WriteHeader(cw.statusCode)
+	}
+}
+
 func (cw *CompressedWriter) Close() {
 	// Если порог минимального количество байт так и не пройдет, то просто сбрасываем все в
 	// обернутый врайтер
 	if cw.archiveWriter == nil {
-		if cw.statusCode != 200 {
-			cw.originalWriter.WriteHeader(cw.statusCode)
-		}
+		cw.confirmStatusCode()
 		io.Copy(cw.originalWriter, &cw.fistBytesBuffer)
 	} else {
 		// а если архиватор создан, то его надо закрыть
@@ -271,15 +276,6 @@ func (cw *CompressedWriter) Close() {
 var _ http.ResponseWriter = (*CompressedWriter)(nil)
 
 func GZIP(funcOpts ...gzipFuncOpt) func(http.Handler) http.Handler {
-	// Создаем структуру настроек для GZIP,
-	// после применения к ней опцефункций,
-	// она будет передана в замыкание и будет уже работать с мидлварью
-	opts := gzipOptions{
-		CompressionLevel: gzip.BestCompression,
-	}
-	for _, f := range funcOpts {
-		f(&opts)
-	}
 
 	// Тут описываемся сама мидлварь, получившая opts
 	// в качестве настроек
