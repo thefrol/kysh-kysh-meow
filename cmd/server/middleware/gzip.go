@@ -103,6 +103,9 @@ func StatusCodes(codes ...int) gzipFuncOpt {
 // которая если нужно, будет использовать сжимать данные
 // а если не нужно, просто отправит как есть
 //
+// Стоит обязательно создавать конструктором NewCompressedWriter,
+// иначе будут пробелмы с статус кодом по умолчанию
+//
 // Вся концепция этого класса держится на том, в http.ResponseWrite
 // устроен следующим образом: к тому моменту, как впервые используется
 // Write, все заголовки и код ответа уже должны быть записаны, и
@@ -285,18 +288,31 @@ func GZIP(funcOpts ...gzipFuncOpt) func(http.Handler) http.Handler {
 			// Eсли клиент поддерживает gzip, то подменяем врайтер, не забыв его закрыть, и отправляем
 			// запрос дальше по цепочке
 			if acceptsEncoding(r, "gzip") {
-				cw := CompressedWriter{opts: opts, originalWriter: w}
-				w = &cw
-
-				next.ServeHTTP(&cw, r)
-				cw.Close()
-				return
-
-			} else {
-				next.ServeHTTP(w, r)
+				cw := NewCompressedWriter(w, funcOpts...)
+				w = cw
+				defer cw.Close()
 			}
+			next.ServeHTTP(w, r)
 
 		})
+	}
+}
+
+func NewCompressedWriter(originalWriter http.ResponseWriter, funcOpts ...gzipFuncOpt) *CompressedWriter {
+
+	// Создаем структуру настроек для GZIP,
+	// после применения к ней опцефункций,
+	// она будет передана в замыкание и будет уже работать с мидлварью
+	opts := gzipOptions{
+		CompressionLevel: gzip.BestCompression,
+	}
+	for _, f := range funcOpts {
+		f(&opts)
+	}
+	return &CompressedWriter{
+		opts:           opts,
+		originalWriter: originalWriter,
+		statusCode:     200, // сразу ставим StatusOK, потому что такой код у нас по умолчанию
 	}
 }
 
