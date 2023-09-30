@@ -18,7 +18,7 @@ func MeowRouter() (router chi.Router) {
 		middleware.GZIPBestCompression,
 		middleware.ContentTypes("text/plain", "text/html", "application/json", "application/xml"),
 		middleware.StatusCodes(http.StatusOK),
-		middleware.MinLenght(0),
+		middleware.MinLenght(1),
 		// todo
 		//
 		// Хочу чтобы это выглядело так compress.ContentType(...)
