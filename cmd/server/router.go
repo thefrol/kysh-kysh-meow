@@ -5,6 +5,8 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/thefrol/kysh-kysh-meow/cmd/server/middleware"
+	"github.com/thefrol/kysh-kysh-meow/internal/ololog"
+	"github.com/thefrol/kysh-kysh-meow/internal/storage"
 )
 
 // todo hlog.FromRequest(r).Info() !!!
@@ -59,6 +61,29 @@ func MeowRouter() (router chi.Router) {
 		w.Header().Add("Content-Type", "text/plain")
 		w.WriteHeader(404)
 		w.Write([]byte("^0^ оуууоо! Нет такой страницы"))
+	})
+
+	// for admin
+	router.Get("/save/{filename}", func(w http.ResponseWriter, r *http.Request) {
+		fname := chi.URLParam(r, "filename")
+		err := store.(storage.MemStore).ToFile(fname) // todo
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		ololog.Info().Msg("saved")
+		w.Write([]byte("saved"))
+	})
+	router.Get("/load/{filename}", func(w http.ResponseWriter, r *http.Request) {
+		fname := chi.URLParam(r, "filename")
+		var err error
+		store, err = storage.FromFile(fname) // todo
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		ololog.Info().Msg("loaded")
+		w.Write([]byte("loaded"))
 	})
 
 	return router
