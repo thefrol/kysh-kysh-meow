@@ -28,8 +28,8 @@ func main() {
 	cfg := configure(defaultConfig)
 
 	ololog.Info().Msgf("^.^ Мяу, сервер запускается по адресу %v!", cfg.Addr)
-	err := http.ListenAndServe(cfg.Addr, MeowRouter())
-	if err != nil {
+	srv := http.Server{Addr: cfg.Addr, Handler: MeowRouter()}
+	if err := srv.ListenAndServe(); err != http.ErrServerClosed {
 		ololog.Error().Msgf("^0^ не могу запустить сервер: %v \n", err)
 	}
 }
