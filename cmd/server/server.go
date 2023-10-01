@@ -47,7 +47,8 @@ func main() {
 		<-sig
 		ololog.Debug().Msg("signal received")
 		// Shutdown signal with grace period of 30 seconds
-		shutdownCtx, _ := context.WithTimeout(serverCtx, 30*time.Second)
+		shutdownCtx, cancel := context.WithTimeout(serverCtx, 30*time.Second)
+		defer cancel()
 
 		go func() {
 			<-shutdownCtx.Done()
