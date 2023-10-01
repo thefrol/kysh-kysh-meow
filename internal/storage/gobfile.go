@@ -10,7 +10,7 @@ import (
 // тут опять есть необходимость в пуле. Пул энкодеров джейсон, пул энкодеров gzip, я бы мог бы все это повторно использовать в разных местах программы
 
 func (s MemStore) ToFile(fname string) error {
-	file, err := os.OpenFile(fname, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0666)
+	file, err := os.OpenFile(fname, os.O_CREATE|os.O_WRONLY, 0666)
 	if err != nil {
 		ololog.Error().Msgf("Cant open file %v: %+v", fname, err)
 		return err
