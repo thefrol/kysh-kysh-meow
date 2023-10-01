@@ -7,9 +7,14 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/thefrol/kysh-kysh-meow/internal/storage"
 )
 
-//что такое test main?
+func init() {
+	store = storage.New() // вот какой ерундой приходится заниматься из-за глобальной переменной
+}
+
+// что такое test main?
 func Test_updateCounter(t *testing.T) {
 	type testResponse struct {
 		code        int
@@ -77,6 +82,7 @@ func Test_updateCounter(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+
 			r := httptest.NewRequest(tt.method, tt.route, nil)
 			w := httptest.NewRecorder()
 			MeowRouter().ServeHTTP(w, r)
