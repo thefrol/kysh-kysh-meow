@@ -1,6 +1,8 @@
 package main
 
 import (
+	"errors"
+	"os"
 	"time"
 
 	"github.com/thefrol/kysh-kysh-meow/internal/metrica"
@@ -19,7 +21,7 @@ func fileStorage(cfg config) (storage.Storager, error) {
 
 	var s *storage.MemStore
 
-	if cfg.Restore {
+	if cfg.Restore && fileExist(cfg.FileStoragePath) {
 		var err error
 		s, err = storage.FromFile(cfg.FileStoragePath)
 		if err != nil {
@@ -39,6 +41,20 @@ func fileStorage(cfg config) (storage.Storager, error) {
 		ololog.Info().Msg("Хранилище записано в файл")
 	})
 	return wrapped, nil
+}
+
+func fileExist(file string) bool {
+	if s, err := os.Stat("/path/to/whatever"); err == nil && !s.IsDir() {
+		return true
+	} else if errors.Is(err, os.ErrNotExist) {
+		return false
+
+	} else {
+		// Schrodinger: file may or may not exist. See err for details.
+
+		// Therefore, do *NOT* use !os.IsNotExist(err) to test for file existence
+		return false
+	}
 }
 
 // CallBackStorage обертывает хранилище так, что при изменении значений вызывает специальную коллбек функцию
