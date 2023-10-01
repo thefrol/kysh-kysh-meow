@@ -44,7 +44,7 @@ func fileStorage(cfg config) (storage.Storager, error) {
 }
 
 func fileExist(file string) bool {
-	if s, err := os.Stat("/path/to/whatever"); err == nil && !s.IsDir() {
+	if s, err := os.Stat(file); err == nil && !s.IsDir() {
 		return true
 	} else if errors.Is(err, os.ErrNotExist) {
 		return false
