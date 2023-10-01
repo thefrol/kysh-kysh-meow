@@ -18,7 +18,10 @@ func init() {
 }
 
 var defaultConfig = config{
-	Addr: ":8080",
+	Addr:                 ":8080",
+	StoreIntervalSeconds: 300,
+	FileStoragePath:      "/tmp/metrics-db.json",
+	Restore:              true,
 }
 
 func main() {
