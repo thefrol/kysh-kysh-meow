@@ -30,13 +30,12 @@ func main() {
 	cfg := configure(defaultConfig)
 
 	// создаем хранилище
-	s := storage.New()
-	store = wrapStorageWithWrite(time.Duration(cfg.StoreIntervalSeconds)*time.Second, s, func() {
-		s.ToFile(cfg.FileStoragePath)
-		ololog.Info().Msg("Хранилище сохранено в файл")
-	})
-
-	// подключаем сохранение хранилища на диск
+	s, err := fileStorage(cfg)
+	if err != nil {
+		ololog.Error().Msgf("Не удалось сконфигурировать сервер, по причине: %v", err)
+		return
+	}
+	store = s
 
 	// Запускаем сервер в отдельной гоурутине
 	ololog.Info().Msgf("^.^ Мяу, сервер запускается по адресу %v!", cfg.Addr)
@@ -45,6 +44,36 @@ func main() {
 		ololog.Error().Msgf("^0^ не могу запустить сервер: %v \n", err)
 	}
 
+}
+
+func fileStorage(cfg config) (storage.Storager, error) {
+	if cfg.FileStoragePath == "" {
+		ololog.Info().Msg("Файл для сохранения и загрузки установлен в пустую строку, а значит все функции сохранения и загрузки на диск отключены")
+		return storage.New(), nil
+	}
+
+	var s *storage.MemStore
+
+	if cfg.Restore {
+		var err error
+		s, err = storage.FromFile(cfg.FileStoragePath)
+		if err != nil {
+			ololog.Error().Msgf("Не могу загрузить хранилища с диска %v по принчине %+v", cfg.FileStoragePath, err)
+			return nil, err
+		}
+		ololog.Info().Msgf("Хранищиле воостановлено из %v", cfg.FileStoragePath)
+	} else {
+		ss := storage.New()
+		s = &ss // todo помоему storage.New() должно возвращать указатель, чтобы не было таких проблем
+	}
+
+	// подключаем сохранение хранилища на диск
+
+	wrapped := wrapStorageWithWrite(time.Duration(cfg.StoreIntervalSeconds)*time.Second, s, func() {
+		s.ToFile(cfg.FileStoragePath)
+		ololog.Info().Msg("Хранилище записано в файл")
+	})
+	return wrapped, nil
 }
 
 // CallBackStorage обертывает хранилище так, что при изменении значений вызывает специальную коллбек функцию
