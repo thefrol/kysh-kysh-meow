@@ -6,55 +6,68 @@ import (
 	"time"
 
 	"github.com/thefrol/kysh-kysh-meow/internal/metrica"
-	"github.com/thefrol/kysh-kysh-meow/internal/storage"
 )
 
-// todo
-//
-// мне кажется нужно отвязать Fetch от storager, он может работать как-то иначе,
-// например, возвращать массив metrica.Metrica, или типа того. Или у нас может быть какая-то структура
-// с ленивой инициализацией. Например, она содержит в себе структуру мемстатс и два других счетчика,
-// и если уж надо, то формирует из них массив для отправки на сервер. А то иначе получается мы делаем лишнюю работу
-// каждые две секунды наполняем хранилище, а пользуемся им только раз в десять секунд, а может быть и другая ситуация даже!
-
-// Fetch собирает метрики мамяти и сохраняет их в хранилище store
-func Fetch(s storage.Storager) {
+// Fetch собирает метрики мамяти и сохраняет их во временное хранилище
+func Fetch() Stats {
 	m := runtime.MemStats{}
 	runtime.ReadMemStats(&m)
 
-	s.SetGauge("Alloc", metrica.Gauge(m.Alloc))
-	s.SetGauge("BuckHashSys", metrica.Gauge(m.BuckHashSys))
-	s.SetGauge("Frees", metrica.Gauge(m.Frees))
-	s.SetGauge("GCCPUFraction", metrica.Gauge(m.GCCPUFraction))
-	s.SetGauge("GCSys", metrica.Gauge(m.GCSys))
-	s.SetGauge("HeapAlloc", metrica.Gauge(m.HeapAlloc))
-	s.SetGauge("HeapIdle", metrica.Gauge(m.HeapIdle))
-	s.SetGauge("HeapInuse", metrica.Gauge(m.HeapInuse))
-	s.SetGauge("HeapObjects", metrica.Gauge(m.HeapObjects))
-	s.SetGauge("HeapReleased", metrica.Gauge(m.HeapReleased))
-	s.SetGauge("HeapSys", metrica.Gauge(m.HeapSys))
-	s.SetGauge("LastGC", metrica.Gauge(m.LastGC))
-	s.SetGauge("Lookups", metrica.Gauge(m.Lookups))
-	s.SetGauge("MCacheInuse", metrica.Gauge(m.MCacheInuse))
-	s.SetGauge("MCacheSys", metrica.Gauge(m.MCacheSys))
-	s.SetGauge("MSpanInuse", metrica.Gauge(m.MSpanInuse))
-	s.SetGauge("MSpanSys", metrica.Gauge(m.MSpanSys))
-	s.SetGauge("Mallocs", metrica.Gauge(m.Mallocs))
-	s.SetGauge("NextGC", metrica.Gauge(m.NextGC))
-	s.SetGauge("NumForcedGC", metrica.Gauge(m.NumForcedGC))
-	s.SetGauge("NumGC", metrica.Gauge(m.NumGC))
-	s.SetGauge("OtherSys", metrica.Gauge(m.OtherSys))
-	s.SetGauge("PauseTotalNs", metrica.Gauge(m.PauseTotalNs))
-	s.SetGauge("StackInuse", metrica.Gauge(m.StackInuse))
-	s.SetGauge("StackSys", metrica.Gauge(m.StackSys))
-	s.SetGauge("Sys", metrica.Gauge(m.Sys))
-	s.SetGauge("TotalAlloc", metrica.Gauge(m.TotalAlloc))
-
-	// случайное значение
-	s.SetGauge(randomValueName, randomGauge())
+	s := Stats{
+		memStats:    &m,
+		randomValue: randomGauge(),
+		pollCount:   metrica.Counter(pollCount),
+	}
 
 	// Добавить ко счетчику опросов
-	incrementPollCount(s)
+	incrementPollCount()
+
+	return s
+}
+
+type Stats struct {
+	memStats    *runtime.MemStats
+	randomValue metrica.Gauge
+	pollCount   metrica.Counter
+}
+
+// Преобразует хранящиеся значения в транспортную структуру metrica.Metrica
+func (st Stats) ToTransport() (m []metrica.Metrica) {
+	m = append(m, metrica.Gauge(st.memStats.Alloc).Metrica("Alloc"))
+	m = append(m, metrica.Gauge(st.memStats.BuckHashSys).Metrica("BuckHashSys"))
+	m = append(m, metrica.Gauge(st.memStats.Frees).Metrica("Frees"))
+	m = append(m, metrica.Gauge(st.memStats.GCCPUFraction).Metrica("GCCPUFraction"))
+	m = append(m, metrica.Gauge(st.memStats.GCSys).Metrica("GCSys"))
+	m = append(m, metrica.Gauge(st.memStats.HeapAlloc).Metrica("HeapAlloc"))
+	m = append(m, metrica.Gauge(st.memStats.HeapIdle).Metrica("HeapIdle"))
+	m = append(m, metrica.Gauge(st.memStats.HeapInuse).Metrica("HeapInuse"))
+	m = append(m, metrica.Gauge(st.memStats.HeapObjects).Metrica("HeapObjects"))
+	m = append(m, metrica.Gauge(st.memStats.HeapReleased).Metrica("HeapReleased"))
+	m = append(m, metrica.Gauge(st.memStats.HeapSys).Metrica("HeapSys"))
+	m = append(m, metrica.Gauge(st.memStats.LastGC).Metrica("LastGC"))
+	m = append(m, metrica.Gauge(st.memStats.Lookups).Metrica("Lookups"))
+	m = append(m, metrica.Gauge(st.memStats.MCacheInuse).Metrica("MCacheInuse"))
+	m = append(m, metrica.Gauge(st.memStats.MCacheSys).Metrica("MCacheSys"))
+	m = append(m, metrica.Gauge(st.memStats.MSpanInuse).Metrica("MSpanInuse"))
+	m = append(m, metrica.Gauge(st.memStats.MSpanSys).Metrica("MSpanSys"))
+	m = append(m, metrica.Gauge(st.memStats.Mallocs).Metrica("Mallocs"))
+	m = append(m, metrica.Gauge(st.memStats.NextGC).Metrica("NextGC"))
+	m = append(m, metrica.Gauge(st.memStats.NumForcedGC).Metrica("NumForcedGC"))
+	m = append(m, metrica.Gauge(st.memStats.NumGC).Metrica("NumGC"))
+	m = append(m, metrica.Gauge(st.memStats.OtherSys).Metrica("OtherSys"))
+	m = append(m, metrica.Gauge(st.memStats.PauseTotalNs).Metrica("PauseTotalNs"))
+	m = append(m, metrica.Gauge(st.memStats.StackInuse).Metrica("StackInuse"))
+	m = append(m, metrica.Gauge(st.memStats.StackSys).Metrica("StackSys"))
+	m = append(m, metrica.Gauge(st.memStats.Sys).Metrica("Sys"))
+	m = append(m, metrica.Gauge(st.memStats.TotalAlloc).Metrica("TotalAlloc"))
+
+	// случайное значение
+	m = append(m, st.randomValue.Metrica(randomValueName))
+
+	// счетчик
+	m = append(m, st.pollCount.Metrica(metrica.CounterName))
+
+	return
 }
 
 // randomGauge возвращает случайное число типа float64

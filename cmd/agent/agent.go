@@ -2,21 +2,16 @@ package main
 
 import (
 	"compress/gzip"
-	"fmt"
 	"path"
 	"time"
 
+	"github.com/thefrol/kysh-kysh-meow/internal/ololog"
 	"github.com/thefrol/kysh-kysh-meow/internal/report"
 	"github.com/thefrol/kysh-kysh-meow/internal/scheduler"
 	"github.com/thefrol/kysh-kysh-meow/internal/stats"
-	"github.com/thefrol/kysh-kysh-meow/internal/storage"
 )
 
-var store storage.Storager
-
 func init() {
-	store = storage.New()
-
 	report.UseBeforeRequest(report.ApplyGZIP(20, gzip.BestCompression))
 }
 
@@ -29,28 +24,38 @@ var defaultConfig = config{
 func main() {
 	config := configure(defaultConfig)
 
+	// Метрики собираются во временное хранилище s,
+	// где они хранятся в сыром виде и готовы превратиться
+	// в массив metrica.Metrica
+	var s stats.Stats
+
 	// запуск планировщика
 	c := scheduler.New()
 	//собираем данные раз в pollingInterval
 	c.AddJob(time.Duration(config.PollingInterval)*time.Second, func() {
 		//Обновляем данные в хранилище, тут же увеличиваем счетчик
-		stats.Fetch(store)
+		s = stats.Fetch()
 	})
 	// отправляем данные раз в repostInterval
 	c.AddJob(time.Duration(config.ReportInterval)*time.Second, func() {
-		//отправляем на сервер
-		err := report.Send(store.Metricas(), "http://"+path.Join(config.Addr, "update"))
+		//отправляем на сервер метрики из хранилища s
+		err := report.Send(s.ToTransport(), Endpoint(config))
 		if err != nil {
-			fmt.Println("Попытка отправить метрики завершилась с  ошибками:")
-			fmt.Print(err)
+			ololog.Error().Msgf("Попытка отправить метрики завершилась с  ошибками: %v", err)
 			return
 		}
 		// Сбрасываем PollCount
 		// #TODO: в таком случае нужно проверить, что счетчик реально отправился,
 		//		а не просто, или нам пофигу?)
-		stats.DropPollCount(store)
+		stats.DropPollCount()
 	})
 
+	// Запускаем планировщик, и он занимает поток
 	c.Serve(200 * time.Millisecond)
 
+}
+
+// Endpoint формирует точку, куда агент будет посылать все запросы на основе своей текущей конфигурации
+func Endpoint(cfg config) string {
+	return "http://" + path.Join(cfg.Addr, "update")
 }
