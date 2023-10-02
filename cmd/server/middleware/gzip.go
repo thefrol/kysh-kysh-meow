@@ -22,6 +22,10 @@ import (
 //
 // В общем виде, на сервере chi создание мидлвари выглядит следующим образом,
 // router.Use(GZIP(BestCompresion,MinLenght(50),ContentTypes("text/plain"),StatusCodes(http.StatusOK)))
+//
+// Можно воспользоваться опцией GZIPDefault, содержащую все базовые условия для сжатия
+//
+//	router.Use(GZIP(GZIPDefault))
 func GZIP(funcOpts ...gzipFuncOpt) func(http.Handler) http.Handler {
 
 	// Тут описываемся сама мидлварь, получившая opts

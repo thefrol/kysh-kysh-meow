@@ -76,4 +76,23 @@ func StatusCodes(codes ...int) gzipFuncOpt {
 }
 
 // todo По-хорошему, у нас должны быть ещё какие-то удалятели значений, типа BlockStatusCode(200), типа чтобы можно было удалить из установленных автоматически или типа того
-// или сделать GZIP.Default
+
+// GZIPDefault создает типичные настройки для сжатия:
+//
+//	Уровень сжатия: лучшая компрессия
+//	Заголовки: text/html, text/plain, text/xml, text/css, application/json, application/javascript
+//	Статус коды: 200
+//	Минимальная длинна 50 байт
+func GZIPDefault(opt *gzipOptions) {
+	opt.Apply(
+		GZIPBestCompression,
+		StatusCodes(http.StatusOK),
+		ContentTypes(
+			"text/plain",
+			"text/html",
+			"text/css",
+			"text/xml",
+			"application/json",
+			"application/javascript"),
+		MinLenght(50))
+}
