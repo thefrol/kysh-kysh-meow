@@ -82,10 +82,8 @@ func NewCompressedWriter(originalWriter http.ResponseWriter, funcOpts ...gzipFun
 	// она будет передана в замыкание и будет уже работать с мидлварью
 	opts := gzipOptions{
 		CompressionLevel: gzip.BestCompression,
-	}
-	for _, f := range funcOpts {
-		f(&opts)
-	}
+	} // todo наверное такие настройки самых базовых штук должны быть в конструкторе опций
+	opts.Apply(funcOpts...)
 	return &CompressedWriter{
 		opts:           opts,
 		originalWriter: originalWriter,
