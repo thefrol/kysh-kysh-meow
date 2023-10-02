@@ -65,7 +65,7 @@ func (st Stats) ToTransport() (m []metrica.Metrica) {
 	m = append(m, st.randomValue.Metrica(randomValueName))
 
 	// счетчик
-	m = append(m, st.pollCount.Metrica(metrica.CounterName))
+	m = append(m, st.pollCount.Metrica(metricPollCount))
 
 	return
 }

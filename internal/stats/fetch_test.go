@@ -60,7 +60,7 @@ func Test_fetchMemStats(t *testing.T) {
 				assert.Equal(t, tt.memValuesCount, len(st.ToTransport()))
 			}
 			for _, v := range tt.fieldsFound {
-				assert.Truef(t, findMetric(st, "gauge", randomValueName) || findMetric(st, "gauge", randomValueName), "Not found metric %v", v)
+				assert.Truef(t, findMetric(st, "gauge", randomValueName) || findMetric(st, "counter", randomValueName), "Not found metric %v", v)
 			}
 
 		})
