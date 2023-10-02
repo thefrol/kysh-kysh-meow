@@ -11,10 +11,18 @@ import (
 	"github.com/thefrol/kysh-kysh-meow/internal/ololog"
 )
 
-// UnGZIP распаковывает запросы, закодированные при помощи GZIP, и пропускает все
-// остальное мимо ушей, отслеживает чтобы хотя бы один из заголовков Content-Encoding
-// содержал подстроку gzip
-func UnGZIP(next http.Handler) http.Handler {
+// GZIP это мидлварь для сервера, которая сжимает содержимое запроса
+// и оформляет все заголовки. Имеет множество настроек, которые передаются
+// при создании, такие как:
+//
+//	MinLenght(длинна) - минимальная длинна тела в байтах, чтобы сжать тело запроса
+//	ContentType(заголовок1, заголовок2, ... ) разрешенные к передаче заголовки, обычно text/plain,text/html, application/json
+//	StatusCodes(код1, код2, ...) разрешенные к сжиманию по кодам ответов, обычно 200
+//	BestCompession, BestSpeed - уровень компрессии
+//
+// В общем виде, на сервере chi создание мидлвари выглядит следующим образом,
+// router.Use(GZIP(BestCompresion,MinLenght(50),ContentTypes("text/plain"),StatusCodes(http.StatusOK)))
+func GZIP(funcOpts ...gzipFuncOpt) func(http.Handler) http.Handler {
 
 	// Тут описываемся сама мидлварь, получившая opts
 	// в качестве настроек
