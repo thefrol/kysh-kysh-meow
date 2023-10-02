@@ -9,7 +9,7 @@ var pollCount metrica.Counter
 // DropPoll сбрасывает значение счетчика опросов памяти в указанном хранилище
 // dropCounter сбраcывает счетчик
 func DropPollCount() {
-	pollCount = 0
+	pollCount = 0 // todo поллкаунт может стать вообще внутренней штукой модуля report если их объдинить, тогда агенту вообще не надо будет об этом париться
 }
 func incrementPollCount() {
 	pollCount += metrica.Counter(1)
