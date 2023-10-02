@@ -40,10 +40,16 @@ func UnGZIP(next http.Handler) http.Handler {
 //
 // if encoded(r,"gzip"){...}
 func encoded(r *http.Request, encoder string) bool {
-	for _, v := range r.Header.Values("Content-Encoding") {
-		if strings.Contains(v, encoder) {
-			return true
-		}
+	// По стандартным договоренностям, если запрос сжат или закодирован, то кодировщики
+	// указываются в последовательности их применения, а значит нам нужно читать последний
+	// заголовок Content-Encoded, и если он gzip, то расшифровать
+
+	hh := r.Header.Values("Content-Encoding")
+	// Если вообще нет таких заголовков, то возвращаем false
+	if len(hh) == 0 {
+		return false
 	}
-	return false
+
+	lastValue := hh[len(hh)-1]
+	return strings.Contains(lastValue, encoder)
 }
