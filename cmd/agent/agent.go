@@ -11,7 +11,8 @@ import (
 )
 
 func init() {
-	report.UseBeforeRequest(report.ApplyGZIP(20, gzip.BestCompression))
+	// Добавим компрессию при отправке данных
+	report.UseBeforeRequest(ApplyGZIP(20, gzip.BestCompression))
 }
 
 var defaultConfig = config{

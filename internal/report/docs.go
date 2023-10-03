@@ -16,7 +16,7 @@
 //
 // Типичное использование:
 //
-// report.UseBeforeRequest(report.ApplyGZIP)
+// report.UseBeforeRequest(ApplyGZIP)
 // s := report.Fetch()
 // err := report.Send(s,"http://my.serv.er/update")
 //
@@ -24,3 +24,9 @@
 //		...
 //	}
 package report
+
+// TODO
+//
+// Теперь мне не нравится, что тут больно дофига всего замешано)
+// Тут и какие-то мидлвари, и опрос памяти и отправка
+// Мидлварь, должна лежать наверное в агенте все же

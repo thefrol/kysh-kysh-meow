@@ -1,4 +1,4 @@
-package report
+package main
 
 import (
 	"bytes"
@@ -9,17 +9,6 @@ import (
 	"github.com/go-resty/resty/v2"
 	"github.com/thefrol/kysh-kysh-meow/internal/ololog"
 )
-
-// UseBeforeRequest встраиваем мидлварь в цепочку отправки сообщений. Все обработчики получают доступ
-// к рести клиенту и текущему подготавливаемому запросу. Таким образом можно сделать дополнительное поггирование,
-// или сжатие
-//
-// пример: report.UseBeforeRequest(GZIP)
-func UseBeforeRequest(middlewares ...func(c *resty.Client, r *resty.Request) error) {
-	for _, m := range middlewares {
-		defaultClient.OnBeforeRequest(m)
-	}
-}
 
 func ApplyGZIP(minLenght int, level int) func(c *resty.Client, r *resty.Request) error {
 	return func(c *resty.Client, r *resty.Request) error {
