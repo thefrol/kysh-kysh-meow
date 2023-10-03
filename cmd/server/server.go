@@ -23,7 +23,7 @@ var defaultConfig = config{
 }
 
 func main() {
-	cfg := configure(defaultConfig)
+	cfg := mustConfigure(defaultConfig)
 
 	// создаем хранилище
 	s, err := fileStorage(cfg)

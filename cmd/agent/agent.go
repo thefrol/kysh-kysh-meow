@@ -22,7 +22,7 @@ var defaultConfig = config{
 }
 
 func main() {
-	config := configure(defaultConfig)
+	config := mustConfigure(defaultConfig)
 
 	// Метрики собираются во временное хранилище s,
 	// где они хранятся в сыром виде и готовы превратиться

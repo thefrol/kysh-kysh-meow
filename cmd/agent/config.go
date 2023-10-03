@@ -14,9 +14,9 @@ type config struct {
 	PollingInterval uint   `env:"POLLING_INTERVAL" flag:"~p" desc:"(число, секунды) частота отпроса метрик"`
 }
 
-// configure парсит настройки адреса сервера, и частоты опроса и отправки
+// mustConfigure парсит настройки адреса сервера, и частоты опроса и отправки
 // из командной строки и переменных окружения. В приоритете переменные окружения
-func configure(defaults config) (cfg config) {
+func mustConfigure(defaults config) (cfg config) {
 	// todo
 	// сделать репозиторий sflags домашним, чтобы он мог устанавливаться от меня хотя бы
 	// github.com/octago/sflags, сейчас там ошибка в go.mod
@@ -28,7 +28,10 @@ func configure(defaults config) (cfg config) {
 
 	flag.Parse()
 
-	env.Parse(&cfg)
+	err := env.Parse(&cfg)
+	if err != nil {
+		panic(err)
+	}
 
 	return
 }

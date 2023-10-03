@@ -18,6 +18,7 @@ func Test_configure(t *testing.T) {
 		env         map[string]string
 		commandLine string
 		wantCfg     config
+		panic       bool
 	}{
 		{
 			name:        "без параметров строки",
@@ -54,6 +55,35 @@ func Test_configure(t *testing.T) {
 			commandLine: "agent -a localhost:8092",
 			wantCfg:     config{Addr: "localhost:8088", ReportInterval: 3, PollingInterval: 4},
 		},
+		{
+			name:        "Отрицательное значение интервала вызывает панику в командной строке",
+			defaults:    config{Addr: "localhost:8081", ReportInterval: 2, PollingInterval: 1},
+			env:         map[string]string{"ADDRESS": "localhost:8088"},
+			commandLine: "agent -r -1",
+			panic:       true,
+		},
+		{
+			name:        "Отрицательное значение интервала вызывает панику в командной строке 2",
+			defaults:    config{Addr: "localhost:8081", ReportInterval: 2, PollingInterval: 1},
+			env:         map[string]string{"ADDRESS": "localhost:8088"},
+			commandLine: "agent -p -1",
+			panic:       true,
+		},
+
+		{
+			name:        "Отрицательное значение интервала вызывает панику в переменной окружения 3",
+			defaults:    config{Addr: "localhost:8081", ReportInterval: 2, PollingInterval: 1},
+			env:         map[string]string{"ADDRESS": "localhost:8088", "REPORT_INTERVAL": "-1"},
+			commandLine: "agent",
+			panic:       true,
+		},
+		{
+			name:        "Отрицательное значение интервала вызывает панику в переменной окружения 3",
+			defaults:    config{Addr: "localhost:8081", ReportInterval: 2, PollingInterval: 1},
+			env:         map[string]string{"ADDRESS": "localhost:8088", "POLLING_INTERVAL": "-1"},
+			commandLine: "agent",
+			panic:       true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -76,8 +106,18 @@ func Test_configure(t *testing.T) {
 			os.Args = nil
 			os.Args = append(os.Args, strings.Split(tt.commandLine, " ")...)
 
+			// отловим панику
+			defer func() {
+				r := recover()
+				if r != nil {
+					assert.True(t, tt.panic, "Panicked but should not")
+					return
+				}
+				assert.False(t, tt.panic, "We not panicked but should")
+			}()
+
 			//проведем конфигурацию
-			assert.True(t, reflect.DeepEqual(tt.wantCfg, configure(tt.defaults)), "Итоговая конфигурация не совпадает с ожидаемой")
+			assert.True(t, reflect.DeepEqual(tt.wantCfg, mustConfigure(tt.defaults)), "Итоговая конфигурация не совпадает с ожидаемой")
 		})
 	}
 }
