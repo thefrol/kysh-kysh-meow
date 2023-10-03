@@ -10,7 +10,7 @@ import (
 
 type config struct {
 	Addr                 string `env:"ADDRESS"`
-	StoreIntervalSeconds int    `env:"STORE_INTERVAL"`
+	StoreIntervalSeconds uint   `env:"STORE_INTERVAL"`
 	FileStoragePath      string `env:"FILE_STORAGE_PATH"`
 	Restore              bool   `env:"RESTORE"`
 }
@@ -24,7 +24,7 @@ type config struct {
 //   - То, что указано в переменной окружения, переписывает то, что было указано ранее
 func configure(defaults config) (cfg config) {
 	flag.StringVar(&cfg.Addr, "a", defaults.Addr, "[адрес:порт] устанавливает адрес сервера ")
-	flag.IntVar(&cfg.StoreIntervalSeconds, "i", defaults.StoreIntervalSeconds, "[время, сек] интервал сохранения показаний. При 0 запись делается почти синхронно")
+	flag.UintVar(&cfg.StoreIntervalSeconds, "i", defaults.StoreIntervalSeconds, "[время, сек] интервал сохранения показаний. При 0 запись делается почти синхронно")
 	flag.StringVar(&cfg.FileStoragePath, "f", defaults.FileStoragePath, "[строка] путь к файлу, откуда будут читаться при запуске и куда будут сохраняться метрики полученные сервером, если файл пустой, то сохранение будет отменено")
 	flag.BoolVar(&cfg.Restore, "r", defaultConfig.Restore, "[флаг] если установлен, загружает из файла ранее записанные метрики")
 
