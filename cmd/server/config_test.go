@@ -27,22 +27,19 @@ func Test_configure(t *testing.T) {
 			wantCfg:     config{Addr: "localhost:8081", StoreIntervalSeconds: 300, Restore: true, FileStoragePath: "/tmp/file"},
 		},
 		{
-			name:        "restore как флаг",
+			name:        "restore установить флагом",
 			defaults:    config{Addr: "localhost:8081", StoreIntervalSeconds: 300, Restore: false, FileStoragePath: "/tmp/file"},
 			env:         nil,
 			commandLine: "serv -r",
 			wantCfg:     config{Addr: "localhost:8081", StoreIntervalSeconds: 300, Restore: true, FileStoragePath: "/tmp/file"},
 		},
-		// todo
-		//
-		// должно работать вот так
-		// {
-		// 	name:        "restore со значением через строку",
-		// 	defaults:    config{Addr: "localhost:8081", StoreIntervalSeconds: 300, Restore: true, FileStoragePath: "/tmp/file"},
-		// 	env:         nil,
-		// 	commandLine: "serv -r 0",
-		// 	wantCfg:     config{Addr: "localhost:8081", StoreIntervalSeconds: 300, Restore: false, FileStoragePath: "/tmp/file"},
-		// },
+		{
+			name:        "restore отменить флагом",
+			defaults:    config{Addr: "localhost:8081", StoreIntervalSeconds: 300, Restore: true, FileStoragePath: "/tmp/file"},
+			env:         nil,
+			commandLine: "serv -r=false",
+			wantCfg:     config{Addr: "localhost:8081", StoreIntervalSeconds: 300, Restore: false, FileStoragePath: "/tmp/file"},
+		},
 		{
 			name:        "restore со значением через переменную окружения",
 			defaults:    config{Addr: "localhost:8081", StoreIntervalSeconds: 300, Restore: false, FileStoragePath: "/tmp/file"},
