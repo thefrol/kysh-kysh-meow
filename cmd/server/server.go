@@ -19,11 +19,11 @@ var defaultConfig = config{
 	Addr:                 ":8080",
 	StoreIntervalSeconds: 300,
 	FileStoragePath:      "/tmp/metrics-db.json",
-	Restore:              true,
+	Restore:              true, // в текущей конфигурации это значение командной строкой никак не поменять, нельзя указать -r 0, флан такое не принимает todo
 }
 
 func main() {
-	cfg := configure(defaultConfig)
+	cfg := mustConfigure(defaultConfig)
 
 	// создаем хранилище
 	s, err := fileStorage(cfg)

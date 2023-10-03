@@ -196,7 +196,7 @@ func getValue(w http.ResponseWriter, r *http.Request, params URLParams) {
 func listMetrics(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Content-Type", "text/html")
 
-	t := `
+	htmlTemplate := `
 	{{ if .ListCounters}}
 		Counters
 			<ul> 
@@ -219,7 +219,7 @@ func listMetrics(w http.ResponseWriter, r *http.Request) {
 	{{end}}
 	`
 
-	tmpl, err := template.New("simple").Parse(t)
+	tmpl, err := template.New("simple").Parse(htmlTemplate)
 	if err != nil {
 		ololog.Error().Str("location", "server/handlers/listCounters").Err(err).Msg("Не удается создать и пропарсить HTML шаблон")
 		http.Error(w, "error creating template", http.StatusInternalServerError)
@@ -236,17 +236,21 @@ func listMetrics(w http.ResponseWriter, r *http.Request) {
 // updateMetricFunc это типа функций обработчков, таких как updateCounter, updateGauge
 type updateMetricFunc func(http.ResponseWriter, *http.Request, URLParams)
 
-// makeHandler оборачивает обработчик(например updateCounter) в HandlerFunc
-// Проверяет, чтобы марштрут выглядел как надо и заодно парсит его и передает
-// в функцию обработчик updateHandleFunc
-func makeHandler(fn updateMetricFunc) http.HandlerFunc {
+// metricAsUrl используется на длинных маршрутах, вроде /update/counter/testcounter/10,
+// эта функция парсит все урл параметры и передает uupdateFunc, уже распарсив URL в
+// структуру URLParams
+//
+// При создании маршрута в роутере должны быть обозначены такие шаблоны пути, как type, name, value
+// Например, вот так
+// Router.Get("/update/{type}/{name}/{value}")
+func metricAsUrl(updateFunc updateMetricFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		p := URLParams{
 			metric: chi.URLParam(r, "type"),
 			name:   chi.URLParam(r, "name"),
 			value:  chi.URLParam(r, "value"),
 		}
-		fn(w, r, p)
+		updateFunc(w, r, p)
 	}
 }
 

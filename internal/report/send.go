@@ -34,15 +34,19 @@ func Send(metricas []metrica.Metrica, url string) (lastErr error) {
 		defer resp.RawBody().Close()
 		ololog.Info().Msgf("Успешно отправлено %v %v", m.MType, m.ID)
 	}
+
+	// сбрасываем счетчик PollCount
+	dropPollCount() // todo вот этот сброс надо проверять
 	return
 }
 
-// todo
+// UseBeforeRequest встраивает мидлварь в цепочку отправки сообщений. Все обработчики получают доступ
+// к рести клиенту и текущему подготавливаемому запросу. Таким образом можно сделать дополнительное поггирование,
+// или сжатие
 //
-// По-хорошему storage должен уметь вернуть мне все метрики в формате metrica.Metrica() и отказаться при этом от ListCounters()
-//
-// как будето на данный момент мы даже не можем представить какой-то список метрик, например которые были отправлены, или не были
-//
-// до сих пор не понимаю, что делать если счетчик PollCount не отправился, надо ли его сбрасывать, и вообще что делать...
-// или у нас есть как бы текущая сессия? Мол складываем с исходным значением текущей сессии
-// Но тогда это уже не REST
+// пример: report.UseBeforeRequest(GZIP)
+func UseBeforeRequest(middlewares ...func(c *resty.Client, r *resty.Request) error) {
+	for _, m := range middlewares {
+		defaultClient.OnBeforeRequest(m)
+	}
+}

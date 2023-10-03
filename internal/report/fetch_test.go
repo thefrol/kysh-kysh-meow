@@ -1,4 +1,4 @@
-package stats
+package report
 
 import (
 	"testing"
@@ -39,19 +39,14 @@ var metricsMem = []string{
 }
 
 func Test_fetchMemStats(t *testing.T) {
-	type args struct {
-		store storage.Storager
-	}
 	tests := []struct {
 		name           string
-		args           args
 		wantErr        bool
 		memValuesCount int      // if <0 not checking
 		fieldsFound    []string //какие поля мы должны содержаться в memStore, можно неполно
 	}{
 		{
 			name:           "all metrics in place",
-			args:           args{store: storage.New()},
 			wantErr:        false,
 			memValuesCount: -1,
 			fieldsFound:    metricsMem,
@@ -60,14 +55,12 @@ func Test_fetchMemStats(t *testing.T) {
 	for _, tt := range tests {
 
 		t.Run(tt.name, func(t *testing.T) {
-			Fetch(tt.args.store)
+			st := Fetch()
 			if tt.memValuesCount >= 0 {
-				assert.Equal(t, tt.memValuesCount, CountValues(tt.args.store))
+				assert.Equal(t, tt.memValuesCount, len(st.ToTransport()))
 			}
 			for _, v := range tt.fieldsFound {
-				_, gaugeFound := tt.args.store.Gauge(v)
-				_, counterFound := tt.args.store.Counter(v)
-				assert.Truef(t, gaugeFound || counterFound, "Not found metric %v", v)
+				assert.Truef(t, findMetric(st, "gauge", randomValueName) || findMetric(st, "counter", randomValueName), "Not found metric %v", v)
 			}
 
 		})
@@ -76,18 +69,14 @@ func Test_fetchMemStats(t *testing.T) {
 
 // Test_fetchAdditionalStats проверяет, что случайная величина так же хорошо сохраняется в хранилище
 func Test_fetchAdditionalStats(t *testing.T) {
-	type args struct {
-		store storage.Storager
-	}
+
 	tests := []struct {
 		name        string
-		args        args
 		wantErr     bool
 		fieldsFound []string //какие поля мы должны содержаться в memStore, можно неполно
 	}{
 		{
 			name:        "all metrics in place",
-			args:        args{store: storage.New()},
 			wantErr:     false,
 			fieldsFound: []string{randomValueName},
 		},
@@ -95,11 +84,9 @@ func Test_fetchAdditionalStats(t *testing.T) {
 	for _, tt := range tests {
 
 		t.Run(tt.name, func(t *testing.T) {
-			Fetch(tt.args.store)
+			st := Fetch()
 			for _, v := range tt.fieldsFound {
-				_, gaugeFound := tt.args.store.Gauge(v)
-				_, counterFound := tt.args.store.Counter(v)
-				assert.Truef(t, gaugeFound || counterFound, "Not found metric %v", v)
+				assert.Truef(t, findMetric(st, "gauge", randomValueName), "Not found metric %v", v)
 			}
 
 		})
@@ -108,4 +95,13 @@ func Test_fetchAdditionalStats(t *testing.T) {
 
 func CountValues(s storage.Storager) int {
 	return len(s.ListCounters()) + len(s.ListGauges())
+}
+
+func findMetric(st Stats, mtype string, name string) bool {
+	for _, v := range st.ToTransport() {
+		if v.ID == name && v.MType == mtype {
+			return true
+		}
+	}
+	return false
 }
