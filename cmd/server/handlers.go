@@ -236,14 +236,14 @@ func listMetrics(w http.ResponseWriter, r *http.Request) {
 // updateMetricFunc это типа функций обработчков, таких как updateCounter, updateGauge
 type updateMetricFunc func(http.ResponseWriter, *http.Request, URLParams)
 
-// metricAsUrl используется на длинных маршрутах, вроде /update/counter/testcounter/10,
+// metricAsURL используется на длинных маршрутах, вроде /update/counter/testcounter/10,
 // эта функция парсит все урл параметры и передает uupdateFunc, уже распарсив URL в
 // структуру URLParams
 //
 // При создании маршрута в роутере должны быть обозначены такие шаблоны пути, как type, name, value
 // Например, вот так
 // Router.Get("/update/{type}/{name}/{value}")
-func metricAsUrl(updateFunc updateMetricFunc) http.HandlerFunc {
+func metricAsURL(updateFunc updateMetricFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		p := URLParams{
 			metric: chi.URLParam(r, "type"),

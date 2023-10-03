@@ -32,7 +32,7 @@ func MeowRouter() (router chi.Router) {
 
 	router.Get("/", listMetrics)
 	router.Route("/value", func(r chi.Router) {
-		r.Get("/{type}/{name}", metricAsUrl(getValue))
+		r.Get("/{type}/{name}", metricAsURL(getValue))
 		r.Post("/", valueWithJSON)
 	}) // todo как-то поработать с allowContentType
 	router.Route("/update", func(r chi.Router) {
@@ -42,11 +42,11 @@ func MeowRouter() (router chi.Router) {
 			//With(chimiddleware.AllowContentType("application/json")).
 			Post("/", updateWithJSON)
 		r.
-			Post("/{type:counter}/{name}/{value}", metricAsUrl(updateCounter))
+			Post("/{type:counter}/{name}/{value}", metricAsURL(updateCounter))
 		r.
-			Post("/{type:gauge}/{name}/{value}", metricAsUrl(updateGauge))
+			Post("/{type:gauge}/{name}/{value}", metricAsURL(updateGauge))
 		r.
-			Post("/{type}/{name}/{value}", metricAsUrl(updateUnknownType))
+			Post("/{type}/{name}/{value}", metricAsURL(updateUnknownType))
 	})
 
 	router.MethodNotAllowed(func(w http.ResponseWriter, r *http.Request) {
