@@ -7,7 +7,7 @@ import (
 
 	"github.com/thefrol/kysh-kysh-meow/internal/ololog"
 	"github.com/thefrol/kysh-kysh-meow/internal/report"
-	"github.com/thefrol/kysh-kysh-meow/internal/scheduler"
+	"github.com/thefrol/kysh-kysh-meow/lib/scheduler"
 )
 
 func init() {

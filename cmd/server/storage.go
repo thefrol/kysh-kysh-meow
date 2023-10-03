@@ -7,8 +7,8 @@ import (
 
 	"github.com/thefrol/kysh-kysh-meow/internal/metrica"
 	"github.com/thefrol/kysh-kysh-meow/internal/ololog"
-	"github.com/thefrol/kysh-kysh-meow/internal/scheduler"
 	"github.com/thefrol/kysh-kysh-meow/internal/storage"
+	"github.com/thefrol/kysh-kysh-meow/lib/scheduler"
 )
 
 var store storage.Storager // todo я бы двже наверное отказался бы от этой глобальной переменной

@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/thefrol/kysh-kysh-meow/internal/slices"
+	"github.com/thefrol/kysh-kysh-meow/lib/slices"
 )
 
 type gzipOptions struct {
