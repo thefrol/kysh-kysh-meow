@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"os"
 
 	"github.com/caarlos0/env/v6"
 )
@@ -24,6 +25,15 @@ func configure(defaults config) (cfg config) {
 
 	flag.Parse()
 	env.Parse(&cfg)
+
+	// todo
+	//
+	// вообще две эти функции сверху требуют проверку ошибок, и это в тестах тоже стоило бы отразить
+
+	// Тут обрабатываем особый случай. Если переменная окружения установлена, но в пустое значение
+	if v, ok := os.LookupEnv("FILE_STORAGE_PATH"); ok {
+		cfg.FileStoragePath = v
+	}
 	return
 }
 
