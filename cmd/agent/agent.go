@@ -8,7 +8,6 @@ import (
 	"github.com/thefrol/kysh-kysh-meow/internal/ololog"
 	"github.com/thefrol/kysh-kysh-meow/internal/report"
 	"github.com/thefrol/kysh-kysh-meow/internal/scheduler"
-	"github.com/thefrol/kysh-kysh-meow/internal/stats"
 )
 
 func init() {
@@ -27,14 +26,14 @@ func main() {
 	// Метрики собираются во временное хранилище s,
 	// где они хранятся в сыром виде и готовы превратиться
 	// в массив metrica.Metrica
-	var s stats.Stats
+	var s report.Stats
 
 	// запуск планировщика
 	c := scheduler.New()
 	//собираем данные раз в pollingInterval
 	c.AddJob(time.Duration(config.PollingInterval)*time.Second, func() {
 		//Обновляем данные в хранилище, тут же увеличиваем счетчик
-		s = stats.Fetch()
+		s = report.Fetch()
 	})
 	// отправляем данные раз в repostInterval
 	c.AddJob(time.Duration(config.ReportInterval)*time.Second, func() {
@@ -44,10 +43,6 @@ func main() {
 			ololog.Error().Msgf("Попытка отправить метрики завершилась с  ошибками: %v", err)
 			return
 		}
-		// Сбрасываем PollCount
-		// #TODO: в таком случае нужно проверить, что счетчик реально отправился,
-		//		а не просто, или нам пофигу?)
-		stats.DropPollCount()
 	})
 
 	// Запускаем планировщик, и он занимает поток

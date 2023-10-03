@@ -34,6 +34,9 @@ func Send(metricas []metrica.Metrica, url string) (lastErr error) {
 		defer resp.RawBody().Close()
 		ololog.Info().Msgf("Успешно отправлено %v %v", m.MType, m.ID)
 	}
+
+	// сбрасываем счетчик PollCount
+	dropPollCount() // todo вот этот сброс надо проверять
 	return
 }
 
