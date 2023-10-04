@@ -1,4 +1,4 @@
-package main
+package handlers
 
 import (
 	"fmt"
@@ -10,13 +10,20 @@ import (
 	"github.com/mailru/easyjson"
 	"github.com/thefrol/kysh-kysh-meow/internal/metrica"
 	"github.com/thefrol/kysh-kysh-meow/internal/ololog"
+	"github.com/thefrol/kysh-kysh-meow/internal/storage"
 )
+
+var store storage.Storager
+
+func SetStore(s storage.Storager) {
+	store = s
+}
 
 // updateWithJSON обновляет значение счетчика JSON запросом. Читает из запроса тело в
 // формате metrica.Metrica. Для счетчиков типа counter исползует поле delta и прибавляет к
 // текущему значению, для счетчиков типа gauge заменяет текущее значение новым из поля Value.
 // В ответ записывает структуру metrica.Metrica с обновленным значением
-func updateWithJSON(w http.ResponseWriter, r *http.Request) {
+func UpdateWithJSON(w http.ResponseWriter, r *http.Request) {
 	//todo mix of two handlers + save+ response
 	m := metrica.Metrica{}
 	err := easyjson.UnmarshalFromReader(r.Body, &m)
@@ -83,7 +90,7 @@ func updateWithJSON(w http.ResponseWriter, r *http.Request) {
 // TДля счетчиков типа counter записывает значнием в поле delta,
 // для счетчиков типа gauge в поле value. В ответ
 // записывает структуру metrica.Metrica с обновленным значением
-func valueWithJSON(w http.ResponseWriter, r *http.Request) {
+func ValueWithJSON(w http.ResponseWriter, r *http.Request) {
 	//todo mix of two handlers + save+ response
 	m := metrica.Metrica{}
 	err := easyjson.UnmarshalFromReader(r.Body, &m)
@@ -129,7 +136,7 @@ func valueWithJSON(w http.ResponseWriter, r *http.Request) {
 // иначе говоря за URL вида: /update/counter/<name>/<value>
 // приходящее значение: int64
 // поведение: складывать с предыдущим значением, если оно известно
-func updateCounter(w http.ResponseWriter, r *http.Request, params URLParams) {
+func UpdateCounter(w http.ResponseWriter, r *http.Request, params URLParams) {
 	value, err := strconv.ParseInt(params.value, 10, 64)
 	if err != nil {
 		w.Header().Add("Content-Type", "text/plain")
@@ -148,7 +155,7 @@ func updateCounter(w http.ResponseWriter, r *http.Request, params URLParams) {
 // иначе говоря за URL вида: /update/gauge/<name>/<value>
 // приходящее значение: float64
 // поведение: устанавливать новое значение
-func updateGauge(w http.ResponseWriter, r *http.Request, params URLParams) {
+func UpdateGauge(w http.ResponseWriter, r *http.Request, params URLParams) {
 	value, err := strconv.ParseFloat(params.value, 64)
 	if err != nil {
 		w.Header().Add("Content-Type", "text/plain")
@@ -162,7 +169,7 @@ func updateGauge(w http.ResponseWriter, r *http.Request, params URLParams) {
 // updateGauge отвечает за маршрут, по которому будет обновляться счетчик неизвестного типа
 // без разбора возвращаем 400(Bad Request)
 // #TODO переименовать в BadRequest
-func updateUnknownType(w http.ResponseWriter, r *http.Request, params URLParams) {
+func UpdateUnknownType(w http.ResponseWriter, r *http.Request, params URLParams) {
 	w.Header().Add("Content-Type", "text/plain")
 	http.Error(w, "Фшшш! Я не знаю такой тип счетчика", http.StatusBadRequest)
 }
@@ -170,7 +177,7 @@ func updateUnknownType(w http.ResponseWriter, r *http.Request, params URLParams)
 // getValue возвращает значение уже записанной метрики,
 // если метрика ранее не была записана, возвращает http.StatusNotFound
 // если попытка обратиться к метрике несуществующего типа http.StatusNotFound
-func getValue(w http.ResponseWriter, r *http.Request, params URLParams) {
+func GetValue(w http.ResponseWriter, r *http.Request, params URLParams) {
 	var value fmt.Stringer
 	var found bool
 
@@ -193,7 +200,7 @@ func getValue(w http.ResponseWriter, r *http.Request, params URLParams) {
 }
 
 // listMetrics выводит список всех известных на данный момент метрик
-func listMetrics(w http.ResponseWriter, r *http.Request) {
+func ListMetrics(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Content-Type", "text/html")
 
 	htmlTemplate := `
@@ -243,7 +250,7 @@ type updateMetricFunc func(http.ResponseWriter, *http.Request, URLParams)
 // При создании маршрута в роутере должны быть обозначены такие шаблоны пути, как type, name, value
 // Например, вот так
 // Router.Get("/update/{type}/{name}/{value}")
-func metricAsURL(updateFunc updateMetricFunc) http.HandlerFunc {
+func MetricAsURL(updateFunc updateMetricFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		p := URLParams{
 			metric: chi.URLParam(r, "type"),

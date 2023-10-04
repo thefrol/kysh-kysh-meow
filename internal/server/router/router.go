@@ -1,15 +1,17 @@
-package main
+package router
 
 import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/thefrol/kysh-kysh-meow/cmd/server/middleware"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/handlers"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/middleware"
 )
 
 // todo hlog.FromRequest(r).Info() !!!
 
 func MeowRouter() (router chi.Router) {
+
 	router = chi.NewRouter()
 
 	router.Use(middleware.MeowLogging())
@@ -30,23 +32,23 @@ func MeowRouter() (router chi.Router) {
 	//
 	// а compress вот так compress.GZIP(WithMinLenght(100),WithContentType("text/html")
 
-	router.Get("/", listMetrics)
+	router.Get("/", handlers.ListMetrics)
 	router.Route("/value", func(r chi.Router) {
-		r.Get("/{type}/{name}", metricAsURL(getValue))
-		r.Post("/", valueWithJSON)
+		r.Get("/{type}/{name}", handlers.MetricAsURL(handlers.GetValue))
+		r.Post("/", handlers.ValueWithJSON)
 	}) // todo как-то поработать с allowContentType
 	router.Route("/update", func(r chi.Router) {
 		//r.Use(chimiddleware.AllowContentType("text/plain"))
 
 		r.
 			//With(chimiddleware.AllowContentType("application/json")).
-			Post("/", updateWithJSON)
+			Post("/", handlers.UpdateWithJSON)
 		r.
-			Post("/{type:counter}/{name}/{value}", metricAsURL(updateCounter))
+			Post("/{type:counter}/{name}/{value}", handlers.MetricAsURL(handlers.UpdateCounter))
 		r.
-			Post("/{type:gauge}/{name}/{value}", metricAsURL(updateGauge))
+			Post("/{type:gauge}/{name}/{value}", handlers.MetricAsURL(handlers.UpdateGauge))
 		r.
-			Post("/{type}/{name}/{value}", metricAsURL(updateUnknownType))
+			Post("/{type}/{name}/{value}", handlers.MetricAsURL(handlers.UpdateUnknownType)) // todo ERROR видно, что хендлер вызывает ошибку
 	})
 
 	router.MethodNotAllowed(func(w http.ResponseWriter, r *http.Request) {

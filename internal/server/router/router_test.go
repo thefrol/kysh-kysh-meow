@@ -1,4 +1,4 @@
-package main
+package router
 
 import (
 	"net/http"
@@ -7,11 +7,13 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/handlers"
 	"github.com/thefrol/kysh-kysh-meow/internal/storage"
 )
 
 func init() {
-	store = storage.New() // вот какой ерундой приходится заниматься из-за глобальной переменной
+	handlers.SetStore(storage.New())
+
 }
 
 // что такое test main?
@@ -207,6 +209,7 @@ func Test_updateGauge(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			handlers.SetStore(storage.New())
 			r := httptest.NewRequest(tt.method, tt.route, nil)
 			w := httptest.NewRecorder()
 			MeowRouter().ServeHTTP(w, r)
