@@ -16,12 +16,6 @@ func init() {
 	report.UseBeforeRequest(ApplyGZIP(20, gzip.BestCompression))
 }
 
-var defaultConfig = config{
-	Addr:            "localhost:8080",
-	ReportInterval:  10,
-	PollingInterval: 2,
-}
-
 func main() {
 	config := mustConfigure(defaultConfig)
 

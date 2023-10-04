@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/caarlos0/env/v6"
+	"github.com/thefrol/kysh-kysh-meow/internal/ololog"
 	//"github.com/octago/sflags/gen/gflag" сделать свой репозиторий и залить его всем в ПР
 )
 
@@ -12,6 +13,12 @@ type config struct {
 	Addr            string `env:"ADDRESS" flag:"~a" desc:"(строка) адрес сервера в формате host:port"`
 	ReportInterval  uint   `env:"REPORT_INTERVAL" flag:"~r" desc:"(число, секунды) частота отправки данных на сервер"`
 	PollingInterval uint   `env:"POLLING_INTERVAL" flag:"~p" desc:"(число, секунды) частота отпроса метрик"`
+}
+
+var defaultConfig = config{
+	Addr:            "localhost:8080",
+	ReportInterval:  10,
+	PollingInterval: 2,
 }
 
 // mustConfigure парсит настройки адреса сервера, и частоты опроса и отправки
@@ -32,6 +39,8 @@ func mustConfigure(defaults config) (cfg config) {
 	if err != nil {
 		panic(err)
 	}
+
+	ololog.Info().Msgf("Запущено с настройками %+v", cfg)
 
 	return
 }

@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/caarlos0/env/v6"
+	"github.com/thefrol/kysh-kysh-meow/internal/ololog"
 )
 
 type config struct {
@@ -13,6 +14,13 @@ type config struct {
 	StoreIntervalSeconds uint   `env:"STORE_INTERVAL"`
 	FileStoragePath      string `env:"FILE_STORAGE_PATH"`
 	Restore              bool   `env:"RESTORE"`
+}
+
+var defaultConfig = config{
+	Addr:                 ":8080",
+	StoreIntervalSeconds: 300,
+	FileStoragePath:      "/tmp/metrics-db.json",
+	Restore:              true, // в текущей конфигурации это значение командной строкой никак не поменять, нельзя указать -r 0, флан такое не принимает todo
 }
 
 // mustConfigure парсит командную строку и переменные окружения, чтобы выдать структуру с конфигурацией сервера.
@@ -42,6 +50,9 @@ func mustConfigure(defaults config) (cfg config) {
 	if v, ok := os.LookupEnv("FILE_STORAGE_PATH"); ok {
 		cfg.FileStoragePath = v
 	}
+
+	ololog.Info().Msgf("Запущено с настройками %+v", cfg)
+
 	return
 }
 
