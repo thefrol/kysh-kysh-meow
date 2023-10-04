@@ -2,6 +2,7 @@ package main
 
 import (
 	"compress/gzip"
+	"fmt"
 	"path"
 	"time"
 
@@ -34,6 +35,7 @@ func main() {
 	//собираем данные раз в pollingInterval
 	c.AddJob(time.Duration(config.PollingInterval)*time.Second, func() {
 		//Обновляем данные в хранилище, тут же увеличиваем счетчик
+		ololog.Debug().Msg("Считывание метрик")
 		s = report.Fetch()
 	})
 	// отправляем данные раз в repostInterval
@@ -53,5 +55,5 @@ func main() {
 
 // Endpoint формирует точку, куда агент будет посылать все запросы на основе своей текущей конфигурации
 func Endpoint(cfg config) string {
-	return "http://" + path.Join(cfg.Addr, "update")
+	return fmt.Sprintf("%s%s", "http://", path.Join(cfg.Addr, "update"))
 }
