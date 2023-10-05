@@ -4,14 +4,57 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	chimiddleware "github.com/go-chi/chi/v5/middleware"
 	apiv1 "github.com/thefrol/kysh-kysh-meow/internal/server/api/v1"
 	apiv2 "github.com/thefrol/kysh-kysh-meow/internal/server/api/v2"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/middleware"
 	"github.com/thefrol/kysh-kysh-meow/internal/storage"
 )
 
-// todo hlog.FromRequest(r).Info() !!!
+// apiV1 создает маршруты в роутере, отвечает
+// за наследственный API, это когда передача и получение
+// значений шли через длинные адреса, например:
+// /update/counter/TestCounter/10 или /value/gauge/Alloc
+//
+// Испрользуется так
+// router := chi.NewRouter()
+// router.Group(apiV1)
+func apiV1(r chi.Router) {
+	// в какой-то момент, когда починят тесты, тут можно будет снять комменты
+	//r.With(chimiddleware.AllowContentType("text/plain"))
 
+	r.Get("/value/{type}/{name}", apiv1.MetricAsURL(apiv1.GetValue))
+
+	r.Post("/update/{type:counter}/{name}/{value}", apiv1.MetricAsURL(apiv1.UpdateCounter))
+	r.Post("/update/{type:gauge}/{name}/{value}", apiv1.MetricAsURL(apiv1.UpdateGauge))
+	r.Post("/update/{type}/{name}/{value}", apiv1.MetricAsURL(apiv1.UpdateUnknownType)) // todo ERROR видно, что хендлер вызывает ошибку
+
+}
+
+// apiV2 создает маршруты апи нового образца,
+// /update и /value, принимающие джейсон запросы
+//
+// Испрользуется так
+// router := chi.NewRouter()
+// router.Group(apiV2)
+func apiV2(r chi.Router) {
+	r.With(chimiddleware.AllowContentType("application/json"))
+
+	r.Post("/value", apiv2.ValueWithJSON)
+	r.Post("/value/", apiv2.ValueWithJSON)
+	r.Post("/update", apiv2.UpdateWithJSON)
+	r.Post("/update/", apiv2.UpdateWithJSON)
+	// как не дублировать маршруты я пока варианта не нашел:
+	// если в конце поставить слеш, то без слеша не работает
+	// а вроде даже в тестах и так и так иногда бывает
+}
+
+// MeowRouter - основной роутер сервера, он отвечает за все мидлвари
+// и все маршруты, и даже чтобы на ответы типа 404 и 400 отправлять
+// стилизованные ответы.
+//
+// на входе получает store - объект хранилища, из которого он будет
+// брать все нужные данные о метриках
 func MeowRouter(store storage.Storager) (router chi.Router) {
 
 	apiv1.SetStore(store)
@@ -19,55 +62,33 @@ func MeowRouter(store storage.Storager) (router chi.Router) {
 
 	router = chi.NewRouter()
 
+	// настраиваем мидлвари, логгер, распаковщик и запаковщик
 	router.Use(middleware.MeowLogging())
-	router.Use(middleware.UnGZIP) // еще бы сообщать, что такой энкодинг не поддерживается
-	router.Use(middleware.GZIP(
-		middleware.GZIPBestCompression,
-		middleware.ContentTypes("text/plain", "text/html", "application/json", "application/xml"),
-		middleware.StatusCodes(http.StatusOK),
-		middleware.MinLenght(1),
-		// todo
-		//
-		// Хочу чтобы это выглядело так compress.ContentType(...)
-	))
-	//todo
-	//
-	// по красоте было бы, если миддлеварь выглядела так router.Use(middleware.Uncompress(Gzip,Deflate,Brotli))
-	// и может uncompress.Brotli, uncompress.GZIP
-	//
-	// а compress вот так compress.GZIP(WithMinLenght(100),WithContentType("text/html")
+	router.Use(middleware.UnGZIP)
+	router.Use(middleware.GZIP(middleware.GZIPDefault))
 
+	// Добавляем маршруты, которые я разделил на два раздела
+	//
+	// apiV1 - это установка и получение значений при помощи
+	// длинных URL, например /update/gauge/Alloc/242.81
+	// или /value/counter/PollCount
+	//
+	// apiV2 - это установка и получение значений при помощи JSON
+	// по маршрутам /value и /update
+	router.Group(apiV1)
+	router.Group(apiV2)
+
+	// а ещё вот HTML страничка, которая тоже по сути относится к apiV1
+	// она не объединяется с остальными, потому что не требует
+	// application/json или text/plain в заголовках
 	router.Get("/", apiv1.ListMetrics)
-	router.Route("/value", func(r chi.Router) {
-		r.Get("/{type}/{name}", apiv1.MetricAsURL(apiv1.GetValue))
-		r.Post("/", apiv2.ValueWithJSON)
-	}) // todo как-то поработать с allowContentType
-	router.Route("/update", func(r chi.Router) {
-		//r.Use(chimiddleware.AllowContentType("text/plain"))
 
-		r.
-			//With(chimiddleware.AllowContentType("application/json")).
-			Post("/", apiv2.UpdateWithJSON)
-		r.
-			Post("/{type:counter}/{name}/{value}", apiv1.MetricAsURL(apiv1.UpdateCounter))
-		r.
-			Post("/{type:gauge}/{name}/{value}", apiv1.MetricAsURL(apiv1.UpdateGauge))
-		r.
-			Post("/{type}/{name}/{value}", apiv1.MetricAsURL(apiv1.UpdateUnknownType)) // todo ERROR видно, что хендлер вызывает ошибку
-	})
-
-	// как еще вариант могут быть классы, то есть у нас было бы
-	// handlers.V1().SetStorage(s)
-	// r.Post("/", handlers.V1().Update)
-	// - или -
-	// r.Post("/", handlers.ByUri.Update)
-
+	// Тут добавляем стилизованные под кошки-мышки ответы сервера при 404 и 400
 	router.MethodNotAllowed(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Content-Type", "text/plain")
 		w.WriteHeader(404)
 		w.Write([]byte("^0^ оуууоо! такой метод не дотупен по этому адресу"))
 	})
-
 	router.NotFound(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Content-Type", "text/plain")
 		w.WriteHeader(404)
