@@ -11,8 +11,6 @@ import (
 	"github.com/thefrol/kysh-kysh-meow/lib/scheduler"
 )
 
-var store storage.Storager // todo я бы двже наверное отказался бы от этой глобальной переменной
-
 func fileStorage(cfg config) (storage.Storager, error) {
 	if cfg.FileStoragePath == "" {
 		ololog.Info().Msg("Файл для сохранения и загрузки установлен в пустую строку, а значит все функции сохранения и загрузки на диск отключены")

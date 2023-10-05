@@ -25,7 +25,6 @@ func main() {
 		ololog.Error().Msgf("Не удалось сконфигурировать сервер, по причине: %v", err)
 		return
 	}
-	store = s
 
 	// Запускаем сервер с поддержкой нежного выключения
 	// вдохноввлено примерами роутера chi
@@ -74,7 +73,7 @@ func main() {
 			ToFile(string) error
 		}
 
-		if v, ok := store.(saver); ok {
+		if v, ok := s.(saver); ok {
 			v.ToFile(cfg.FileStoragePath)
 			ololog.Info().Msg("Сохранено в файл")
 		} else {
