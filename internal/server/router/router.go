@@ -4,13 +4,18 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/thefrol/kysh-kysh-meow/internal/server/handlers"
+	apiv1 "github.com/thefrol/kysh-kysh-meow/internal/server/api/v1"
+	apiv2 "github.com/thefrol/kysh-kysh-meow/internal/server/api/v2"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/middleware"
+	"github.com/thefrol/kysh-kysh-meow/internal/storage"
 )
 
 // todo hlog.FromRequest(r).Info() !!!
 
-func MeowRouter() (router chi.Router) {
+func MeowRouter(store storage.Storager) (router chi.Router) {
+
+	apiv1.SetStore(store)
+	apiv2.SetStore(store)
 
 	router = chi.NewRouter()
 
@@ -32,24 +37,30 @@ func MeowRouter() (router chi.Router) {
 	//
 	// а compress вот так compress.GZIP(WithMinLenght(100),WithContentType("text/html")
 
-	router.Get("/", handlers.ListMetrics)
+	router.Get("/", apiv1.ListMetrics)
 	router.Route("/value", func(r chi.Router) {
-		r.Get("/{type}/{name}", handlers.MetricAsURL(handlers.GetValue))
-		r.Post("/", handlers.ValueWithJSON)
+		r.Get("/{type}/{name}", apiv1.MetricAsURL(apiv1.GetValue))
+		r.Post("/", apiv2.ValueWithJSON)
 	}) // todo как-то поработать с allowContentType
 	router.Route("/update", func(r chi.Router) {
 		//r.Use(chimiddleware.AllowContentType("text/plain"))
 
 		r.
 			//With(chimiddleware.AllowContentType("application/json")).
-			Post("/", handlers.UpdateWithJSON)
+			Post("/", apiv2.UpdateWithJSON)
 		r.
-			Post("/{type:counter}/{name}/{value}", handlers.MetricAsURL(handlers.UpdateCounter))
+			Post("/{type:counter}/{name}/{value}", apiv1.MetricAsURL(apiv1.UpdateCounter))
 		r.
-			Post("/{type:gauge}/{name}/{value}", handlers.MetricAsURL(handlers.UpdateGauge))
+			Post("/{type:gauge}/{name}/{value}", apiv1.MetricAsURL(apiv1.UpdateGauge))
 		r.
-			Post("/{type}/{name}/{value}", handlers.MetricAsURL(handlers.UpdateUnknownType)) // todo ERROR видно, что хендлер вызывает ошибку
+			Post("/{type}/{name}/{value}", apiv1.MetricAsURL(apiv1.UpdateUnknownType)) // todo ERROR видно, что хендлер вызывает ошибку
 	})
+
+	// как еще вариант могут быть классы, то есть у нас было бы
+	// handlers.V1().SetStorage(s)
+	// r.Post("/", handlers.V1().Update)
+	// - или -
+	// r.Post("/", handlers.ByUri.Update)
 
 	router.MethodNotAllowed(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Content-Type", "text/plain")

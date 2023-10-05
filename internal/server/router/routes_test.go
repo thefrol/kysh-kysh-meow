@@ -8,7 +8,6 @@ import (
 	"github.com/go-resty/resty/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/thefrol/kysh-kysh-meow/internal/server/handlers"
 	"github.com/thefrol/kysh-kysh-meow/internal/storage"
 )
 
@@ -272,9 +271,7 @@ func Test_MeowRouter(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			store := storage.New()   //обнуляем хранилище
-			handlers.SetStore(store) // todo Это пипец конечно
-			server := httptest.NewServer(MeowRouter())
+			server := httptest.NewServer(MeowRouter(storage.New()))
 			defer server.Close()
 			client := resty.New()
 			for _, u := range tt.prePosts {

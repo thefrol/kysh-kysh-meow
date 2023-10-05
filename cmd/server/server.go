@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/thefrol/kysh-kysh-meow/internal/ololog"
-	"github.com/thefrol/kysh-kysh-meow/internal/server/handlers"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/router"
 )
 
@@ -27,11 +26,10 @@ func main() {
 		return
 	}
 	store = s
-	handlers.SetStore(s) // todo Жесть срочно это убрать
 
 	// Запускаем сервер с поддержкой нежного выключения
 	// вдохноввлено примерами роутера chi
-	server := http.Server{Addr: cfg.Addr, Handler: router.MeowRouter()}
+	server := http.Server{Addr: cfg.Addr, Handler: router.MeowRouter(s)}
 
 	// Server run context
 	serverCtx, serverStopCtx := context.WithCancel(context.Background())

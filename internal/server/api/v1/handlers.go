@@ -1,4 +1,4 @@
-package handlers
+package apiv1
 
 import (
 	"fmt"
@@ -9,7 +9,14 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/thefrol/kysh-kysh-meow/internal/metrica"
 	"github.com/thefrol/kysh-kysh-meow/internal/ololog"
+	"github.com/thefrol/kysh-kysh-meow/internal/storage"
 )
+
+var store storage.Storager
+
+func SetStore(s storage.Storager) {
+	store = s
+}
 
 // updateCounter отвечает за маршрут, по которому будет обновляться счетчик типа counter
 // иначе говоря за URL вида: /update/counter/<name>/<value>

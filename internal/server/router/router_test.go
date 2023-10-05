@@ -7,13 +7,15 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/thefrol/kysh-kysh-meow/internal/server/handlers"
+
+	apiv1 "github.com/thefrol/kysh-kysh-meow/internal/server/api/v1"
+	apiv2 "github.com/thefrol/kysh-kysh-meow/internal/server/api/v2"
 	"github.com/thefrol/kysh-kysh-meow/internal/storage"
 )
 
 func init() {
-	handlers.SetStore(storage.New())
-
+	apiv1.SetStore(storage.New())
+	apiv2.SetStore(storage.New())
 }
 
 // что такое test main?
@@ -87,7 +89,7 @@ func Test_updateCounter(t *testing.T) {
 
 			r := httptest.NewRequest(tt.method, tt.route, nil)
 			w := httptest.NewRecorder()
-			MeowRouter().ServeHTTP(w, r)
+			MeowRouter(storage.New()).ServeHTTP(w, r)
 
 			result := w.Result()
 			defer result.Body.Close()
@@ -209,10 +211,9 @@ func Test_updateGauge(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			handlers.SetStore(storage.New())
 			r := httptest.NewRequest(tt.method, tt.route, nil)
 			w := httptest.NewRecorder()
-			MeowRouter().ServeHTTP(w, r)
+			MeowRouter(storage.New()).ServeHTTP(w, r)
 
 			result := w.Result()
 			defer result.Body.Close()
@@ -284,7 +285,7 @@ func Test_updateUnknownType(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			r := httptest.NewRequest(tt.method, tt.route, nil)
 			w := httptest.NewRecorder()
-			MeowRouter().ServeHTTP(w, r)
+			MeowRouter(storage.New()).ServeHTTP(w, r)
 
 			result := w.Result()
 			defer result.Body.Close()

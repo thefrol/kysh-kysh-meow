@@ -1,4 +1,4 @@
-package handlers
+package apiv2
 
 import (
 	"net/http"
