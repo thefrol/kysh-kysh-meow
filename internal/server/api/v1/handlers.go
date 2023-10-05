@@ -22,7 +22,9 @@ func SetStore(s storage.Storager) {
 // иначе говоря за URL вида: /update/counter/<name>/<value>
 // приходящее значение: int64
 // поведение: складывать с предыдущим значением, если оно известно
-func UpdateCounter(w http.ResponseWriter, r *http.Request, params URLParams) {
+func UpdateCounter(w http.ResponseWriter, r *http.Request) {
+	params := getURLParams(r)
+
 	value, err := strconv.ParseInt(params.value, 10, 64)
 	if err != nil {
 		w.Header().Add("Content-Type", "text/plain")
@@ -41,7 +43,9 @@ func UpdateCounter(w http.ResponseWriter, r *http.Request, params URLParams) {
 // иначе говоря за URL вида: /update/gauge/<name>/<value>
 // приходящее значение: float64
 // поведение: устанавливать новое значение
-func UpdateGauge(w http.ResponseWriter, r *http.Request, params URLParams) {
+func UpdateGauge(w http.ResponseWriter, r *http.Request) {
+	params := getURLParams(r)
+
 	value, err := strconv.ParseFloat(params.value, 64)
 	if err != nil {
 		w.Header().Add("Content-Type", "text/plain")
@@ -52,10 +56,9 @@ func UpdateGauge(w http.ResponseWriter, r *http.Request, params URLParams) {
 	w.Header().Add("Content-Type", "text/plain")
 }
 
-// updateGauge отвечает за маршрут, по которому будет обновляться счетчик неизвестного типа
-// без разбора возвращаем 400(Bad Request)
-// #TODO переименовать в BadRequest
-func UpdateUnknownType(w http.ResponseWriter, r *http.Request, params URLParams) {
+// ErrorUnknownType возвращает клиенту ошибку 400(Bad Request)
+// и отправляет информационное сообщение, о том, что сервер не знает такого типа счетчика
+func ErrorUnknownType(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Content-Type", "text/plain")
 	http.Error(w, "Фшшш! Я не знаю такой тип счетчика", http.StatusBadRequest)
 }
@@ -63,7 +66,9 @@ func UpdateUnknownType(w http.ResponseWriter, r *http.Request, params URLParams)
 // getValue возвращает значение уже записанной метрики,
 // если метрика ранее не была записана, возвращает http.StatusNotFound
 // если попытка обратиться к метрике несуществующего типа http.StatusNotFound
-func GetValue(w http.ResponseWriter, r *http.Request, params URLParams) {
+func GetValue(w http.ResponseWriter, r *http.Request) {
+	params := getURLParams(r)
+
 	var value fmt.Stringer
 	var found bool
 
@@ -126,29 +131,18 @@ func ListMetrics(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// updateMetricFunc это типа функций обработчков, таких как updateCounter, updateGauge
-type updateMetricFunc func(http.ResponseWriter, *http.Request, URLParams)
-
-// metricAsURL используется на длинных маршрутах, вроде /update/counter/testcounter/10,
-// эта функция парсит все урл параметры и передает uupdateFunc, уже распарсив URL в
-// структуру URLParams
-//
-// При создании маршрута в роутере должны быть обозначены такие шаблоны пути, как type, name, value
-// Например, вот так
-// Router.Get("/update/{type}/{name}/{value}")
-func MetricAsURL(updateFunc updateMetricFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		p := URLParams{
-			metric: chi.URLParam(r, "type"),
-			name:   chi.URLParam(r, "name"),
-			value:  chi.URLParam(r, "value"),
-		}
-		updateFunc(w, r, p)
-	}
-}
-
-type URLParams struct {
+type urlParams struct {
 	metric string //type
 	name   string
 	value  string
+}
+
+// getURLParams достает из URL маршрута параметры счетчика, такие как
+// тип, имя, значение, и возвращает в виде структуры urlParams
+func getURLParams(r *http.Request) urlParams {
+	return urlParams{
+		metric: chi.URLParam(r, "type"),
+		name:   chi.URLParam(r, "name"),
+		value:  chi.URLParam(r, "value"),
+	}
 }

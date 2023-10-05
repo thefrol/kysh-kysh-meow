@@ -23,11 +23,11 @@ func apiV1(r chi.Router) {
 	// в какой-то момент, когда починят тесты, тут можно будет снять комменты
 	//r.With(chimiddleware.AllowContentType("text/plain"))
 
-	r.Get("/value/{type}/{name}", apiv1.MetricAsURL(apiv1.GetValue))
+	r.Get("/value/{type}/{name}", apiv1.GetValue)
 
-	r.Post("/update/{type:counter}/{name}/{value}", apiv1.MetricAsURL(apiv1.UpdateCounter))
-	r.Post("/update/{type:gauge}/{name}/{value}", apiv1.MetricAsURL(apiv1.UpdateGauge))
-	r.Post("/update/{type}/{name}/{value}", apiv1.MetricAsURL(apiv1.UpdateUnknownType)) // todo ERROR видно, что хендлер вызывает ошибку
+	r.Post("/update/{type:counter}/{name}/{value}", apiv1.UpdateCounter)
+	r.Post("/update/{type:gauge}/{name}/{value}", apiv1.UpdateGauge)
+	r.Post("/update/{type}/{name}/{value}", apiv1.ErrorUnknownType)
 
 }
 
