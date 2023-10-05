@@ -20,7 +20,12 @@ var defaultClient = resty.New() // todo .SetJSONMarshaler(easyjson.Marshal())
 func Send(metricas []metrica.Metrica, url string) (lastErr error) {
 	for _, m := range metricas {
 		buf := new(bytes.Buffer)
-		easyjson.MarshalToWriter(m, buf)
+		_, err := easyjson.MarshalToWriter(m, buf)
+		if err != nil {
+			ololog.Error().Str("location", "internal/report").Msgf("Не могу замаршалить [%v]%v, по приничине %+v", m.MType, m.ID, err)
+			lastErr = err
+			continue
+		}
 		// у нас существует очень важный контракт,
 		// что тело сюда передается в формате io.Reader,
 		// тогда могут работать разные мидлвари
