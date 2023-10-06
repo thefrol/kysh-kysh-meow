@@ -32,7 +32,7 @@ type API struct {
 // New создает новую
 func New(store Storager) API {
 	if store == nil {
-		panic("Хранилище - пустая функция")
+		panic("Хранилище - пустой указатель")
 	}
 	return API{store: store}
 }
