@@ -90,7 +90,7 @@ func ValueWithJSON(w http.ResponseWriter, r *http.Request) {
 		httpErrorWithLogging(w, http.StatusBadRequest, "Ошибка метрики %+v: %v", m, err) // todo, а как бы сделать так, чтобы %v подсвечивался
 		return
 	} else if !found {
-		httpErrorWithLogging(w, http.StatusNotFound, "Невозможно получить значение метрики %v из хранилища", m.ID)
+		httpErrorWithLogging(w, http.StatusNotFound, "В хранилище не найдена метрика %v", m.ID)
 		return
 	}
 
