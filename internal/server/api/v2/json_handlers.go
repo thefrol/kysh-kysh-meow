@@ -10,8 +10,31 @@ import (
 	"github.com/mailru/easyjson"
 	"github.com/thefrol/kysh-kysh-meow/internal/metrica"
 	"github.com/thefrol/kysh-kysh-meow/internal/ololog"
-	"github.com/thefrol/kysh-kysh-meow/internal/storage"
 )
+
+// Storager это интерфейс к хранилищу, которое использует именно этот API. Таким образом мы делаем хранилище зависимым от
+// API,  а не наоборот
+type Storager interface {
+	Counter(name string) (metrica.Counter, bool)
+	SetCounter(string, metrica.Counter)
+	ListCounters() []string
+	Gauge(name string) (metrica.Gauge, bool)
+	SetGauge(string, metrica.Gauge)
+	ListGauges() []string
+}
+
+// API это колленция http.HanlderFunc, которые обращаются к единому хранилищу store
+type API struct {
+	store Storager
+}
+
+// New создает новую
+func New(store Storager) API {
+	if store == nil {
+		panic("Хранилище - пустой указатель")
+	}
+	return API{store: store}
+}
 
 // Не знаю, правильно ли это обновлять значение m в функциях AddValueFromStorage и UpdateStorageAndValue.
 // Просто не хочется ещё раз обращаться к хранилищу, там проводить преобразование типов  и плодить указатели.
@@ -32,17 +55,13 @@ import (
 // а в базу данных. Дополнительно вазывать чтение значение из базы - записали нормально ли? Не слишком ли это много времени займет, так что
 // эти два хендлера работают в рачете на скорость, потому что тут это наиболее чувствительная область.
 
-var store storage.Storager
-
-func SetStore(s storage.Storager) {
-	store = s
-}
+//
 
 // updateWithJSON обновляет значение счетчика JSON запросом. Читает из запроса тело в
 // формате metrica.Metrica. Для счетчиков типа counter исползует поле delta и прибавляет к
 // текущему значению, для счетчиков типа gauge заменяет текущее значение новым из поля Value.
 // В ответ записывает структуру metrica.Metrica с обновленным значением
-func UpdateWithJSON(w http.ResponseWriter, r *http.Request) {
+func (api API) UpdateWithJSON(w http.ResponseWriter, r *http.Request) {
 	//todo mix of two handlers + save+ response
 	m := metrica.Metrica{}
 	err := easyjson.UnmarshalFromReader(r.Body, &m)
@@ -54,7 +73,7 @@ func UpdateWithJSON(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	// изменяем хранилище и значения в переменной m
-	err = updateStorageAndValue(store, &m)
+	err = updateStorageAndValue(api.store, &m)
 	if err != nil {
 		httpErrorWithLogging(w, http.StatusBadRequest, "Ошибка обновления хранилища: %v", err)
 		return
@@ -73,7 +92,7 @@ func UpdateWithJSON(w http.ResponseWriter, r *http.Request) {
 // TДля счетчиков типа counter записывает значнием в поле delta,
 // для счетчиков типа gauge в поле value. В ответ
 // записывает структуру metrica.Metrica с обновленным значением
-func ValueWithJSON(w http.ResponseWriter, r *http.Request) {
+func (api API) ValueWithJSON(w http.ResponseWriter, r *http.Request) {
 	//todo mix of two handlers + save+ response
 	m := metrica.Metrica{}
 	err := easyjson.UnmarshalFromReader(r.Body, &m)
@@ -85,7 +104,7 @@ func ValueWithJSON(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	// пробуем обновить метрики. Там где мы проверяем err, нас не интересуют ошибки где пустые поля Value или
-	err, found := addValueFromStorage(store, &m)
+	err, found := addValueFromStorage(api.store, &m)
 	if err != nil {
 		httpErrorWithLogging(w, http.StatusBadRequest, "Ошибка метрики %+v: %v", m, err) // todo, а как бы сделать так, чтобы %v подсвечивался
 		return
@@ -128,7 +147,7 @@ func httpErrorWithLogging(w http.ResponseWriter, statusCode int, format string, 
 //
 // found==true Тогда и только тогда, когда err!=nil; found=false тоже возможен когда err!=nil
 // err!=nil тогда, когда структура m неправильно оформлена
-func addValueFromStorage(store storage.Storager, m *metrica.Metrica) (e error, found bool) {
+func addValueFromStorage(store Storager, m *metrica.Metrica) (e error, found bool) {
 
 	// TODO
 	//
@@ -173,7 +192,7 @@ func addValueFromStorage(store storage.Storager, m *metrica.Metrica) (e error, f
 }
 
 // updateStorageAndValue обновляет и значение m и хранилища store  в соответствии со значением
-func updateStorageAndValue(store storage.Storager, m *metrica.Metrica) error {
+func updateStorageAndValue(store Storager, m *metrica.Metrica) error {
 	err := m.Validate()
 	if err != nil {
 		return fmt.Errorf("полученная структура оформлена неправильно: %v", err)

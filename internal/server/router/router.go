@@ -18,7 +18,7 @@ import (
 //
 // Испрользуется так
 // router := chi.NewRouter()
-// router.Group(apiV1)
+// InstallAPIV1(router, store)
 func InstallAPIV1(r chi.Router, v1 apiv1.API) {
 	r.Group(func(r chi.Router) {
 		// в какой-то момент, когда починят тесты, тут можно будет снять комменты
@@ -32,22 +32,26 @@ func InstallAPIV1(r chi.Router, v1 apiv1.API) {
 	})
 }
 
-// apiV2 создает маршруты апи нового образца,
+// InstallAPIV2 создает маршруты апи нового образца,
 // /update и /value, принимающие джейсон запросы
 //
 // Испрользуется так
 // router := chi.NewRouter()
-// router.Group(apiV2)
-func apiV2(r chi.Router) {
-	r.With(chimiddleware.AllowContentType("application/json"))
+// InstallAPIV2(router, store)
+func InstallAPIV2(r chi.Router, v2 apiv2.API) {
+	r.Group(func(r chi.Router) {
+		r.With(chimiddleware.AllowContentType("application/json"))
 
-	r.Post("/value", apiv2.ValueWithJSON)
-	r.Post("/value/", apiv2.ValueWithJSON)
-	r.Post("/update", apiv2.UpdateWithJSON)
-	r.Post("/update/", apiv2.UpdateWithJSON)
-	// как не дублировать маршруты я пока варианта не нашел:
-	// если в конце поставить слеш, то без слеша не работает
-	// а вроде даже в тестах и так и так иногда бывает
+		r.Post("/value", v2.ValueWithJSON)
+		r.Post("/value/", v2.ValueWithJSON)
+		r.Post("/update", v2.UpdateWithJSON)
+		r.Post("/update/", v2.UpdateWithJSON)
+
+		// как не дублировать маршруты я пока варианта не нашел:
+		// если в конце поставить слеш, то без слеша не работает
+		// а вроде даже в тестах и так и так иногда бывает
+	})
+
 }
 
 // MeowRouter - основной роутер сервера, он отвечает за все мидлвари
@@ -67,10 +71,10 @@ func MeowRouter(store storage.Storager) (router chi.Router) {
 
 	// Добавляем маршруты, которые я разделил на два раздела
 	v1 := apiv1.New(store)
-	apiv2.SetStore(store)
+	v2 := apiv2.New(store)
 
 	InstallAPIV1(router, v1)
-	router.Group(apiV2)
+	InstallAPIV2(router, v2)
 
 	// а ещё вот HTML страничка, которая тоже по сути относится к apiV1
 	// она не объединяется с остальными, потому что не требует
