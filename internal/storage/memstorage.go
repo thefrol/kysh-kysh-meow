@@ -3,6 +3,7 @@ package storage
 import (
 	"github.com/thefrol/kysh-kysh-meow/internal/metrica"
 	apiv1 "github.com/thefrol/kysh-kysh-meow/internal/server/api/v1"
+	apiv2 "github.com/thefrol/kysh-kysh-meow/internal/server/api/v2"
 )
 
 type MemStore struct {
@@ -66,3 +67,4 @@ var _ Storager = (*MemStore)(nil)
 
 // Делаем MemStore зависимым от бизнес логики - хендлеров
 var _ apiv1.Storager = (*MemStore)(nil)
+var _ apiv2.Storager = (*MemStore)(nil)
