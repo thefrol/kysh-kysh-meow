@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/thefrol/kysh-kysh-meow/internal/ololog"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/router"
 )
 
 func main() {
@@ -24,11 +25,10 @@ func main() {
 		ololog.Error().Msgf("Не удалось сконфигурировать сервер, по причине: %v", err)
 		return
 	}
-	store = s
 
 	// Запускаем сервер с поддержкой нежного выключения
 	// вдохноввлено примерами роутера chi
-	server := http.Server{Addr: cfg.Addr, Handler: MeowRouter()}
+	server := http.Server{Addr: cfg.Addr, Handler: router.MeowRouter(s)}
 
 	// Server run context
 	serverCtx, serverStopCtx := context.WithCancel(context.Background())
@@ -73,7 +73,7 @@ func main() {
 			ToFile(string) error
 		}
 
-		if v, ok := store.(saver); ok {
+		if v, ok := s.(saver); ok {
 			v.ToFile(cfg.FileStoragePath)
 			ololog.Info().Msg("Сохранено в файл")
 		} else {
