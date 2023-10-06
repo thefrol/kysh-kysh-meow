@@ -28,3 +28,8 @@ vendor/
 
 #Folders for hiding, like sandbox
 __*/
+
+#scripts for testing
+scripts/test*
+scripts/agent-cover
+scripts/server-cover
