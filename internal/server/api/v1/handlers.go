@@ -11,20 +11,37 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/thefrol/kysh-kysh-meow/internal/metrica"
 	"github.com/thefrol/kysh-kysh-meow/internal/ololog"
-	"github.com/thefrol/kysh-kysh-meow/internal/storage"
 )
 
-var store storage.Storager
+// Storager это интерфейс к хранилищу, которое использует именно этот API. Таким образом мы делаем хранилище зависимым от
+// API,  а не наоборот
+type Storager interface {
+	Counter(name string) (metrica.Counter, bool)
+	SetCounter(string, metrica.Counter)
+	ListCounters() []string
+	Gauge(name string) (metrica.Gauge, bool)
+	SetGauge(string, metrica.Gauge)
+	ListGauges() []string
+}
 
-func SetStore(s storage.Storager) {
-	store = s
+// API это колленция http.HanlderFunc, которые обращаются к единому хранилищу store
+type API struct {
+	store Storager
+}
+
+// New создает новую
+func New(store Storager) API {
+	if store == nil {
+		panic("Хранилище - пустая функция")
+	}
+	return API{store: store}
 }
 
 // updateCounter отвечает за маршрут, по которому будет обновляться счетчик типа counter
 // иначе говоря за URL вида: /update/counter/<name>/<value>
 // приходящее значение: int64
 // поведение: складывать с предыдущим значением, если оно известно
-func UpdateCounter(w http.ResponseWriter, r *http.Request) {
+func (api API) UpdateCounter(w http.ResponseWriter, r *http.Request) {
 	params := getURLParams(r)
 
 	value, err := strconv.ParseInt(params.value, 10, 64)
@@ -34,10 +51,10 @@ func UpdateCounter(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "^0^ Ошибка значения, не могу пропарсить", http.StatusBadRequest)
 		return
 	}
-	old, _ := store.Counter(params.name)
+	old, _ := api.store.Counter(params.name)
 	// по сути нам не надо обрабатывать случай, если значение небыло установлено. Оно ноль, прибавим новое значение и все четко
 	new := old + metrica.Counter(value)
-	store.SetCounter(params.name, new)
+	api.store.SetCounter(params.name, new)
 	w.Header().Add("Content-Type", "text/plain")
 }
 
@@ -45,7 +62,7 @@ func UpdateCounter(w http.ResponseWriter, r *http.Request) {
 // иначе говоря за URL вида: /update/gauge/<name>/<value>
 // приходящее значение: float64
 // поведение: устанавливать новое значение
-func UpdateGauge(w http.ResponseWriter, r *http.Request) {
+func (api API) UpdateGauge(w http.ResponseWriter, r *http.Request) {
 	params := getURLParams(r)
 
 	value, err := strconv.ParseFloat(params.value, 64)
@@ -54,7 +71,7 @@ func UpdateGauge(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "^0^ Ошибка значения, не могу пропарсить", http.StatusBadRequest)
 		return
 	}
-	store.SetGauge(params.name, metrica.Gauge(value))
+	api.store.SetGauge(params.name, metrica.Gauge(value))
 	w.Header().Add("Content-Type", "text/plain")
 }
 
@@ -68,7 +85,7 @@ func ErrorUnknownType(w http.ResponseWriter, r *http.Request) {
 // getValue возвращает значение уже записанной метрики,
 // если метрика ранее не была записана, возвращает http.StatusNotFound
 // если попытка обратиться к метрике несуществующего типа http.StatusNotFound
-func GetValue(w http.ResponseWriter, r *http.Request) {
+func (api API) GetValue(w http.ResponseWriter, r *http.Request) {
 	params := getURLParams(r)
 
 	var value fmt.Stringer
@@ -76,9 +93,9 @@ func GetValue(w http.ResponseWriter, r *http.Request) {
 
 	switch params.metric {
 	case metrica.CounterName:
-		value, found = store.Counter(params.name)
+		value, found = api.store.Counter(params.name)
 	case metrica.GaugeName:
-		value, found = store.Gauge(params.name)
+		value, found = api.store.Gauge(params.name)
 	default:
 		http.NotFound(w, r)
 		return
@@ -93,7 +110,7 @@ func GetValue(w http.ResponseWriter, r *http.Request) {
 }
 
 // listMetrics выводит список всех известных на данный момент метрик
-func ListMetrics(w http.ResponseWriter, r *http.Request) {
+func (api API) ListMetrics(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Content-Type", "text/html")
 
 	htmlTemplate := `
@@ -125,7 +142,7 @@ func ListMetrics(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "error creating template", http.StatusInternalServerError)
 		return
 	}
-	err = tmpl.Execute(w, store)
+	err = tmpl.Execute(w, api.store)
 	if err != nil {
 		ololog.Error().Str("location", "server/handlers/listCounters").Err(err).Msg("Ошибка запуска шаблона HTML")
 		http.Error(w, "error executing template", http.StatusInternalServerError)

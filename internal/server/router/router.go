@@ -19,16 +19,17 @@ import (
 // Испрользуется так
 // router := chi.NewRouter()
 // router.Group(apiV1)
-func apiV1(r chi.Router) {
-	// в какой-то момент, когда починят тесты, тут можно будет снять комменты
-	//r.With(chimiddleware.AllowContentType("text/plain"))
+func InstallAPIV1(r chi.Router, v1 apiv1.API) {
+	r.Group(func(r chi.Router) {
+		// в какой-то момент, когда починят тесты, тут можно будет снять комменты
+		//r.With(chimiddleware.AllowContentType("text/plain"))
+		r.Get("/value/{type}/{name}", v1.GetValue)
 
-	r.Get("/value/{type}/{name}", apiv1.GetValue)
+		r.Post("/update/{type:counter}/{name}/{value}", v1.UpdateCounter)
+		r.Post("/update/{type:gauge}/{name}/{value}", v1.UpdateGauge)
+		r.Post("/update/{type}/{name}/{value}", apiv1.ErrorUnknownType)
 
-	r.Post("/update/{type:counter}/{name}/{value}", apiv1.UpdateCounter)
-	r.Post("/update/{type:gauge}/{name}/{value}", apiv1.UpdateGauge)
-	r.Post("/update/{type}/{name}/{value}", apiv1.ErrorUnknownType)
-
+	})
 }
 
 // apiV2 создает маршруты апи нового образца,
@@ -57,9 +58,6 @@ func apiV2(r chi.Router) {
 // брать все нужные данные о метриках
 func MeowRouter(store storage.Storager) (router chi.Router) {
 
-	apiv1.SetStore(store)
-	apiv2.SetStore(store)
-
 	router = chi.NewRouter()
 
 	// настраиваем мидлвари, логгер, распаковщик и запаковщик
@@ -68,20 +66,16 @@ func MeowRouter(store storage.Storager) (router chi.Router) {
 	router.Use(middleware.GZIP(middleware.GZIPDefault))
 
 	// Добавляем маршруты, которые я разделил на два раздела
-	//
-	// apiV1 - это установка и получение значений при помощи
-	// длинных URL, например /update/gauge/Alloc/242.81
-	// или /value/counter/PollCount
-	//
-	// apiV2 - это установка и получение значений при помощи JSON
-	// по маршрутам /value и /update
-	router.Group(apiV1)
+	v1 := apiv1.New(store)
+	apiv2.SetStore(store)
+
+	InstallAPIV1(router, v1)
 	router.Group(apiV2)
 
 	// а ещё вот HTML страничка, которая тоже по сути относится к apiV1
 	// она не объединяется с остальными, потому что не требует
 	// application/json или text/plain в заголовках
-	router.Get("/", apiv1.ListMetrics)
+	router.Get("/", v1.ListMetrics)
 
 	// Тут добавляем стилизованные под кошки-мышки ответы сервера при 404 и 400
 	router.MethodNotAllowed(func(w http.ResponseWriter, r *http.Request) {

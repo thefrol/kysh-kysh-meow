@@ -9,15 +9,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	apiv1 "github.com/thefrol/kysh-kysh-meow/internal/server/api/v1"
-	apiv2 "github.com/thefrol/kysh-kysh-meow/internal/server/api/v2"
 	"github.com/thefrol/kysh-kysh-meow/internal/storage"
 )
-
-func init() {
-	apiv1.SetStore(storage.New())
-	apiv2.SetStore(storage.New())
-}
 
 func Test_MeowRouter(t *testing.T) {
 

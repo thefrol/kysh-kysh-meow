@@ -1,6 +1,9 @@
 package storage
 
-import "github.com/thefrol/kysh-kysh-meow/internal/metrica"
+import (
+	"github.com/thefrol/kysh-kysh-meow/internal/metrica"
+	apiv1 "github.com/thefrol/kysh-kysh-meow/internal/server/api/v1"
+)
 
 type MemStore struct {
 	Counters map[string]metrica.Counter
@@ -58,9 +61,8 @@ func (m MemStore) Metricas() (list []metrica.Metrica) {
 	return
 }
 
-// todo
-//
-// У меня может быть стринг интерфейс к хранилищу, и им пользуются всякие ребятки, но другие ребятки им не пользуются. Но дело ли это хранилища,
-// Или можно какую-то надсткойку сделать, например, - новый слой?
 // Проверка, что MemStore соответсвует нужному интерфейсу
 var _ Storager = (*MemStore)(nil)
+
+// Делаем MemStore зависимым от бизнес логики - хендлеров
+var _ apiv1.Storager = (*MemStore)(nil)
