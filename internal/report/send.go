@@ -5,8 +5,8 @@ import (
 
 	"github.com/go-resty/resty/v2"
 	"github.com/mailru/easyjson"
+	"github.com/rs/zerolog/log"
 	"github.com/thefrol/kysh-kysh-meow/internal/metrica"
-	"github.com/thefrol/kysh-kysh-meow/internal/ololog"
 )
 
 var defaultClient = resty.New() // todo .SetJSONMarshaler(easyjson.Marshal())
@@ -22,7 +22,7 @@ func Send(metricas []metrica.Metrica, url string) (lastErr error) {
 		buf := new(bytes.Buffer)
 		_, err := easyjson.MarshalToWriter(m, buf)
 		if err != nil {
-			ololog.Error().Str("location", "internal/report").Msgf("Не могу замаршалить [%v]%v, по приничине %+v", m.MType, m.ID, err)
+			log.Error().Str("location", "internal/report").Msgf("Не могу замаршалить [%v]%v, по приничине %+v", m.MType, m.ID, err)
 			lastErr = err
 			continue
 		}
@@ -32,12 +32,12 @@ func Send(metricas []metrica.Metrica, url string) (lastErr error) {
 		resp, err := defaultClient.R().SetBody(buf).Post(url) // todo в данный момент мы не используем тут easyjson
 
 		if err != nil {
-			ololog.Error().Str("location", "internal/report").Msgf("Не могу отправить сообщение с метрикой [%v]%v, по приничине %+v", m.MType, m.ID, err)
+			log.Error().Str("location", "internal/report").Msgf("Не могу отправить сообщение с метрикой [%v]%v, по приничине %+v", m.MType, m.ID, err)
 			lastErr = err
 			continue
 		}
 		defer resp.RawBody().Close()
-		ololog.Info().Msgf("Успешно отправлено %v %v", m.MType, m.ID)
+		log.Info().Msgf("Успешно отправлено %v %v", m.MType, m.ID)
 	}
 
 	// сбрасываем счетчик PollCount

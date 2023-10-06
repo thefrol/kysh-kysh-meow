@@ -6,7 +6,7 @@ import (
 	"path"
 	"time"
 
-	"github.com/thefrol/kysh-kysh-meow/internal/ololog"
+	"github.com/rs/zerolog/log"
 	"github.com/thefrol/kysh-kysh-meow/internal/report"
 	"github.com/thefrol/kysh-kysh-meow/lib/scheduler"
 )
@@ -29,7 +29,7 @@ func main() {
 	//собираем данные раз в pollingInterval
 	c.AddJob(time.Duration(config.PollingInterval)*time.Second, func() {
 		//Обновляем данные в хранилище, тут же увеличиваем счетчик
-		ololog.Debug().Msg("Считывание метрик")
+		log.Debug().Msg("Считывание метрик")
 		s = report.Fetch()
 	})
 	// отправляем данные раз в repostInterval
@@ -37,7 +37,7 @@ func main() {
 		//отправляем на сервер метрики из хранилища s
 		err := report.Send(s.ToTransport(), Endpoint(config))
 		if err != nil {
-			ololog.Error().Msgf("Попытка отправить метрики завершилась с  ошибками: %v", err)
+			log.Error().Msgf("Попытка отправить метрики завершилась с  ошибками: %v", err)
 			return
 		}
 	})

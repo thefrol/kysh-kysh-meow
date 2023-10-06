@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/thefrol/kysh-kysh-meow/internal/ololog"
+	"github.com/rs/zerolog/log"
 )
 
 // GZIP это мидлварь для сервера, которая сжимает содержимое запроса
@@ -180,7 +180,7 @@ func (cw *CompressedWriter) Write(bb []byte) (int, error) {
 
 	nn, err := gz.Write(bb)
 	if err != nil {
-		ololog.Error().Str("Location", "compression middleware").Msg("error writing to first bytes buffer when writing, should not happen")
+		log.Error().Str("Location", "compression middleware").Msg("error writing to first bytes buffer when writing, should not happen")
 		return nn, err
 		// todo тут ещё можно скипнуть с архива и попробовать например без архивации, если что-то идет не так. Например может можно вызвать recover?
 	}
@@ -216,7 +216,7 @@ func (cw *CompressedWriter) WriteHeader(status int) {
 // пристальное внимание, но такая ошибка не должна валить сервер
 func (cw *CompressedWriter) confirmStatusCode() {
 	if cw.statusCode == 0 {
-		ololog.Error().Str("location", "server/middleware/gzip").Msg("Кто-то записал мне код статуса 0, вместо 200, это где-то после меня случилось. Я поменял статус код на 200, но нужно обязательно проверить, что-то работает не так")
+		log.Error().Str("location", "server/middleware/gzip").Msg("Кто-то записал мне код статуса 0, вместо 200, это где-то после меня случилось. Я поменял статус код на 200, но нужно обязательно проверить, что-то работает не так")
 		cw.statusCode = 200
 	}
 	if cw.statusCode != 200 {

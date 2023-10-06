@@ -5,15 +5,15 @@ import (
 	"os"
 	"time"
 
+	"github.com/rs/zerolog/log"
 	"github.com/thefrol/kysh-kysh-meow/internal/metrica"
-	"github.com/thefrol/kysh-kysh-meow/internal/ololog"
 	"github.com/thefrol/kysh-kysh-meow/internal/storage"
 	"github.com/thefrol/kysh-kysh-meow/lib/scheduler"
 )
 
 func fileStorage(cfg config) (storage.Storager, error) {
 	if cfg.FileStoragePath == "" {
-		ololog.Info().Msg("Файл для сохранения и загрузки установлен в пустую строку, а значит все функции сохранения и загрузки на диск отключены")
+		log.Info().Msg("Файл для сохранения и загрузки установлен в пустую строку, а значит все функции сохранения и загрузки на диск отключены")
 		return storage.New(), nil
 	}
 
@@ -23,10 +23,10 @@ func fileStorage(cfg config) (storage.Storager, error) {
 		var err error
 		s, err = storage.FromFile(cfg.FileStoragePath)
 		if err != nil {
-			ololog.Error().Msgf("Не могу загрузить хранилища с диска %v по принчине %+v", cfg.FileStoragePath, err)
+			log.Error().Msgf("Не могу загрузить хранилища с диска %v по принчине %+v", cfg.FileStoragePath, err)
 			return nil, err
 		}
-		ololog.Info().Msgf("Хранищиле воостановлено из %v", cfg.FileStoragePath)
+		log.Info().Msgf("Хранищиле воостановлено из %v", cfg.FileStoragePath)
 	} else {
 		ss := storage.New()
 		s = &ss // todo помоему storage.New() должно возвращать указатель, чтобы не было таких проблем
@@ -36,7 +36,7 @@ func fileStorage(cfg config) (storage.Storager, error) {
 
 	wrapped := wrapStorageWithWrite(time.Duration(cfg.StoreIntervalSeconds)*time.Second, s, func() {
 		s.ToFile(cfg.FileStoragePath)
-		ololog.Info().Msg("Хранилище записано в файл")
+		log.Info().Msg("Хранилище записано в файл")
 	})
 	return wrapped, nil
 }
@@ -80,12 +80,12 @@ func wrapStorageWithWrite(writeInterval time.Duration, s storage.Storager, write
 	if writeInterval == 0 {
 		cbs := CallBackStorage{Storager: s}
 		cbs.SaveCallback = writeCallback
-		ololog.Info().Msg("Создано хранилище с синхронной записью на диск")
+		log.Info().Msg("Создано хранилище с синхронной записью на диск")
 		return cbs
 	}
 
 	if writeInterval < 500*time.Millisecond {
-		ololog.Warn().Str("location", "server storage wrapper").Msgf("Указана слишком быстрое время сохранения метрик %vс. Это может сказать на производительности", writeInterval.Seconds())
+		log.Warn().Str("location", "server storage wrapper").Msgf("Указана слишком быстрое время сохранения метрик %vс. Это может сказать на производительности", writeInterval.Seconds())
 	}
 	// в ином случае запускаем планировщик
 	sc := scheduler.New()

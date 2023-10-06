@@ -3,9 +3,11 @@ package main
 import (
 	"flag"
 	"fmt"
+	"os"
 
 	"github.com/caarlos0/env/v6"
-	"github.com/thefrol/kysh-kysh-meow/internal/ololog"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 	//"github.com/octago/sflags/gen/gflag" сделать свой репозиторий и залить его всем в ПР
 )
 
@@ -40,12 +42,16 @@ func mustConfigure(defaults config) (cfg config) {
 		panic(err)
 	}
 
-	ololog.Info().Msgf("Запущено с настройками %+v", cfg)
+	log.Info().Msgf("Запущено с настройками %+v", cfg)
 
 	return
 }
 
 func init() {
+	// настраиваем дружелюбный цветастый вывод логгера
+	log.Logger = zerolog.New(os.Stderr).Output(zerolog.ConsoleWriter{Out: os.Stderr})
+	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
+
 	// добавляет смайлик кота в конец справки
 	flag.Usage = func() {
 		print("server")

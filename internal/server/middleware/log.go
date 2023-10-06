@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/thefrol/kysh-kysh-meow/internal/ololog"
+	"github.com/rs/zerolog/log"
 )
 
 func MeowLogging() func(http.Handler) http.Handler {
@@ -29,14 +29,14 @@ func MeowLogging() func(http.Handler) http.Handler {
 			// Чтобы сообщения были как бы обернуты миддлеваром, вот начало вот конец.
 			// Или в контексте реквеста передается как-то логгер, куда может писать хендлер и тогда его сообщения
 			// будут как-то отдельно форматироваться
-			ololog.Info().
+			log.Info().
 				Str("method", r.Method).
 				Str("uri", r.RequestURI).
 				Bool("gzippedRequest", encoded(r, "gzip")).
 				Dur("duration", d).
 				Msg("Request ->")
 
-			ololog.Info().
+			log.Info().
 				Int("statusCode", wr.statusCode).
 				Int("size", wr.bytesWritten).
 				// todo add gzipped response flag
@@ -84,7 +84,7 @@ func (ww *writerWrapper) WriteHeader(statusCode int) {
 		// я кое-что узнал в перерыве, что после использования Write()
 		// заголовки нельзя больше переписать даже при помощи WriteHeader()
 		// поэтому проверяем
-		ololog.Error().Str("location", "logger middleware").Msg("Попытка записи заголовков после использования функции Write(). Заголовки и статус уже не изменить")
+		log.Error().Str("location", "logger middleware").Msg("Попытка записи заголовков после использования функции Write(). Заголовки и статус уже не изменить")
 
 		// TODO
 		//
@@ -97,7 +97,7 @@ func (ww *writerWrapper) WriteHeader(statusCode int) {
 	}
 
 	if statusCode == 0 {
-		ololog.Error().Str("location", "logger middleware").Msg("Кто-то пытается записать в ответ статус код 0, это ошибка и приведет к падению сервера")
+		log.Error().Str("location", "logger middleware").Msg("Кто-то пытается записать в ответ статус код 0, это ошибка и приведет к падению сервера")
 	}
 	if statusCode != 200 {
 		ww.originalWriter.WriteHeader(statusCode)

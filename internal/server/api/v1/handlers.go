@@ -9,8 +9,8 @@ import (
 	"text/template"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/rs/zerolog/log"
 	"github.com/thefrol/kysh-kysh-meow/internal/metrica"
-	"github.com/thefrol/kysh-kysh-meow/internal/ololog"
 )
 
 // Storager это интерфейс к хранилищу, которое использует именно этот API. Таким образом мы делаем хранилище зависимым от
@@ -138,13 +138,13 @@ func (api API) ListMetrics(w http.ResponseWriter, r *http.Request) {
 
 	tmpl, err := template.New("simple").Parse(htmlTemplate)
 	if err != nil {
-		ololog.Error().Str("location", "server/handlers/listCounters").Err(err).Msg("Не удается создать и пропарсить HTML шаблон")
+		log.Error().Str("location", "server/handlers/listCounters").Err(err).Msg("Не удается создать и пропарсить HTML шаблон")
 		http.Error(w, "error creating template", http.StatusInternalServerError)
 		return
 	}
 	err = tmpl.Execute(w, api.store)
 	if err != nil {
-		ololog.Error().Str("location", "server/handlers/listCounters").Err(err).Msg("Ошибка запуска шаблона HTML")
+		log.Error().Str("location", "server/handlers/listCounters").Err(err).Msg("Ошибка запуска шаблона HTML")
 		http.Error(w, "error executing template", http.StatusInternalServerError)
 		return
 	}

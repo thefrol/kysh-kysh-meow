@@ -5,14 +5,13 @@ package main
 
 import (
 	"context"
-	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
-	"github.com/thefrol/kysh-kysh-meow/internal/ololog"
+	"github.com/rs/zerolog/log"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/router"
 )
 
@@ -22,7 +21,7 @@ func main() {
 	// создаем хранилище
 	s, err := fileStorage(cfg)
 	if err != nil {
-		ololog.Error().Msgf("Не удалось сконфигурировать сервер, по причине: %v", err)
+		log.Error().Msgf("Не удалось сконфигурировать сервер, по причине: %v", err)
 		return
 	}
 
@@ -38,7 +37,7 @@ func main() {
 	signal.Notify(sig, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 	go func() {
 		<-sig
-		ololog.Debug().Msg("signal received")
+		log.Debug().Msg("signal received")
 		// Shutdown signal with grace period of 30 seconds
 		shutdownCtx, cancel := context.WithTimeout(serverCtx, 30*time.Second)
 		defer cancel()
@@ -46,21 +45,23 @@ func main() {
 		go func() {
 			<-shutdownCtx.Done()
 			if shutdownCtx.Err() == context.DeadlineExceeded {
-				log.Fatal("graceful shutdown timed out.. forcing exit.")
+				log.Fatal().Msg("graceful shutdown timed out.. forcing exit.")
+				return
 			}
 		}()
 
 		// Trigger graceful shutdown
 		err := server.Shutdown(shutdownCtx)
 		if err != nil {
-			log.Fatal(err)
+			log.Fatal().Msg(err.Error())
+			panic(err)
 		}
 		serverStopCtx()
 	}()
-	ololog.Info().Msgf("^.^ Мяу, сервер запускается по адресу %v!", cfg.Addr)
+	log.Info().Msgf("^.^ Мяу, сервер запускается по адресу %v!", cfg.Addr)
 
 	if err := server.ListenAndServe(); err != http.ErrServerClosed {
-		ololog.Error().Msgf("^0^ не могу запустить сервер: %v \n", err)
+		log.Error().Msgf("^0^ не могу запустить сервер: %v \n", err)
 	}
 
 	// Завершаем последние дела
@@ -75,13 +76,13 @@ func main() {
 
 		if v, ok := s.(saver); ok {
 			v.ToFile(cfg.FileStoragePath)
-			ololog.Info().Msg("Сохранено в файл")
+			log.Info().Msg("Сохранено в файл")
 		} else {
-			ololog.Error().Msg("Не могу преобразовать хранилище в нужный интерфейс для сохранения данных на выходе")
+			log.Error().Msg("Не могу преобразовать хранилище в нужный интерфейс для сохранения данных на выходе")
 		}
 	}
 
-	ololog.Info().Msg("^.^ Сервер завершен нежно")
+	log.Info().Msg("^.^ Сервер завершен нежно")
 	// Wait for server context to be stopped
 	<-serverCtx.Done()
 

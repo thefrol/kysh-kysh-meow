@@ -8,8 +8,8 @@ import (
 	"net/http"
 
 	"github.com/mailru/easyjson"
+	"github.com/rs/zerolog/log"
 	"github.com/thefrol/kysh-kysh-meow/internal/metrica"
-	"github.com/thefrol/kysh-kysh-meow/internal/ololog"
 )
 
 // Storager это интерфейс к хранилищу, которое использует именно этот API. Таким образом мы делаем хранилище зависимым от
@@ -66,7 +66,7 @@ func (api API) UpdateWithJSON(w http.ResponseWriter, r *http.Request) {
 	m := metrica.Metrica{}
 	err := easyjson.UnmarshalFromReader(r.Body, &m)
 	if err != nil {
-		ololog.Error().Str("location", "json update handler").Msg("Cant unmarshal data in body")
+		log.Error().Str("location", "json update handler").Msg("Cant unmarshal data in body")
 		http.Error(w, "^0^ не могу размаршалить тело сообщения", http.StatusBadRequest)
 		return
 	}
@@ -81,7 +81,7 @@ func (api API) UpdateWithJSON(w http.ResponseWriter, r *http.Request) {
 
 	_, _, err = easyjson.MarshalToHTTPResponseWriter(&m, w)
 	if err != nil {
-		ololog.Error().Str("location", "json update handler(on return)").Msgf("Cant marshal a return for %v %v", m.MType, m.ID)
+		log.Error().Str("location", "json update handler(on return)").Msgf("Cant marshal a return for %v %v", m.MType, m.ID)
 		http.Error(w, "cant marshal result", http.StatusInternalServerError)
 		return
 	}
@@ -97,7 +97,7 @@ func (api API) ValueWithJSON(w http.ResponseWriter, r *http.Request) {
 	m := metrica.Metrica{}
 	err := easyjson.UnmarshalFromReader(r.Body, &m)
 	if err != nil {
-		ololog.Error().Str("location", "json update handler").Msg("Cant unmarshal data in body")
+		log.Error().Str("location", "json update handler").Msg("Cant unmarshal data in body")
 		http.Error(w, "bad body", http.StatusBadRequest)
 		return
 	}
@@ -115,7 +115,7 @@ func (api API) ValueWithJSON(w http.ResponseWriter, r *http.Request) {
 
 	_, _, err = easyjson.MarshalToHTTPResponseWriter(&m, w)
 	if err != nil {
-		ololog.Error().Str("location", "json get handler(on return)").Msgf("Cant marshal a return for %v %v", m.MType, m.ID)
+		log.Error().Str("location", "json get handler(on return)").Msgf("Cant marshal a return for %v %v", m.MType, m.ID)
 		http.Error(w, "cant marshal result", http.StatusInternalServerError)
 		return
 	}
@@ -129,7 +129,7 @@ func (api API) ValueWithJSON(w http.ResponseWriter, r *http.Request) {
 // format, params - типичные параметры, как в функции Printf
 func httpErrorWithLogging(w http.ResponseWriter, statusCode int, format string, params ...interface{}) {
 	s := fmt.Sprintf(format, params...)
-	ololog.Error().Str("location", "json update handler").Msg(s)
+	log.Error().Str("location", "json update handler").Msg(s)
 	http.Error(w, s, statusCode)
 	// TODO
 	//
