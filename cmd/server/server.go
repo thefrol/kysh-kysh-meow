@@ -1,6 +1,5 @@
 // Сервер Мяу-мяу
 // Умеет сохранять и передавать такие метрики: counter, gauge
-
 package main
 
 import (
@@ -23,7 +22,8 @@ func main() {
 	m := storage.New()
 	s, cancelStorage := ConfigureStorage(&m, cfg)
 
-	// Запускаем сервер с поддержкой нежного завершения
+	// Запускаем сервер с поддержкой нежного завершения,
+	// занимаем текущий поток до вызова сигнатов выключения
 	Run(cfg, s)
 
 	// Завершаем последние дела
@@ -38,6 +38,8 @@ func main() {
 
 }
 
+// Run запускает сервер с поддержкой нежного завершения. Сервер можно будет выключить через
+// SIGINT, SIGTERM, SIGQUIT
 func Run(cfg config, s storage.Storager) {
 	// Запускаем сервер с поддержкой нежного выключения
 	// вдохноввлено примерами роутера chi
@@ -80,8 +82,16 @@ func Run(cfg config, s storage.Storager) {
 	}
 
 	<-serverCtx.Done()
+
+	// МНе кажется в отдельную функцию надо выделить именно все, что относится к нежному завершению, + надо перевести комменты по коду на русский
 }
 
+// ConfigureStorage подготавливает хранилище к работе в соответствии с текущими настройками,
+// при необходимости загружает из файла значения метрик, запускает сохранение в файл, и
+// возвращает интерфейс хранилища и функцию, подготавливающая ханилище к остановке
+//
+// На входе получает экземпляр хранилища m, и далее оборачивает его другим классов,
+// наиболее соответсвующим задаче, исходя из cfg
 func ConfigureStorage(m *storage.MemStore, cfg config) (storage.Storager, context.CancelFunc) {
 	// 1. Если путь не задан, то возвращаем хранилище в оперативке, без приблуд
 	// 2. Иначе оборачиваем файловым хранилищем, но не возвращаем пока
@@ -90,6 +100,7 @@ func ConfigureStorage(m *storage.MemStore, cfg config) (storage.Storager, contex
 
 	// Если путь до хранилища не пустой, то нам нужно инициаизировать обертки над хранилищем
 	if cfg.FileStoragePath == "" {
+		log.Info().Msg("Установлено хранилище в памяти. Сохранение на диск отключено")
 		return m, func() {
 			log.Info().Msg("Хранилище сихронной записи получило сигнал о завершении, но файловая запись в текущей конфигурации сервера не используется. Ничего не записано")
 		}
@@ -103,11 +114,13 @@ func ConfigureStorage(m *storage.MemStore, cfg config) (storage.Storager, contex
 		if err != nil && err != storage.ErrorRestoreFileNotExist {
 			panic(err)
 		}
+		log.Info().Msgf("Значения метрик загружены из %v", fs.FileName)
 	}
 
 	if cfg.StoreIntervalSeconds == 0 {
 		// инициализируем сихнронную запись,
 		// при этом сохраняться в конце нам не понадобится
+		log.Info().Msgf("Установлено синхронное сохранение в %v в при записи", fs.FileName)
 		return storage.NewSyncDump(&fs), func() {
 			log.Info().Msg("Хранилище сихронной записи получило сигнал о завершении, но дополнительно сохранение не нужно")
 		}
@@ -117,6 +130,8 @@ func ConfigureStorage(m *storage.MemStore, cfg config) (storage.Storager, contex
 	s := storage.NewIntervalDump(&fs, time.Duration(cfg.StoreIntervalSeconds)*time.Second)
 	ctx, cancel := context.WithCancel(context.Background())
 	go s.StartDumping(ctx)
+
+	log.Info().Msgf("Установлено сохранение с интервалом %v в %v в при записи", s.Interval, s.FileName)
 
 	return s, func() {
 		// оберстка сделана под группу ожидаения
