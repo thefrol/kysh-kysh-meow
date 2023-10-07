@@ -23,6 +23,22 @@ func main() {
 	m := storage.New()
 	s, cancelStorage := ConfigureStorage(&m, cfg)
 
+	// Запускаем сервер с поддержкой нежного завершения
+	Run(cfg, s)
+
+	// Завершаем последние дела
+	// попытаемся сохраниться в файл
+	cancelStorage()
+
+	// Даем ему время
+	time.Sleep(time.Second)
+
+	log.Info().Msg("^.^ Сервер завершен нежно")
+	// Wait for server context to be stopped
+
+}
+
+func Run(cfg config, s storage.Storager) {
 	// Запускаем сервер с поддержкой нежного выключения
 	// вдохноввлено примерами роутера chi
 	server := http.Server{Addr: cfg.Addr, Handler: router.MeowRouter(s)}
@@ -55,6 +71,7 @@ func main() {
 			panic(err)
 		}
 		serverStopCtx()
+		log.Info().Msg("^-^ рутина остановки сервера завершилась")
 	}()
 	log.Info().Msgf("^.^ Мяу, сервер запускается по адресу %v!", cfg.Addr)
 
@@ -62,16 +79,7 @@ func main() {
 		log.Error().Msgf("^0^ не могу запустить сервер: %v \n", err)
 	}
 
-	// Завершаем последние дела
-	// попытаемся сохраниться в файл
-	cancelStorage()
-
-	time.Sleep(time.Second)
-
-	log.Info().Msg("^.^ Сервер завершен нежно")
-	// Wait for server context to be stopped
 	<-serverCtx.Done()
-
 }
 
 func ConfigureStorage(m *storage.MemStore, cfg config) (storage.Storager, context.CancelFunc) {
