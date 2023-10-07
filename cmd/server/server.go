@@ -100,7 +100,7 @@ func ConfigureStorage(m *storage.MemStore, cfg config) (storage.Storager, contex
 	if cfg.StoreIntervalSeconds == 0 {
 		// инициализируем сихнронную запись,
 		// при этом сохраняться в конце нам не понадобится
-		return storage.NewSyncDump(&fs, cfg.FileStoragePath), func() {
+		return storage.NewSyncDump(&fs), func() {
 			log.Info().Msg("Хранилище сихронной записи получило сигнал о завершении, но дополнительно сохранение не нужно")
 		}
 	}

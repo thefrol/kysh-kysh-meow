@@ -101,7 +101,7 @@ type SyncDump struct {
 	FileStorage
 }
 
-func NewSyncDump(s *FileStorage, fileName string) SyncDump {
+func NewSyncDump(s *FileStorage) SyncDump {
 	return SyncDump{FileStorage: *s}
 }
 
