@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"encoding/gob"
 	"errors"
 	"fmt"
 	"os"
@@ -34,18 +35,43 @@ func (s FileStorage) Restore() error {
 	if !fileExist(s.FileName) {
 		return ErrorRestoreFileNotExist
 	}
-	err := RewriteFromFile(s.FileName, &s.MemStore)
+	file, err := os.Open(s.FileName)
 	if err != nil {
-		return fmt.Errorf("ошибка чтения файла %v при загрузке хранилища: %v", s.FileName, err)
+		log.Error().Msgf("Cant open file %v: %+v", s.FileName, err)
+		return err
 	}
+
+	err = gob.NewDecoder(file).Decode(&s.MemStore)
+	if err != nil {
+		log.Error().Msgf("Cant unmarshal from gob %v: %+v", s.FileName, err)
+		return err
+	}
+
 	return nil
-	// todo
+
+	// TODO
 	//
-	// прям сюда весь код из MemStore по сохранению и загрузке
+	// Вариант: добавляет значения из файла, не очищая хранилище, и может быть использует интерфейс Storager
+	//
+	// Самый главный вопрос, которым стоит руководствоваться: останутся ли мапы в стеке? Или декодер создаст новые памы которые сразу в кучу попадут?
+	// Если так, то лучше сделать более долгую загрузку - пользоваться исходными мапами, просто переписать в них из исходного хранилища данные
+
 }
 
 func (s FileStorage) Dump() error {
-	return s.MemStore.ToFile(s.FileName)
+	file, err := os.OpenFile(s.FileName, os.O_CREATE|os.O_WRONLY, 0666)
+	if err != nil {
+		log.Error().Msgf("Cant open file %v: %+v", s.FileName, err)
+		return err
+	}
+	err = gob.NewEncoder(file).Encode(&s.MemStore)
+	if err != nil {
+		log.Error().Msgf("Cant marshal to gob %v: %+v", s.FileName, err)
+		return err
+	}
+	// вообще мы можем просто указывать маршалер и врайтер, и там че хочешь потом хоть джейсонь
+	// например, могут быть функопции с настройками декодеров и энкодеров
+	return nil
 }
 
 // fileExist проверяет существует ли файл file, если да
@@ -150,3 +176,7 @@ func (s SyncDump) SetGauge(name string, value metrica.Gauge) {
 	}
 	log.Info().Msgf("После обновления метрики %v[Gauge], хранилище записино в %v", name, s.FileName)
 }
+
+// TODO
+//
+// Этот пакет жаждет тестов и ох они будут не простые, но это даже и прикольно!
