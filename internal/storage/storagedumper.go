@@ -11,7 +11,7 @@ import (
 	"github.com/thefrol/kysh-kysh-meow/internal/metrica"
 )
 
-var ErrorRestoreFileNotExist = fmt.Errorf("файла, чтобы выгрузить хранилише не существует")
+var ErrorRestoreFileNotExist = fmt.Errorf("файла, чтобы выгрузить хранилише, не существует")
 
 // FileStorage позволяет писать и восстанавливаться из файда
 // при помощи функций Dump() и Restore(). Является оберткой над
