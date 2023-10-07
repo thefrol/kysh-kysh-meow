@@ -24,21 +24,28 @@ func (m MemStore) ToFile(fname string) error {
 	return nil
 }
 
-func FromFile(fname string) (*MemStore, error) {
+// RewriteFromFile перезаписывает хранилище  store данными из файла fname
+func RewriteFromFile(fname string, store *MemStore) error {
 	file, err := os.Open(fname)
 	if err != nil {
 		log.Error().Msgf("Cant open file %v: %+v", fname, err)
-		return nil, err
+		return err
 	}
 
-	s := New()
-	err = gob.NewDecoder(file).Decode(&s)
+	err = gob.NewDecoder(file).Decode(&store)
 	if err != nil {
 		log.Error().Msgf("Cant unmarshal from gob %v: %+v", fname, err)
-		return nil, err
+		return err
 	}
-	// вообще мы можем просто указывать маршалер и врайтер, и там че хочешь потом хоть джейсонь
-	return &s, nil
+
+	return nil
+
+	// TODO
+	//
+	// Варинаты. добавляет значения из файла, и может быть использует интерфейс Storager
+	//
+	// Самый главный вопрос, которым стоит руководствоваться: останутся ли мапы в стеке? Или декодер создаст новые памы которые сразу в кучу попадут?
+	// Если так, то лучше сделать более долгую загрузку - пользоваться исходными мапами, просто переписать в них из исходного хранилища данные
 }
 
 // gob файл со всеми метриками 549 байт, без метрик 140
