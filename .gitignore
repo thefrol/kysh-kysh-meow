@@ -26,10 +26,13 @@ vendor/
 .idea
 .vscode
 
-#Folders for hiding, like sandbox
+# Folders for hiding, like sandbox
 __*/
 
-#scripts for testing
+# scripts for testing
 scripts/test*
 scripts/agent-cover
 scripts/server-cover
+
+# postgres files
+.postgre*

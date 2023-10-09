@@ -15,6 +15,7 @@ type config struct {
 	StoreIntervalSeconds uint   `env:"STORE_INTERVAL"`
 	FileStoragePath      string `env:"FILE_STORAGE_PATH"`
 	Restore              bool   `env:"RESTORE"`
+	DatabaseDSN          string `env:"DATABASE_DSN"`
 }
 
 var defaultConfig = config{
@@ -36,6 +37,7 @@ func mustConfigure(defaults config) (cfg config) {
 	flag.UintVar(&cfg.StoreIntervalSeconds, "i", defaults.StoreIntervalSeconds, "[время, сек] интервал сохранения показаний. При 0 запись делается почти синхронно")
 	flag.StringVar(&cfg.FileStoragePath, "f", defaults.FileStoragePath, "[строка] путь к файлу, откуда будут читаться при запуске и куда будут сохраняться метрики полученные сервером, если файл пустой, то сохранение будет отменено")
 	flag.BoolVar(&cfg.Restore, "r", defaultConfig.Restore, "[флаг] если установлен, загружает из файла ранее записанные метрики")
+	flag.StringVar(&cfg.DatabaseDSN, "d", defaults.DatabaseDSN, "[строка] подключения к базе данных")
 
 	flag.Parse()
 	err := env.Parse(&cfg)
@@ -48,11 +50,11 @@ func mustConfigure(defaults config) (cfg config) {
 	// вообще две эти функции сверху требуют проверку ошибок, и это в тестах тоже стоило бы отразить
 
 	// Тут обрабатываем особый случай. Если переменная окружения установлена, но в пустое значение
+	// то мы перезаписываем установленный командной строкой флаг на пуское значение, хотя штатно
+	// этого не было бы сделано
 	if v, ok := os.LookupEnv("FILE_STORAGE_PATH"); ok {
 		cfg.FileStoragePath = v
 	}
-
-	log.Info().Msgf("Запущено с настройками %+v", cfg)
 
 	return
 }
