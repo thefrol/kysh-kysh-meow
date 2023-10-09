@@ -7,6 +7,8 @@ import (
 	chimiddleware "github.com/go-chi/chi/v5/middleware"
 	apiv1 "github.com/thefrol/kysh-kysh-meow/internal/server/api/v1"
 	apiv2 "github.com/thefrol/kysh-kysh-meow/internal/server/api/v2"
+	apiv3 "github.com/thefrol/kysh-kysh-meow/internal/server/api/v3"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/app"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/middleware"
 	"github.com/thefrol/kysh-kysh-meow/internal/storage"
 )
@@ -60,7 +62,7 @@ func InstallAPIV2(r chi.Router, v2 apiv2.API) {
 //
 // на входе получает store - объект хранилища, из которого он будет
 // брать все нужные данные о метриках
-func MeowRouter(store storage.Storager) (router chi.Router) {
+func MeowRouter(store storage.Storager, app *app.App) (router chi.Router) {
 
 	router = chi.NewRouter()
 
@@ -72,9 +74,13 @@ func MeowRouter(store storage.Storager) (router chi.Router) {
 	// Добавляем маршруты, которые я разделил на два раздела
 	v1 := apiv1.New(store)
 	v2 := apiv2.New(store)
+	v3 := apiv3.New(app)
 
 	InstallAPIV1(router, v1)
 	InstallAPIV2(router, v2)
+
+	//создаем маршрут для проверки соединения с БД
+	router.Get("/ping", v3.CheckConnection)
 
 	// а ещё вот HTML страничка, которая тоже по сути относится к apiV1
 	// она не объединяется с остальными, потому что не требует

@@ -35,7 +35,7 @@ func main() {
 
 	// Запускаем сервер с поддержкой нежного завершения,
 	// занимаем текущий поток до вызова сигнатов выключения
-	Run(cfg, s)
+	Run(cfg, s, app)
 
 	// Завершаем последние дела
 	// попытаемся сохраниться в файл
@@ -51,10 +51,10 @@ func main() {
 
 // Run запускает сервер с поддержкой нежного завершения. Сервер можно будет выключить через
 // SIGINT, SIGTERM, SIGQUIT
-func Run(cfg config, s storage.Storager) {
+func Run(cfg config, s storage.Storager, app *app.App) {
 	// Запускаем сервер с поддержкой нежного выключения
 	// вдохноввлено примерами роутера chi
-	server := http.Server{Addr: cfg.Addr, Handler: router.MeowRouter(s)}
+	server := http.Server{Addr: cfg.Addr, Handler: router.MeowRouter(s, app)}
 
 	// Server run context
 	serverCtx, serverStopCtx := context.WithCancel(context.Background())
