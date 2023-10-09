@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/rs/zerolog/log"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/app"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/router"
 	"github.com/thefrol/kysh-kysh-meow/internal/storage"
 )
@@ -21,6 +22,16 @@ func main() {
 	// создаем хранилище
 	m := storage.New()
 	s, cancelStorage := ConfigureStorage(&m, cfg)
+
+	// Создаем объект App, который в дальнейшем включит в себя все остальное тут
+	app, err := app.New(cfg.DatabaseDSN)
+	if err != nil {
+		log.Fatal().Msgf("Ошибка во время конфигурирования сервера %v", err)
+		panic(err)
+	}
+	if err := app.CheckConnection(context.Background()); err == nil {
+		log.Info().Msg("Связь с базой данных в порядке")
+	}
 
 	// Запускаем сервер с поддержкой нежного завершения,
 	// занимаем текущий поток до вызова сигнатов выключения
