@@ -12,20 +12,22 @@ import (
 
 // App это приложение сервера, которое умеет работать с базой данных, и другими хранилищами. Со всеми вещами от которого, он зависит.
 type App struct {
-	db *sql.DB
+	db  *sql.DB
+	ctx context.Context
 }
 
 const sqldriver = "pgx"
 
 // New cоздает новый объект приложения, получая на вход параметры конфигурации
-func New(connString string) (*App, error) {
+func New(ctx context.Context, connString string) (*App, error) {
 
 	db, err := createDataBase(sqldriver, connString)
 	if err != nil {
 		return nil, fmt.Errorf("не могу создать базу данных %v", err)
 	}
 	return &App{
-		db: db,
+		db:  db,
+		ctx: ctx,
 	}, nil
 }
 
@@ -36,6 +38,11 @@ func (app App) CheckConnection(ctx context.Context) error {
 
 func (app App) Database() *sql.DB {
 	return app.db
+}
+
+func (app App) Context() context.Context {
+	// todo не понимаю можно ли так передавать контекст по значению
+	return app.ctx
 }
 
 func createDataBase(driver string, connstring string) (*sql.DB, error) {

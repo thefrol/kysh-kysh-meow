@@ -24,7 +24,7 @@ func main() {
 	s, cancelStorage := ConfigureStorage(&m, cfg)
 
 	// Создаем объект App, который в дальнейшем включит в себя все остальное тут
-	app, err := app.New(cfg.DatabaseDSN)
+	app, err := app.New(context.TODO(), cfg.DatabaseDSN)
 	if err != nil {
 		log.Fatal().Msgf("Ошибка во время конфигурирования сервера %v", err)
 		panic(err)
