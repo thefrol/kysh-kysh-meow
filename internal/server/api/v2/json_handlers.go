@@ -10,6 +10,7 @@ import (
 	"github.com/mailru/easyjson"
 	"github.com/rs/zerolog/log"
 	"github.com/thefrol/kysh-kysh-meow/internal/metrica"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/api"
 )
 
 // Storager это интерфейс к хранилищу, которое использует именно этот API. Таким образом мы делаем хранилище зависимым от
@@ -61,7 +62,7 @@ func New(store Storager) API {
 // формате metrica.Metrica. Для счетчиков типа counter исползует поле delta и прибавляет к
 // текущему значению, для счетчиков типа gauge заменяет текущее значение новым из поля Value.
 // В ответ записывает структуру metrica.Metrica с обновленным значением
-func (api API) UpdateWithJSON(w http.ResponseWriter, r *http.Request) {
+func (i API) UpdateWithJSON(w http.ResponseWriter, r *http.Request) {
 	//todo mix of two handlers + save+ response
 	m := metrica.Metrica{}
 	err := easyjson.UnmarshalFromReader(r.Body, &m)
@@ -73,9 +74,9 @@ func (api API) UpdateWithJSON(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	// изменяем хранилище и значения в переменной m
-	err = updateStorageAndValue(api.store, &m)
+	err = updateStorageAndValue(i.store, &m)
 	if err != nil {
-		httpErrorWithLogging(w, http.StatusBadRequest, "Ошибка обновления хранилища: %v", err)
+		api.HTTPErrorWithLogging(w, http.StatusBadRequest, "Ошибка обновления хранилища: %v", err)
 		return
 	}
 
@@ -92,7 +93,7 @@ func (api API) UpdateWithJSON(w http.ResponseWriter, r *http.Request) {
 // TДля счетчиков типа counter записывает значнием в поле delta,
 // для счетчиков типа gauge в поле value. В ответ
 // записывает структуру metrica.Metrica с обновленным значением
-func (api API) ValueWithJSON(w http.ResponseWriter, r *http.Request) {
+func (i API) ValueWithJSON(w http.ResponseWriter, r *http.Request) {
 	//todo mix of two handlers + save+ response
 	m := metrica.Metrica{}
 	err := easyjson.UnmarshalFromReader(r.Body, &m)
@@ -104,12 +105,12 @@ func (api API) ValueWithJSON(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	// пробуем обновить метрики. Там где мы проверяем err, нас не интересуют ошибки где пустые поля Value или
-	err, found := addValueFromStorage(api.store, &m)
+	err, found := addValueFromStorage(i.store, &m)
 	if err != nil {
-		httpErrorWithLogging(w, http.StatusBadRequest, "Ошибка метрики %+v: %v", m, err) // todo, а как бы сделать так, чтобы %v подсвечивался
+		api.HTTPErrorWithLogging(w, http.StatusBadRequest, "Ошибка метрики %+v: %v", m, err) // todo, а как бы сделать так, чтобы %v подсвечивался
 		return
 	} else if !found {
-		httpErrorWithLogging(w, http.StatusNotFound, "В хранилище не найдена метрика %v", m.ID)
+		api.HTTPErrorWithLogging(w, http.StatusNotFound, "В хранилище не найдена метрика %v", m.ID)
 		return
 	}
 
@@ -119,21 +120,6 @@ func (api API) ValueWithJSON(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "cant marshal result", http.StatusInternalServerError)
 		return
 	}
-}
-
-// httpErrorWithLogging отправляет сообщение об ошибке, параллельно дублируя в журнал. Работает быстрее, чем просто две функции отдельно.
-// Во-первых, конкатенация строк происходит при помощи Spfrintf, а не сложением, а во вторых один раз на два вызова: и логгера, и http.Error()
-//
-// w - responseWriter вашего HTTP хендлера
-// statusCode - код ответа сервера, напр. 200, 400, http.StatusNotFound, http.StatusOK
-// format, params - типичные параметры, как в функции Printf
-func httpErrorWithLogging(w http.ResponseWriter, statusCode int, format string, params ...interface{}) {
-	s := fmt.Sprintf(format, params...)
-	log.Error().Str("location", "json update handler").Msg(s)
-	http.Error(w, s, statusCode)
-	// TODO
-	//
-	// Возможно это пока единственный повод держать кастомный логгер, чтобы в нем была функция типа withHttpError(w)
 }
 
 // addValueFromStorage добавляет структуре request поле со значением из хранилища store,
