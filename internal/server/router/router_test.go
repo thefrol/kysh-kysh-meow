@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/thefrol/kysh-kysh-meow/internal/server/app"
 	"github.com/thefrol/kysh-kysh-meow/internal/storage"
 )
 
@@ -272,7 +273,7 @@ func Test_MeowRouter(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			server := httptest.NewServer(MeowRouter(storage.New()))
+			server := httptest.NewServer(MeowRouter(storage.New(), &app.App{}))
 			defer server.Close()
 			client := resty.New()
 			for _, u := range tt.prePosts {
@@ -368,7 +369,7 @@ func Test_updateCounter(t *testing.T) {
 
 			r := httptest.NewRequest(tt.method, tt.route, nil)
 			w := httptest.NewRecorder()
-			MeowRouter(storage.New()).ServeHTTP(w, r)
+			MeowRouter(storage.New(), &app.App{}).ServeHTTP(w, r)
 
 			result := w.Result()
 			defer result.Body.Close()
@@ -492,7 +493,7 @@ func Test_updateGauge(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			r := httptest.NewRequest(tt.method, tt.route, nil)
 			w := httptest.NewRecorder()
-			MeowRouter(storage.New()).ServeHTTP(w, r)
+			MeowRouter(storage.New(), &app.App{}).ServeHTTP(w, r)
 
 			result := w.Result()
 			defer result.Body.Close()
@@ -564,7 +565,7 @@ func Test_updateUnknownType(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			r := httptest.NewRequest(tt.method, tt.route, nil)
 			w := httptest.NewRecorder()
-			MeowRouter(storage.New()).ServeHTTP(w, r)
+			MeowRouter(storage.New(), &app.App{}).ServeHTTP(w, r)
 
 			result := w.Result()
 			defer result.Body.Close()
