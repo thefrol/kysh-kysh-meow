@@ -33,9 +33,10 @@ func New(store api.Storager) API {
 func (i API) UpdateCounter(w http.ResponseWriter, r *http.Request) {
 	params := getURLParams(r)
 
+	api.SetContentType(w, api.TypeTextPlain)
+
 	value, err := strconv.ParseInt(params.value, 10, 64)
 	if err != nil {
-		w.Header().Add("Content-Type", "text/plain")
 		api.HTTPErrorWithLogging(w, http.StatusBadRequest, "Не могу пропарсить новое значение counter: %v", err)
 		return
 	}
@@ -45,8 +46,6 @@ func (i API) UpdateCounter(w http.ResponseWriter, r *http.Request) {
 		api.HTTPErrorWithLogging(w, http.StatusInternalServerError, "не могу обновить счетчик: %v", err)
 		return
 	}
-
-	w.Header().Add("Content-Type", "text/plain")
 }
 
 // updateGauge отвечает за маршрут, по которому будет обновляться метрика типа gauge
@@ -56,9 +55,10 @@ func (i API) UpdateCounter(w http.ResponseWriter, r *http.Request) {
 func (i API) UpdateGauge(w http.ResponseWriter, r *http.Request) {
 	params := getURLParams(r)
 
+	api.SetContentType(w, api.TypeTextPlain)
+
 	value, err := strconv.ParseFloat(params.value, 64)
 	if err != nil {
-		w.Header().Add("Content-Type", "text/plain")
 		api.HTTPErrorWithLogging(w, http.StatusBadRequest, "Не могу пропарсить новое значение gauge: %v", err)
 		return
 	}
@@ -67,15 +67,15 @@ func (i API) UpdateGauge(w http.ResponseWriter, r *http.Request) {
 		api.HTTPErrorWithLogging(w, http.StatusInternalServerError, "не могу обновить gauge: %v", err)
 		return
 	}
-
-	w.Header().Add("Content-Type", "text/plain")
 }
 
 // ErrorUnknownType возвращает клиенту ошибку 400(Bad Request)
 // и отправляет информационное сообщение, о том, что сервер не знает такого типа счетчика
 func ErrorUnknownType(w http.ResponseWriter, r *http.Request) {
 	params := getURLParams(r)
-	w.Header().Add("Content-Type", "text/plain")
+
+	api.SetContentType(w, api.TypeTextPlain)
+
 	api.HTTPErrorWithLogging(w, http.StatusInternalServerError, "неизвестный тип счетчика: %v", params.metric)
 }
 
@@ -131,7 +131,7 @@ func (i API) GetValue(w http.ResponseWriter, r *http.Request) {
 
 // listMetrics выводит список всех известных на данный момент метрик
 func (i API) ListMetrics(w http.ResponseWriter, r *http.Request) {
-	w.Header().Add("Content-Type", "text/html")
+	api.SetContentType(w, api.TypeTextHTML)
 
 	htmlTemplate := `
 	{{ if .ListCounters}}
