@@ -2,6 +2,8 @@ package storage
 
 import "github.com/thefrol/kysh-kysh-meow/internal/metrica"
 
+// DEPRECATED todo delete
+//
 // Storager это интерфейс хранилища данных для метрик,
 // Каждый новый тип метрики должен добавлять свой интерфейс сюда
 type Storager interface {

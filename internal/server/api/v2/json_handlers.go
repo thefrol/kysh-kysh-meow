@@ -14,24 +14,13 @@ import (
 	"github.com/thefrol/kysh-kysh-meow/internal/server/api"
 )
 
-// Storager это интерфейс к хранилищу, которое использует именно этот API. Таким образом мы делаем хранилище зависимым от
-// API,  а не наоборот
-type Storager interface {
-	Counter(ctx context.Context, name string) (value int64, found bool, err error)
-	UpdateCounter(ctx context.Context, name string, delta int64) (newValue int64, err error)
-	ListCounters(ctx context.Context) ([]string, error)
-	Gauge(ctx context.Context, name string) (value float64, found bool, err error)
-	UpdateGauge(ctx context.Context, name string, value float64) (newValue float64, err error)
-	ListGauges(ctx context.Context) ([]string, error)
-}
-
 // API это колленция http.HanlderFunc, которые обращаются к единому хранилищу store
 type API struct {
-	store Storager
+	store api.Storager
 }
 
 // New создает новую
-func New(store Storager) API {
+func New(store api.Storager) API {
 	if store == nil {
 		panic("Хранилище - пустой указатель")
 	}
@@ -134,7 +123,7 @@ func (i API) ValueWithJSON(w http.ResponseWriter, r *http.Request) {
 //
 // found==true Тогда и только тогда, когда err!=nil; found=false тоже возможен когда err!=nil
 // err!=nil тогда, когда структура m неправильно оформлена
-func addValueFromStorage(ctx context.Context, store Storager, m *metrica.Metrica) (e error, found bool) {
+func addValueFromStorage(ctx context.Context, store api.Storager, m *metrica.Metrica) (e error, found bool) {
 
 	// TODO
 	//
@@ -171,7 +160,7 @@ func addValueFromStorage(ctx context.Context, store Storager, m *metrica.Metrica
 }
 
 // updateStorageAndValue обновляет и значение m и хранилища store  в соответствии со значением
-func updateStorageAndValue(ctx context.Context, store Storager, m *metrica.Metrica) error {
+func updateStorageAndValue(ctx context.Context, store api.Storager, m *metrica.Metrica) error {
 	err := m.Validate()
 	if err != nil {
 		return fmt.Errorf("полученная структура оформлена неправильно: %v", err)

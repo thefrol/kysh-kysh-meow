@@ -3,7 +3,6 @@
 package apiv1
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -15,24 +14,13 @@ import (
 	"github.com/thefrol/kysh-kysh-meow/internal/server/api"
 )
 
-// Storager это интерфейс к хранилищу, которое использует именно этот API. Таким образом мы делаем хранилище зависимым от
-// API,  а не наоборот
-type Storager interface {
-	Counter(ctx context.Context, name string) (value int64, found bool, err error)
-	UpdateCounter(ctx context.Context, name string, delta int64) error
-	ListCounters(ctx context.Context) ([]string, error)
-	Gauge(ctx context.Context, name string) (value float64, found bool, err error)
-	UpdateGauge(ctx context.Context, name string, value float64) error
-	ListGauges(ctx context.Context) ([]string, error)
-}
-
 // API это колленция http.HanlderFunc, которые обращаются к единому хранилищу store
 type API struct {
-	store Storager
+	store api.Storager
 }
 
 // New создает новую
-func New(store Storager) API {
+func New(store api.Storager) API {
 	if store == nil {
 		panic("Хранилище - пустой указатель")
 	}
@@ -54,7 +42,7 @@ func (i API) UpdateCounter(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = i.store.UpdateCounter(r.Context(), params.name, value)
+	_, err = i.store.UpdateCounter(r.Context(), params.name, value)
 	if err != nil {
 		api.HTTPErrorWithLogging(w, http.StatusInternalServerError, "не могу обновить счетчик: %v", err)
 		return
@@ -76,7 +64,7 @@ func (i API) UpdateGauge(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "^0^ Ошибка значения, не могу пропарсить", http.StatusBadRequest)
 		return
 	}
-	err = i.store.UpdateGauge(r.Context(), params.name, value)
+	_, err = i.store.UpdateGauge(r.Context(), params.name, value)
 	if err != nil {
 		api.HTTPErrorWithLogging(w, http.StatusInternalServerError, "не могу обновить gauge: %v", err)
 		return

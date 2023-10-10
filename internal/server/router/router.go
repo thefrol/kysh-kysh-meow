@@ -5,12 +5,12 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	chimiddleware "github.com/go-chi/chi/v5/middleware"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/api"
 	apiv1 "github.com/thefrol/kysh-kysh-meow/internal/server/api/v1"
 	apiv2 "github.com/thefrol/kysh-kysh-meow/internal/server/api/v2"
 	apiv3 "github.com/thefrol/kysh-kysh-meow/internal/server/api/v3"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/app"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/middleware"
-	"github.com/thefrol/kysh-kysh-meow/internal/storage"
 )
 
 // apiV1 создает маршруты в роутере, отвечает
@@ -62,7 +62,7 @@ func InstallAPIV2(r chi.Router, v2 apiv2.API) {
 //
 // на входе получает store - объект хранилища, из которого он будет
 // брать все нужные данные о метриках
-func MeowRouter(store storage.Storager, app *app.App) (router chi.Router) {
+func MeowRouter(store api.Storager, app *app.App) (router chi.Router) {
 
 	router = chi.NewRouter()
 
