@@ -13,16 +13,15 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/thefrol/kysh-kysh-meow/internal/metrica"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/api"
-	"github.com/thefrol/kysh-kysh-meow/internal/storage"
 )
 
 // Storager это интерфейс к хранилищу, которое использует именно этот API. Таким образом мы делаем хранилище зависимым от
 // API,  а не наоборот
 type Storager interface {
-	Counter(ctx context.Context, name string) (int64, error)
+	Counter(ctx context.Context, name string) (value int64, found bool, err error)
 	UpdateCounter(ctx context.Context, name string, delta int64) error
 	ListCounters(ctx context.Context) ([]string, error)
-	Gauge(ctx context.Context, name string) (float64, error)
+	Gauge(ctx context.Context, name string) (value float64, found bool, err error)
 	UpdateGauge(ctx context.Context, name string, value float64) error
 	ListGauges(ctx context.Context) ([]string, error)
 }
@@ -100,8 +99,11 @@ func ErrorUnknownType(w http.ResponseWriter, r *http.Request) {
 func (i API) GetValue(w http.ResponseWriter, r *http.Request) {
 	params := getURLParams(r)
 
-	var value string
-	var err error
+	var (
+		value string
+		found bool
+		err   error
+	)
 
 	// Здесь мы получаем значение метрики с полученным именем,
 	//
@@ -117,11 +119,11 @@ func (i API) GetValue(w http.ResponseWriter, r *http.Request) {
 	switch params.metric {
 	case metrica.CounterName:
 		var v int64
-		v, err = i.store.Counter(r.Context(), params.name)
+		v, found, err = i.store.Counter(r.Context(), params.name)
 		value = fmt.Sprint(v)
 	case metrica.GaugeName:
 		var v float64
-		v, err = i.store.Gauge(r.Context(), params.name)
+		v, found, err = i.store.Gauge(r.Context(), params.name)
 		value = fmt.Sprint(v)
 		// TODO
 		//
@@ -129,12 +131,12 @@ func (i API) GetValue(w http.ResponseWriter, r *http.Request) {
 		// SetCounterString(), CounterString(), возможно даже SetString(type, name, sval), GetString(type, name, sval)
 	}
 
-	if err == storage.ErrorMetricNotFound {
-		api.HTTPErrorWithLogging(w, http.StatusNotFound, "метрика [%v]%v не найдена в хранилище", params.metric, params.name)
-		return
-	}
 	if err != nil {
 		api.HTTPErrorWithLogging(w, http.StatusInternalServerError, "Ошибка получения метрики: %v", err)
+		return
+	}
+	if !found {
+		api.HTTPErrorWithLogging(w, http.StatusNotFound, "метрика [%v]%v не найдена в хранилище", params.metric, params.name)
 		return
 	}
 
