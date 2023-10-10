@@ -4,6 +4,7 @@
 package apiv2
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
@@ -16,12 +17,12 @@ import (
 // Storager это интерфейс к хранилищу, которое использует именно этот API. Таким образом мы делаем хранилище зависимым от
 // API,  а не наоборот
 type Storager interface {
-	Counter(name string) (metrica.Counter, bool)
-	SetCounter(string, metrica.Counter)
-	ListCounters() []string
-	Gauge(name string) (metrica.Gauge, bool)
-	SetGauge(string, metrica.Gauge)
-	ListGauges() []string
+	Counter(ctx context.Context, name string) (value int64, found bool, err error)
+	UpdateCounter(ctx context.Context, name string, delta int64) (newValue int64, err error)
+	ListCounters(ctx context.Context) ([]string, error)
+	Gauge(ctx context.Context, name string) (value float64, found bool, err error)
+	UpdateGauge(ctx context.Context, name string, value float64) (newValue float64, err error)
+	ListGauges(ctx context.Context) ([]string, error)
 }
 
 // API это колленция http.HanlderFunc, которые обращаются к единому хранилищу store
@@ -74,7 +75,7 @@ func (i API) UpdateWithJSON(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	// изменяем хранилище и значения в переменной m
-	err = updateStorageAndValue(i.store, &m)
+	err = updateStorageAndValue(r.Context(), i.store, &m)
 	if err != nil {
 		api.HTTPErrorWithLogging(w, http.StatusBadRequest, "Ошибка обновления хранилища: %v", err)
 		return
@@ -105,7 +106,7 @@ func (i API) ValueWithJSON(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	// пробуем обновить метрики. Там где мы проверяем err, нас не интересуют ошибки где пустые поля Value или
-	err, found := addValueFromStorage(i.store, &m)
+	err, found := addValueFromStorage(r.Context(), i.store, &m)
 	if err != nil {
 		api.HTTPErrorWithLogging(w, http.StatusBadRequest, "Ошибка метрики %+v: %v", m, err) // todo, а как бы сделать так, чтобы %v подсвечивался
 		return
@@ -133,7 +134,7 @@ func (i API) ValueWithJSON(w http.ResponseWriter, r *http.Request) {
 //
 // found==true Тогда и только тогда, когда err!=nil; found=false тоже возможен когда err!=nil
 // err!=nil тогда, когда структура m неправильно оформлена
-func addValueFromStorage(store Storager, m *metrica.Metrica) (e error, found bool) {
+func addValueFromStorage(ctx context.Context, store Storager, m *metrica.Metrica) (e error, found bool) {
 
 	// TODO
 	//
@@ -147,38 +148,30 @@ func addValueFromStorage(store Storager, m *metrica.Metrica) (e error, found boo
 
 	switch m.MType {
 	case metrica.CounterName:
-		var c metrica.Counter
-		c, found = store.Counter(m.ID)
-		if !found {
-			return nil, false
-		}
-		m.Delta = new(int64) // todo попадёт в кучу(((
-		*m.Delta = int64(c)
+		var value int64
+		value, found, err = store.Counter(ctx, m.ID)
+
+		*m.Delta = value
 
 	case metrica.GaugeName:
-		var g metrica.Gauge
-		g, found = store.Gauge(m.ID)
+		var value float64
+		value, found, err = store.Gauge(ctx, m.ID)
 		if !found {
 			return nil, false
 		}
 		m.Value = new(float64)
-		*m.Value = float64(g)
+		*m.Value = value
 	}
 
-	// Кажется тут очень важная деталь архитектураная. Если бы у меня хранилище содержало значения типа int64 и float64,
-	// То я мог бы тут добавить ссылки прям на хранилище, то есть прям на переменные хранящиеся в идеале в стеке
-	// Но поскольку я занимаюсь конвертированием типов, я так сделать не могу
-	//
-	// Именно поэтому в этом коде мне нужно добалвять проверку на found, а могу бы, например nil привязывать,
-	// если бы storage.Storager мог бы вернуть мне (*int)(nil)
-	//
-	// Однако ни мапы(memStore) ни БД мне такой возможности не предоставит, вопрос снят
+	if err != nil {
+		return err, false
+	}
 
 	return nil, found
 }
 
 // updateStorageAndValue обновляет и значение m и хранилища store  в соответствии со значением
-func updateStorageAndValue(store Storager, m *metrica.Metrica) error {
+func updateStorageAndValue(ctx context.Context, store Storager, m *metrica.Metrica) error {
 	err := m.Validate()
 	if err != nil {
 		return fmt.Errorf("полученная структура оформлена неправильно: %v", err)
@@ -191,15 +184,21 @@ func updateStorageAndValue(store Storager, m *metrica.Metrica) error {
 
 	switch m.MType {
 	case metrica.CounterName:
-		oldVal, _ := store.Counter(m.ID)
-		val := oldVal + metrica.Counter(*m.Delta)
-		store.SetCounter(m.ID, val)
+		var v int64
+		v, err = store.UpdateCounter(ctx, m.ID, *m.Delta)
 
-		*m.Delta = int64(val)
+		*m.Delta = v
 	case metrica.GaugeName:
-		store.SetGauge(m.ID, metrica.Gauge(*m.Value))
+		var v float64
+		v, err = store.UpdateGauge(ctx, m.ID, *m.Value)
 		// Обновлять значение не требуется
+		*m.Value = v
 	}
+
+	if err != nil {
+		return err
+	}
+
 	return nil
 
 }

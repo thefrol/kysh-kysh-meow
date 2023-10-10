@@ -23,7 +23,7 @@ store.UpdateCounter(20.1)
 Так что я планирую изменить мигнатуры хранилища вот так:
 
 ```go
-func UpdateCounter(ctx context.Context, name string, delta int64) error
+func UpdateCounter(ctx context.Context, name string, delta int64) (value int64, err error)
 
 // а было вот так:
 func SetCounter(name string, c Counter) 
@@ -36,6 +36,7 @@ func SetCounter(name string, c Counter)
 + Update вместо Set
 + мнемонически более правильно писать `delta`, чтобы быть целостней с `storage.Delta`
 + добавлен контекст
++ возвращаем новое значение счетчика в поле `value`(влияние json вариантов ответа)
 
 ### По поводу геттеров
 
@@ -68,13 +69,14 @@ storage.SetCounter("testCounter", val)
 ```
 
 Если добавлять тип, нужно создавать новый интерфейс и новый тип, и ещё имплементировать Stringer для типа
+
 ```go
 type NewType newtype
 
 type NewTyper interface{
-	NewTyper(name string)
-	SetNewType(name string, value NewType)
-	ListNewType() [string]
+   NewTyper(name string)
+   SetNewType(name string, value NewType)
+   ListNewType() [string]
 }
 
 func (n NewType) String() string{
