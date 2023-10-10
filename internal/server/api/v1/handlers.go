@@ -9,7 +9,6 @@ import (
 	"text/template"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/rs/zerolog/log"
 	"github.com/thefrol/kysh-kysh-meow/internal/metrica"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/api"
 )
@@ -37,8 +36,7 @@ func (i API) UpdateCounter(w http.ResponseWriter, r *http.Request) {
 	value, err := strconv.ParseInt(params.value, 10, 64)
 	if err != nil {
 		w.Header().Add("Content-Type", "text/plain")
-		w.WriteHeader(http.StatusBadRequest)
-		http.Error(w, "^0^ Ошибка значения, не могу пропарсить", http.StatusBadRequest)
+		api.HTTPErrorWithLogging(w, http.StatusBadRequest, "Не могу пропарсить новое значение counter: %v", err)
 		return
 	}
 
@@ -61,7 +59,7 @@ func (i API) UpdateGauge(w http.ResponseWriter, r *http.Request) {
 	value, err := strconv.ParseFloat(params.value, 64)
 	if err != nil {
 		w.Header().Add("Content-Type", "text/plain")
-		http.Error(w, "^0^ Ошибка значения, не могу пропарсить", http.StatusBadRequest)
+		api.HTTPErrorWithLogging(w, http.StatusBadRequest, "Не могу пропарсить новое значение gauge: %v", err)
 		return
 	}
 	_, err = i.store.UpdateGauge(r.Context(), params.name, value)
@@ -132,7 +130,7 @@ func (i API) GetValue(w http.ResponseWriter, r *http.Request) {
 }
 
 // listMetrics выводит список всех известных на данный момент метрик
-func (api API) ListMetrics(w http.ResponseWriter, r *http.Request) {
+func (i API) ListMetrics(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Content-Type", "text/html")
 
 	htmlTemplate := `
@@ -160,14 +158,12 @@ func (api API) ListMetrics(w http.ResponseWriter, r *http.Request) {
 
 	tmpl, err := template.New("simple").Parse(htmlTemplate)
 	if err != nil {
-		log.Error().Str("location", "server/handlers/listCounters").Err(err).Msg("Не удается создать и пропарсить HTML шаблон")
-		http.Error(w, "error creating template", http.StatusInternalServerError)
+		api.HTTPErrorWithLogging(w, http.StatusInternalServerError, "Не удалось пропарсить HTML шаблон: %v", err)
 		return
 	}
-	err = tmpl.Execute(w, api.store)
+	err = tmpl.Execute(w, i.store)
 	if err != nil {
-		log.Error().Str("location", "server/handlers/listCounters").Err(err).Msg("Ошибка запуска шаблона HTML")
-		http.Error(w, "error executing template", http.StatusInternalServerError)
+		api.HTTPErrorWithLogging(w, http.StatusInternalServerError, "Ошибка запуска шаблона HTML: %v", err)
 		return
 	}
 }
