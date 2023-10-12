@@ -3,13 +3,12 @@
 package apiv1
 
 import (
-	"fmt"
+	"context"
 	"net/http"
 	"strconv"
 	"text/template"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/thefrol/kysh-kysh-meow/internal/metrica"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/api"
 )
 
@@ -30,53 +29,26 @@ func New(store api.Storager) API {
 // иначе говоря за URL вида: /update/counter/<name>/<value>
 // приходящее значение: int64
 // поведение: складывать с предыдущим значением, если оно известно
-func (i API) UpdateCounter(w http.ResponseWriter, r *http.Request) {
+func (i API) UpdatePlain(w http.ResponseWriter, r *http.Request) {
 	params := getURLParams(r)
 
 	api.SetContentType(w, api.TypeTextPlain)
 
-	value, err := strconv.ParseInt(params.value, 10, 64)
+	err := UpdateString(r.Context(), i.store, params.metric, params.name, params.value)
 	if err != nil {
-		api.HTTPErrorWithLogging(w, http.StatusBadRequest, "Не могу пропарсить новое значение counter: %v", err)
+
+		if err == api.ErrorUnknownMetricType {
+			api.HTTPErrorWithLogging(w, http.StatusBadRequest, "Неизвестный тип счетчика: %v", params.metric)
+			return
+		} else if err == api.ErrorParseError {
+			api.HTTPErrorWithLogging(w, http.StatusBadRequest, "Не могу пропарсить новое значение счетчика типа %v с именем %v значением %v", params.metric, params.name, params.value)
+			return
+		}
+		api.HTTPErrorWithLogging(w, http.StatusInternalServerError, "Неизвестная ошибка обновления счетчика типа %v с именем %v значением %v: %v", params.metric, params.name, params.value, err)
 		return
+
 	}
 
-	_, err = i.store.UpdateCounter(r.Context(), params.name, value)
-	if err != nil {
-		api.HTTPErrorWithLogging(w, http.StatusInternalServerError, "не могу обновить счетчик: %v", err)
-		return
-	}
-}
-
-// updateGauge отвечает за маршрут, по которому будет обновляться метрика типа gauge
-// иначе говоря за URL вида: /update/gauge/<name>/<value>
-// приходящее значение: float64
-// поведение: устанавливать новое значение
-func (i API) UpdateGauge(w http.ResponseWriter, r *http.Request) {
-	params := getURLParams(r)
-
-	api.SetContentType(w, api.TypeTextPlain)
-
-	value, err := strconv.ParseFloat(params.value, 64)
-	if err != nil {
-		api.HTTPErrorWithLogging(w, http.StatusBadRequest, "Не могу пропарсить новое значение gauge: %v", err)
-		return
-	}
-	_, err = i.store.UpdateGauge(r.Context(), params.name, value)
-	if err != nil {
-		api.HTTPErrorWithLogging(w, http.StatusInternalServerError, "не могу обновить gauge: %v", err)
-		return
-	}
-}
-
-// ErrorUnknownType возвращает клиенту ошибку 400(Bad Request)
-// и отправляет информационное сообщение, о том, что сервер не знает такого типа счетчика
-func ErrorUnknownType(w http.ResponseWriter, r *http.Request) {
-	params := getURLParams(r)
-
-	api.SetContentType(w, api.TypeTextPlain)
-
-	api.HTTPErrorWithLogging(w, http.StatusInternalServerError, "неизвестный тип счетчика: %v", params.metric)
 }
 
 // getValue возвращает значение уже записанной метрики,
@@ -85,48 +57,23 @@ func ErrorUnknownType(w http.ResponseWriter, r *http.Request) {
 func (i API) GetValue(w http.ResponseWriter, r *http.Request) {
 	params := getURLParams(r)
 
-	var (
-		value string
-		found bool
-		err   error
-	)
-
-	// Здесь мы получаем значение метрики с полученным именем,
-	//
-	// TODO
-	//
-	// Меня не отпускает ощущение, что можно чу-у-у-у-уточку ускорить
-	// весь этот алгоритм, если проверять не строку целиком, а
-	// например первую буковку
-	// - если "c" - перед нами counter
-	// - если "g" - gauge
-	//
-	// все проверки мы уже сделали заранее!
-	switch params.metric {
-	case metrica.CounterName:
-		var v int64
-		v, found, err = i.store.Counter(r.Context(), params.name)
-		value = fmt.Sprint(v)
-	case metrica.GaugeName:
-		var v float64
-		v, found, err = i.store.Gauge(r.Context(), params.name)
-		value = fmt.Sprint(v)
-		// TODO
-		//
-		// Этот кусок кода, конечно тоже малопонятен, я вообще за такие ункции в хранилишще
-		// SetCounterString(), CounterString(), возможно даже SetString(type, name, sval), GetString(type, name, sval)
-	}
+	s, err := GetString(r.Context(), i.store, params.metric, params.name)
 
 	if err != nil {
-		api.HTTPErrorWithLogging(w, http.StatusInternalServerError, "Ошибка получения метрики: %v", err)
+
+		if err == api.ErrorNotFoundMetric {
+			api.HTTPErrorWithLogging(w, http.StatusNotFound, "Счетчик типа %v с именем %v не найден", params.metric, params.name)
+			return
+		} else if err == api.ErrorUnknownMetricType {
+			api.HTTPErrorWithLogging(w, http.StatusBadRequest, "Неизвестный тип счетчика: %v", params.metric)
+			return
+		}
+		api.HTTPErrorWithLogging(w, http.StatusInternalServerError, "Неизвестная ошибка получения счетчика счетчика типа %v с именем %v значением %v: %v", params.metric, params.name, params.value, err)
 		return
-	}
-	if !found {
-		api.HTTPErrorWithLogging(w, http.StatusNotFound, "метрика [%v]%v не найдена в хранилище", params.metric, params.name)
-		return
+
 	}
 
-	w.Write([]byte(value))
+	w.Write([]byte(s))
 }
 
 // listMetrics выводит список всех известных на данный момент метрик
@@ -161,7 +108,15 @@ func (i API) ListMetrics(w http.ResponseWriter, r *http.Request) {
 		api.HTTPErrorWithLogging(w, http.StatusInternalServerError, "Не удалось пропарсить HTML шаблон: %v", err)
 		return
 	}
-	err = tmpl.Execute(w, i.store)
+	cs, gs, err := i.store.List(r.Context())
+	if err != nil {
+		api.HTTPErrorWithLogging(w, http.StatusInternalServerError, "Ошибка получения списка метрик из хранилища: %v", err)
+		return
+	}
+	err = tmpl.Execute(w, struct {
+		ListCounters []string
+		ListGauges   []string
+	}{ListCounters: cs, ListGauges: gs})
 	if err != nil {
 		api.HTTPErrorWithLogging(w, http.StatusInternalServerError, "Ошибка запуска шаблона HTML: %v", err)
 		return
@@ -182,4 +137,56 @@ func getURLParams(r *http.Request) urlParams {
 		name:   chi.URLParam(r, "name"),
 		value:  chi.URLParam(r, "value"),
 	}
+}
+
+func updateCounterString(ctx context.Context, store api.Storager, name string, s string) (int64, error) {
+	delta, err := strconv.ParseInt(s, 10, 64)
+	if err != nil {
+		return 0, api.ErrorParseError
+	}
+	return store.IncrementCounter(ctx, name, delta)
+}
+
+func updateGaugeString(ctx context.Context, store api.Storager, name string, s string) (float64, error) {
+	v, err := strconv.ParseFloat(s, 64)
+	if err != nil {
+		return 0, api.ErrorParseError
+	}
+	return store.UpdateGauge(ctx, name, v)
+}
+
+// UpdateString обновляет значение в хранилище, имея значение в формате строки. Сам
+// просматриваем тип счетчика и решает куда писать
+func UpdateString(ctx context.Context, store api.Storager, mtype string, name string, s string) (err error) {
+	switch mtype {
+	case "counter":
+		_, err := updateCounterString(ctx, store, name, s)
+		return err
+	case "gauge":
+		_, err := updateGaugeString(ctx, store, name, s)
+		return err
+	default:
+		return api.ErrorUnknownMetricType
+	}
+
+}
+
+// GetString обновляет значение в хранилище, имея значение в формате строки. Сам
+// просматриваем тип счетчика и решает куда писать
+func GetString(ctx context.Context, store api.Storager, mtype string, name string) (value string, err error) {
+
+	switch mtype {
+	case "counter":
+		c, err := store.Counter(ctx, name)
+		return strconv.FormatInt(c, 10), err // лишний вызов форматирования конечно, но это для редких случаев ошики
+	case "gauge":
+		g, err := store.Gauge(ctx, name)
+		return strconv.FormatFloat(g, 'f', -1, 64), err
+	default:
+		return "", api.ErrorUnknownMetricType
+		// мне конечно очень не хочется проверять все эти статусы, но с другой стороны это редкие случаи все, то есть замедление
+		// на интроспецию ошибок будет идти в редких случаях, когда не тот тип метрики или неправильное значение передано. В идеале это
+		// большая редкость
+	}
+
 }

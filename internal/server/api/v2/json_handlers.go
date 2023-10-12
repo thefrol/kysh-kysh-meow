@@ -5,7 +5,6 @@ package apiv2
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 
 	"github.com/mailru/easyjson"
@@ -63,14 +62,24 @@ func (i API) UpdateWithJSON(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
-	// изменяем хранилище и значения в переменной m
-	err = updateStorageAndValue(r.Context(), i.store, &m)
+	// проверяем полученную структуру
+	if err = m.Validate(); err != nil {
+		api.HTTPErrorWithLogging(w, http.StatusBadRequest, "Получена неправильно заполенная струкура %+v: %v", m, err)
+		return
+	}
+	if err = m.ContainsUpdate(); err != nil {
+		api.HTTPErrorWithLogging(w, http.StatusBadRequest, "Получена неправильно заполенная струкура %+v: %v", m, err)
+		return
+	}
+
+	// обновляем
+	val, err := updateStorage(r.Context(), i.store, m)
 	if err != nil {
 		api.HTTPErrorWithLogging(w, http.StatusBadRequest, "Ошибка обновления хранилища: %v", err)
 		return
 	}
 
-	_, _, err = easyjson.MarshalToHTTPResponseWriter(&m, w)
+	_, _, err = easyjson.MarshalToHTTPResponseWriter(&val, w)
 	if err != nil {
 		log.Error().Str("location", "json update handler(on return)").Msgf("Cant marshal a return for %v %v", m.MType, m.ID)
 		http.Error(w, "cant marshal result", http.StatusInternalServerError)
@@ -94,17 +103,23 @@ func (i API) ValueWithJSON(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
-	// пробуем обновить метрики. Там где мы проверяем err, нас не интересуют ошибки где пустые поля Value или
-	err, found := addValueFromStorage(r.Context(), i.store, &m)
-	if err != nil {
-		api.HTTPErrorWithLogging(w, http.StatusBadRequest, "Ошибка метрики %+v: %v", m, err) // todo, а как бы сделать так, чтобы %v подсвечивался
-		return
-	} else if !found {
-		api.HTTPErrorWithLogging(w, http.StatusNotFound, "В хранилище не найдена метрика %v", m.ID)
+	// проверяем полученную структуру
+	if err = m.Validate(); err != nil {
+		api.HTTPErrorWithLogging(w, http.StatusBadRequest, "Получена неправильно заполенная струкура %+v: %v", m, err)
 		return
 	}
 
-	_, _, err = easyjson.MarshalToHTTPResponseWriter(&m, w)
+	val, err := GetStorage(r.Context(), i.store, m)
+	if err != nil {
+		if err == api.ErrorNotFoundMetric {
+			api.HTTPErrorWithLogging(w, http.StatusNotFound, "В хранилище не найдена метрика %v", m.ID)
+			return
+		}
+		api.HTTPErrorWithLogging(w, http.StatusBadRequest, "Ошибка обновления метрики %+v: %v", m, err) // todo, а как бы сделать так, чтобы %v подсвечивался
+		return
+	}
+
+	_, _, err = easyjson.MarshalToHTTPResponseWriter(&val, w)
 	if err != nil {
 		log.Error().Str("location", "json get handler(on return)").Msgf("Cant marshal a return for %v %v", m.MType, m.ID)
 		http.Error(w, "cant marshal result", http.StatusInternalServerError)
@@ -112,82 +127,28 @@ func (i API) ValueWithJSON(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// addValueFromStorage добавляет структуре request поле со значением из хранилища store,
-// будь то поле delta или value. Изменяет исходную структуру request в угоду скорости работы.
-// Если метрика в хранилище не найдена, то возвращает falsе.
-//
-// m будет валидным только если err!=nil, иначе мы не можем полагаться что поля value или delta
-// можно прочитать и они будут соответствовать значения из хранилища. Например, если
-// m - невалидная структура, то m.Delta и m.Value будут содержать nil, и если
-// счетчик с именем m.ID не найден в хранилище store, то то же самое
-//
-// found==true Тогда и только тогда, когда err!=nil; found=false тоже возможен когда err!=nil
-// err!=nil тогда, когда структура m неправильно оформлена
-func addValueFromStorage(ctx context.Context, store api.Storager, m *metrica.Metrica) (e error, found bool) {
-
-	// TODO
-	//
-	// в этомй функции мы вынуждены создавать указатели на int или float, поэтому чуть выгодней конечно возвращать структуру целиком
-	// или раньше инициализировать ссылки на float или int
-	//
-	err := m.Validate()
-	if err != nil {
-		return fmt.Errorf("полученная структура оформлена неправильно: %v", err), false
+func updateStorage(ctx context.Context, store api.Storager, upd metrica.Metrica) (newVal metrica.Metrica, err error) {
+	switch upd.MType {
+	case "counter":
+		c, err := store.IncrementCounter(ctx, upd.ID, *upd.Delta)
+		return metrica.Metrica{MType: upd.MType, ID: upd.ID, Delta: &c}, err // это получается отправится в хип
+	case "gauge":
+		g, err := store.UpdateGauge(ctx, upd.ID, *upd.Value)
+		return metrica.Metrica{MType: upd.MType, ID: upd.ID, Value: &g}, err
+	default:
+		return
 	}
-
-	switch m.MType {
-	case metrica.CounterName:
-		var value int64
-		value, found, err = store.Counter(ctx, m.ID)
-
-		*m.Delta = value
-
-	case metrica.GaugeName:
-		var value float64
-		value, found, err = store.Gauge(ctx, m.ID)
-		if !found {
-			return nil, false
-		}
-		m.Value = new(float64)
-		*m.Value = value
-	}
-
-	if err != nil {
-		return err, false
-	}
-
-	return nil, found
 }
 
-// updateStorageAndValue обновляет и значение m и хранилища store  в соответствии со значением
-func updateStorageAndValue(ctx context.Context, store api.Storager, m *metrica.Metrica) error {
-	err := m.Validate()
-	if err != nil {
-		return fmt.Errorf("полученная структура оформлена неправильно: %v", err)
+func GetStorage(ctx context.Context, store api.Storager, req metrica.Metrica) (newVal metrica.Metrica, err error) {
+	switch req.MType {
+	case "counter":
+		c, err := store.Counter(ctx, req.ID)
+		return metrica.Metrica{MType: req.MType, ID: req.ID, Delta: &c}, err // это получается отправится в хип
+	case "gauge":
+		g, err := store.Gauge(ctx, req.ID)
+		return metrica.Metrica{MType: req.MType, ID: req.ID, Value: &g}, err
+	default:
+		return
 	}
-
-	err = m.ContainsUpdate()
-	if err != nil {
-		return fmt.Errorf("структура %+v не содержит обновлений: %v", m, err)
-	}
-
-	switch m.MType {
-	case metrica.CounterName:
-		var v int64
-		v, err = store.UpdateCounter(ctx, m.ID, *m.Delta)
-
-		*m.Delta = v
-	case metrica.GaugeName:
-		var v float64
-		v, err = store.UpdateGauge(ctx, m.ID, *m.Value)
-		// Обновлять значение не требуется
-		*m.Value = v
-	}
-
-	if err != nil {
-		return err
-	}
-
-	return nil
-
 }

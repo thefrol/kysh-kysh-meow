@@ -27,9 +27,7 @@ func InstallAPIV1(r chi.Router, v1 apiv1.API) {
 		//r.With(chimiddleware.AllowContentType("text/plain"))
 		r.Get("/value/{type}/{name}", v1.GetValue)
 
-		r.Post("/update/{type:counter}/{name}/{value}", v1.UpdateCounter)
-		r.Post("/update/{type:gauge}/{name}/{value}", v1.UpdateGauge)
-		r.Post("/update/{type}/{name}/{value}", apiv1.ErrorUnknownType)
+		r.Post("/update/{type}/{name}/{value}", v1.UpdatePlain)
 
 	})
 }
