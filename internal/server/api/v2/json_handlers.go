@@ -14,8 +14,8 @@ import (
 )
 
 var (
-	ErrorDeltaEmpty = errors.New("Поле Delta не может быть пустым, для когда id=counter")
-	ErrorValueEmpty = errors.New("Поле Value не может быть пустым, для когда id=gauge")
+	ErrorDeltaEmpty = errors.New("поле Delta не может быть пустым, для когда id=counter")
+	ErrorValueEmpty = errors.New("поле Value не может быть пустым, для когда id=gauge")
 )
 
 // API это колленция http.HanlderFunc, которые обращаются к единому хранилищу store
