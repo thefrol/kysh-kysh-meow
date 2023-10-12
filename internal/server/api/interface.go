@@ -1,18 +1,45 @@
 package api
 
-import "context"
+import (
+	"context"
+	"errors"
+)
+
+// var ErrorUnknownMetricType = errors.New("неизвестный тип метрики. Поддерживается только counter или gauge")
+
+var (
+	ErrorParseError        = errors.New("невозможно распарсить значение метрики в int или float")
+	ErrorUnknownMetricType = errors.New("неизвестная метрика, доступны значения counter и gauge")
+
+	ErrorUpdateCheckFailed = errors.New("обновление не удалось")
+	ErrorNotFoundMetric    = errors.New("метрика с указанным именем не найдена")
+)
 
 // Storager это интерфейс к хранилищу, которое использует именно этот API. Таким образом мы делаем хранилище зависимым от
-// API,  а не наоборот
+// API,  а не наоборот.
+//
+// Раз уж интерфейс тут, то, наверное и ошибки тоже должны быть описаны в этом же пакете
+// ErrorUpdateCheckFailed в случае если произошла ошибка ввода-вывода
+// ErrorNotFoundMetric, если искомая метрика не найдена
+//
+// В общем случае от хранилища мы не ожидаем, что он будет проверять тип метрики. По сути он хранит все что не попадя куда ему скажут,
+// и не очень много знает о хранимых данных, это просто интерфейс ввода-вывода
 type Storager interface {
-	Counter(ctx context.Context, name string) (value int64, found bool, err error)
-	UpdateCounter(ctx context.Context, name string, delta int64) (newValue int64, err error)
-	ListCounters(ctx context.Context) ([]string, error)
-	Gauge(ctx context.Context, name string) (value float64, found bool, err error)
-	UpdateGauge(ctx context.Context, name string, value float64) (newValue float64, err error)
-	ListGauges(ctx context.Context) ([]string, error)
+	Counter(ctx context.Context, name string) (value int64, err error)
+	Gauge(ctx context.Context, name string) (value float64, err error)
+
+	IncrementCounter(ctx context.Context, name string, delta int64) (value int64, err error)
+	UpdateGauge(ctx context.Context, name string, v float64) (value float64, err error)
+
+	List(ctx context.Context) (counterNames []string, gaugeNames []string, err error)
 }
 
 // todo
 //
 // КАжется в дальнейшем это надо вынести ещё выше в каталогах
+//
+// возможно тут так же должны быть операции создать и удалить
+//
+// mentor
+//
+// Где должны храниться ошибки?
