@@ -23,7 +23,7 @@ type API struct {
 	store api.Storager
 }
 
-// New создает новую
+// New создает новую апиху для джейсонов
 func New(store api.Storager) API {
 	if store == nil {
 		panic("Хранилище - пустой указатель")
@@ -31,6 +31,8 @@ func New(store api.Storager) API {
 	return API{store: store}
 }
 
+// MarshallUnmarshallMetrica - это функция обертка, которая размаршаливает и замаршаливает значения полученные по HTTP в структуру metrica.Metrica,
+// используется, чтобы избавиться от дублирования кода в конктретных хендлерах /value и /update
 func MarshallUnmarshallMerica(handler func(context.Context, metrica.Metrica) (out metrica.Metrica, err error)) func(http.ResponseWriter, *http.Request) {
 
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -78,6 +80,8 @@ func MarshallUnmarshallMerica(handler func(context.Context, metrica.Metrica) (ou
 
 }
 
+// UpdateStorage обновляет хранилище, используя струтуру типа metrica.Metrica для получения типа и имени счетчика,
+// возвращает обновленное значение структурой out
 func (a API) UpdateStorage(ctx context.Context, in metrica.Metrica) (newVal metrica.Metrica, err error) {
 
 	switch in.MType {
@@ -98,6 +102,8 @@ func (a API) UpdateStorage(ctx context.Context, in metrica.Metrica) (newVal metr
 	}
 }
 
+// GetStorage получает данные из хранилища, которые указаны в Api. Выбирает тиип и имя счетчика из струтуры in,
+// возвращает труктурой out
 func (a API) GetStorage(ctx context.Context, in metrica.Metrica) (newVal metrica.Metrica, err error) {
 	switch in.MType {
 	case "counter":
@@ -112,3 +118,8 @@ func (a API) GetStorage(ctx context.Context, in metrica.Metrica) (newVal metrica
 }
 
 var empty = metrica.Metrica{}
+
+// TODO
+//
+// Если бы мы могли сделать структуру StorageController из Storager, то мы могли бы все перенести в storage, всю эту
+// логику работы метрик, а в хендлерах оставить только высокоуровневое уже все
