@@ -42,10 +42,13 @@ func InstallAPIV2(r chi.Router, v2 apiv2.API) {
 	r.Group(func(r chi.Router) {
 		r.With(chimiddleware.AllowContentType("application/json"))
 
-		r.Post("/value", v2.ValueWithJSON)
-		r.Post("/value/", v2.ValueWithJSON)
-		r.Post("/update", v2.UpdateWithJSON)
-		r.Post("/update/", v2.UpdateWithJSON)
+		update := apiv2.MarshallUnmarshallMerica(v2.UpdateStorage)
+		get := apiv2.MarshallUnmarshallMerica(v2.GetStorage)
+
+		r.Post("/value", get)
+		r.Post("/value/", get)
+		r.Post("/update", update)
+		r.Post("/update/", update)
 
 		// как не дублировать маршруты я пока варианта не нашел:
 		// если в конце поставить слеш, то без слеша не работает
