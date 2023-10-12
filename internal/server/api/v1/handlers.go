@@ -8,7 +8,6 @@ import (
 	"strconv"
 	"text/template"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/api"
 )
 
@@ -25,13 +24,14 @@ func New(store api.Storager) API {
 	return API{store: store}
 }
 
-func TextWrapper(handler func(ctx context.Context, mtype string, name string, in string) (out string, err error)) http.HandlerFunc {
+func UnwrapURLParams(handler func(ctx context.Context, params urlParams) (out string, err error)) http.HandlerFunc {
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		params := getURLParams(r)
 
 		api.SetContentType(w, api.TypeTextPlain)
 
-		out, err := handler(r.Context(), params.metric, params.name, params.value) // todo мы почти тут пришли к какому-то универсальному обработчику, черт, типа напрмер типа Metric
+		out, err := handler(r.Context(), params) // todo мы почти тут пришли к какому-то универсальному обработчику, черт, типа напрмер типа Metric
 		if err != nil {
 
 			if err == api.ErrorUnknownMetricType {
@@ -105,11 +105,7 @@ type urlParams struct {
 // getURLParams достает из URL маршрута параметры счетчика, такие как
 // тип, имя, значение, и возвращает в виде структуры urlParams
 func getURLParams(r *http.Request) urlParams {
-	return urlParams{
-		metric: chi.URLParam(r, "type"),
-		name:   chi.URLParam(r, "name"),
-		value:  chi.URLParam(r, "value"),
-	}
+	return urlParams{}
 }
 
 func (i API) updateCounterString(ctx context.Context, name string, s string) (int64, error) {
@@ -130,13 +126,13 @@ func (i API) updateGaugeString(ctx context.Context, name string, s string) (floa
 
 // UpdateString обновляет значение в хранилище, имея значение в формате строки. Сам
 // просматриваем тип счетчика и решает куда писать
-func (i API) UpdateString(ctx context.Context, mtype string, name string, s string) (out string, err error) {
-	switch mtype {
+func (i API) UpdateString(ctx context.Context, params urlParams) (out string, err error) {
+	switch params.metric {
 	case "counter":
-		_, err := i.updateCounterString(ctx, name, s)
+		_, err := i.updateCounterString(ctx, params.name, params.value)
 		return "", err
 	case "gauge":
-		_, err := i.updateGaugeString(ctx, name, s)
+		_, err := i.updateGaugeString(ctx, params.name, params.value)
 		return "", err
 	default:
 		return "", api.ErrorUnknownMetricType
@@ -148,14 +144,14 @@ func (i API) UpdateString(ctx context.Context, mtype string, name string, s stri
 // просматриваем тип счетчика и решает куда писать.
 //
 // параметр s не используется, и нужен только для соответствия интерфейсу.
-func (i API) GetString(ctx context.Context, mtype string, name string, s string) (value string, err error) {
+func (i API) GetString(ctx context.Context, params urlParams) (value string, err error) {
 
-	switch mtype {
+	switch params.metric {
 	case "counter":
-		c, err := i.store.Counter(ctx, name)
+		c, err := i.store.Counter(ctx, params.name)
 		return strconv.FormatInt(c, 10), err // лишний вызов форматирования конечно, но это для редких случаев ошики
 	case "gauge":
-		g, err := i.store.Gauge(ctx, name)
+		g, err := i.store.Gauge(ctx, params.name)
 		return strconv.FormatFloat(g, 'f', -1, 64), err
 	default:
 		return "", api.ErrorUnknownMetricType

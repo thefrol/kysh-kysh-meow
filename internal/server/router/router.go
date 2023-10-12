@@ -25,9 +25,9 @@ func InstallAPIV1(r chi.Router, v1 apiv1.API) {
 	r.Group(func(r chi.Router) {
 		// в какой-то момент, когда починят тесты, тут можно будет снять комменты
 		//r.With(chimiddleware.AllowContentType("text/plain"))
-		r.Get("/value/{type}/{name}", apiv1.TextWrapper(v1.GetString))
+		r.Get("/value/{type}/{name}", apiv1.UnwrapURLParams(v1.GetString))
 
-		r.Post("/update/{type}/{name}/{value}", apiv1.TextWrapper(v1.UpdateString))
+		r.Post("/update/{type}/{name}/{value}", apiv1.UnwrapURLParams(v1.UpdateString))
 
 	})
 }
