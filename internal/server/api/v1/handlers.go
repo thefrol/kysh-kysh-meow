@@ -35,13 +35,13 @@ func UnwrapURLParams(handler func(ctx context.Context, params urlParams) (out st
 		if err != nil {
 
 			if err == api.ErrorUnknownMetricType {
-				api.HTTPErrorWithLogging(w, http.StatusBadRequest, "Неизвестный тип счетчика: %v", params.metric)
+				api.HTTPErrorWithLogging(w, http.StatusBadRequest, "Неизвестный тип счетчика: %v", params.mtype)
 				return
 			} else if err == api.ErrorParseError {
-				api.HTTPErrorWithLogging(w, http.StatusBadRequest, "Не могу пропарсить новое значение счетчика типа %v с именем %v значением %v", params.metric, params.name, params.value)
+				api.HTTPErrorWithLogging(w, http.StatusBadRequest, "Не могу пропарсить новое значение счетчика типа %v с именем %v значением %v", params.mtype, params.id, params.value)
 				return
 			}
-			api.HTTPErrorWithLogging(w, http.StatusInternalServerError, "Неизвестная ошибка обновления счетчика типа %v с именем %v значением %v: %v", params.metric, params.name, params.value, err)
+			api.HTTPErrorWithLogging(w, http.StatusInternalServerError, "Неизвестная ошибка обновления счетчика типа %v с именем %v значением %v: %v", params.mtype, params.id, params.value, err)
 			return
 
 		}
@@ -97,9 +97,9 @@ func (i API) ListMetrics(w http.ResponseWriter, r *http.Request) {
 }
 
 type urlParams struct {
-	metric string //type
-	name   string
-	value  string
+	mtype string //type
+	id    string
+	value string
 }
 
 // getURLParams достает из URL маршрута параметры счетчика, такие как
@@ -127,12 +127,12 @@ func (i API) updateGaugeString(ctx context.Context, name string, s string) (floa
 // UpdateString обновляет значение в хранилище, имея значение в формате строки. Сам
 // просматриваем тип счетчика и решает куда писать
 func (i API) UpdateString(ctx context.Context, params urlParams) (out string, err error) {
-	switch params.metric {
+	switch params.mtype {
 	case "counter":
-		_, err := i.updateCounterString(ctx, params.name, params.value)
+		_, err := i.updateCounterString(ctx, params.id, params.value)
 		return "", err
 	case "gauge":
-		_, err := i.updateGaugeString(ctx, params.name, params.value)
+		_, err := i.updateGaugeString(ctx, params.id, params.value)
 		return "", err
 	default:
 		return "", api.ErrorUnknownMetricType
@@ -146,12 +146,12 @@ func (i API) UpdateString(ctx context.Context, params urlParams) (out string, er
 // параметр s не используется, и нужен только для соответствия интерфейсу.
 func (i API) GetString(ctx context.Context, params urlParams) (value string, err error) {
 
-	switch params.metric {
+	switch params.mtype {
 	case "counter":
-		c, err := i.store.Counter(ctx, params.name)
+		c, err := i.store.Counter(ctx, params.id)
 		return strconv.FormatInt(c, 10), err // лишний вызов форматирования конечно, но это для редких случаев ошики
 	case "gauge":
-		g, err := i.store.Gauge(ctx, params.name)
+		g, err := i.store.Gauge(ctx, params.id)
 		return strconv.FormatFloat(g, 'f', -1, 64), err
 	default:
 		return "", api.ErrorUnknownMetricType
