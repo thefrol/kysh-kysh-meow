@@ -3,6 +3,8 @@ package api
 import (
 	"context"
 	"errors"
+
+	"github.com/thefrol/kysh-kysh-meow/internal/metrica"
 )
 
 // var ErrorUnknownMetricType = errors.New("неизвестный тип метрики. Поддерживается только counter или gauge")
@@ -35,6 +37,13 @@ type Storager interface {
 	UpdateGauge(ctx context.Context, name string, v float64) (value float64, err error)
 
 	List(ctx context.Context) (counterNames []string, gaugeNames []string, err error)
+}
+
+type datastruct = metrica.Metrica
+
+type Operator interface {
+	Get(ctx context.Context, req ...datastruct) (resp []datastruct, err error)
+	Update(ctx context.Context, req ...datastruct) (resp []datastruct, err error)
 }
 
 // todo
