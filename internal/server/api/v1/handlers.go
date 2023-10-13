@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"text/template"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/api"
 )
 
@@ -27,10 +28,9 @@ func New(store api.Storager) API {
 func UnwrapURLParams(handler func(ctx context.Context, params urlParams) (out string, err error)) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		params := getURLParams(r)
-
 		api.SetContentType(w, api.TypeTextPlain)
 
+		params := getURLParams(r)
 		out, err := handler(r.Context(), params) // todo мы почти тут пришли к какому-то универсальному обработчику, черт, типа напрмер типа Metric
 		if err != nil {
 
@@ -105,7 +105,11 @@ type urlParams struct {
 // getURLParams достает из URL маршрута параметры счетчика, такие как
 // тип, имя, значение, и возвращает в виде структуры urlParams
 func getURLParams(r *http.Request) urlParams {
-	return urlParams{}
+	return urlParams{
+		mtype: chi.URLParam(r, "type"),
+		id:    chi.URLParam(r, "name"),
+		value: chi.URLParam(r, "value"),
+	}
 }
 
 func (i API) updateCounterString(ctx context.Context, name string, s string) (int64, error) {
