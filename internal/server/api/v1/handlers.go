@@ -32,8 +32,11 @@ func UnwrapURLParams(handler func(ctx context.Context, params urlParams) (out st
 
 		params := getURLParams(r)
 		out, err := handler(r.Context(), params) // todo мы почти тут пришли к какому-то универсальному обработчику, черт, типа напрмер типа Metric
-		if err != nil {
-
+		if err != nil {                          // todo вот этот код встречается в соседних обертках
+			if err == api.ErrorNotFoundMetric {
+				api.HTTPErrorWithLogging(w, http.StatusNotFound, "Не найдена метрика %v с именем %v", params.mtype, params.id)
+				return
+			}
 			if err == api.ErrorUnknownMetricType {
 				api.HTTPErrorWithLogging(w, http.StatusBadRequest, "Неизвестный тип счетчика: %v", params.mtype)
 				return
@@ -41,7 +44,7 @@ func UnwrapURLParams(handler func(ctx context.Context, params urlParams) (out st
 				api.HTTPErrorWithLogging(w, http.StatusBadRequest, "Не могу пропарсить новое значение счетчика типа %v с именем %v значением %v", params.mtype, params.id, params.value)
 				return
 			}
-			api.HTTPErrorWithLogging(w, http.StatusInternalServerError, "Неизвестная ошибка обновления счетчика типа %v с именем %v значением %v: %v", params.mtype, params.id, params.value, err)
+			api.HTTPErrorWithLogging(w, http.StatusInternalServerError, "Неизвестная ошибка обработки счетчика типа %v с именем %v значением %v: %v", params.mtype, params.id, params.value, err)
 			return
 
 		}
