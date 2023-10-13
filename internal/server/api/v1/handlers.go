@@ -3,7 +3,6 @@
 package apiv1
 
 import (
-	"context"
 	"net/http"
 	"strconv"
 	"text/template"
@@ -168,42 +167,6 @@ func getURLParams(r *http.Request) urlParams {
 	}
 }
 
-func (i API) updateCounterString(ctx context.Context, name string, s string) (int64, error) {
-	delta, err := strconv.ParseInt(s, 10, 64)
-	if err != nil {
-		return 0, api.ErrorParseError
-	}
-	return i.store.IncrementCounter(ctx, name, delta)
-}
-
-func (i API) updateGaugeString(ctx context.Context, name string, s string) (float64, error) {
-	v, err := strconv.ParseFloat(s, 64)
-	if err != nil {
-		return 0, api.ErrorParseError
-	}
-	return i.store.UpdateGauge(ctx, name, v)
-}
-
-// UpdateString обновляет значение в хранилище, имея значение в формате строки. Сам
-// просматриваем тип счетчика и решает куда писать
-func (i API) UpdateString(ctx context.Context, params urlParams) (out string, err error) {
-	switch params.mtype {
-	case "counter":
-		_, err := i.updateCounterString(ctx, params.id, params.value)
-		return "", err
-	case "gauge":
-		_, err := i.updateGaugeString(ctx, params.id, params.value)
-		return "", err
-	default:
-		return "", api.ErrorUnknownMetricType
-	}
-
-}
-
-// GetString обновляет значение в хранилище, имея значение в формате строки. Сам
-// просматриваем тип счетчика и решает куда писать.
-//
-// параметр s не используется, и нужен только для соответствия интерфейсу.
 func ValueString(m metrica.Metrica) (string, error) {
 
 	switch m.MType {
