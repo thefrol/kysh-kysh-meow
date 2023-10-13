@@ -72,14 +72,11 @@ func MeowRouter(store api.Storager, app *app.App) (router chi.Router) {
 	router.Use(middleware.UnGZIP)
 	router.Use(middleware.GZIP(middleware.GZIPDefault))
 
-	// Добавляем маршруты, которые я разделил на два раздела
-	v3 := apiv3.New(app)
-
 	InstallAPIV1(router, store.(api.Operator))
 	InstallAPIV2(router, store.(api.Operator))
 
 	//создаем маршрут для проверки соединения с БД
-	router.Get("/ping", v3.CheckConnection)
+	router.Get("/ping", apiv3.CheckConnection(app))
 
 	// а ещё вот HTML страничка, которая тоже по сути относится к apiV1
 	// она не объединяется с остальными, потому что не требует
