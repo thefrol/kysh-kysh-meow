@@ -55,4 +55,80 @@ func (a *ContextAdapter) List(ctx context.Context) (counterNames []string, gauge
 	return a.legacyStore.ListCounters(), a.legacyStore.ListGauges(), nil
 }
 
+func (a *ContextAdapter) getOne(ctx context.Context, r metrica.Metrica) (resp metrica.Metrica, err error) {
+	if r.ID == "" {
+		return resp, api.ErrorUpdateCheckFailed // todo правильная ошибка?
+	}
+	switch r.MType {
+	case "counter":
+		c, err := a.Counter(ctx, r.ID)
+		return metrica.Metrica{MType: r.MType, ID: r.ID, Delta: &c}, err
+	case "gauge":
+		g, err := a.Gauge(ctx, r.ID)
+		return metrica.Metrica{MType: r.MType, ID: r.ID, Value: &g}, err
+	default:
+		return resp, api.ErrorUnknownMetricType
+	}
+}
+
+func (a *ContextAdapter) updateOne(ctx context.Context, in metrica.Metrica) (resp metrica.Metrica, err error) {
+
+	switch in.MType {
+	case "counter":
+		if in.Delta == nil {
+			return empty, api.ErrorDeltaEmpty
+		}
+		c, err := a.IncrementCounter(ctx, in.ID, *in.Delta)
+		return metrica.Metrica{MType: in.MType, ID: in.ID, Delta: &c}, err // это получается отправится в хип
+	case "gauge":
+		if in.Value == nil {
+			return empty, api.ErrorValueEmpty
+		}
+		g, err := a.UpdateGauge(ctx, in.ID, *in.Value)
+		return metrica.Metrica{MType: in.MType, ID: in.ID, Value: &g}, err
+	default:
+		return empty, api.ErrorUnknownMetricType
+	}
+}
+
+// TODO мне конечно очень не нравится что мы используем траспортный класс для работы внутри хранилища,
+// но пока в учебных целях так. Будем надеятся все сойдется. Просто если делать ещё один класс, там надо будет
+// переобертывание писать итд.
+//
+// Решение на пока - псевдоним типа DataStruct
+
+type datastruct = metrica.Metrica
+
+type Operator func(context.Context, datastruct) (datastruct, error)
+
+// aggregate позволяет обрабатывать пачку переменных, имея только функцию которая работает с единственной переменной.
+// Так, например, getOne принимает себе единственную metrica.Metrica, а с помощью функции aggregate мы можем сразу
+// обрабаоть целую кучу Metrica при поможи getOne
+//
+// GetMany:
+// many,err:= aggregate(getOne, ctx, batch...)
+func aggregate(o Operator, ctx context.Context, rs ...datastruct) (resp []datastruct, err error) {
+	for _, in := range rs {
+		out, err := o(ctx, in)
+		if err != nil {
+			return resp, err
+		}
+		resp = append(resp, out)
+	}
+	return
+}
+
+// Get implemests BatchOperator
+func (a *ContextAdapter) Get(ctx context.Context, req ...datastruct) (resp []datastruct, err error) {
+	return aggregate(a.getOne, ctx, req...)
+}
+
+// Update implemests BatchOperator
+func (a *ContextAdapter) Update(ctx context.Context, req ...datastruct) (resp []datastruct, err error) {
+	return aggregate(a.updateOne, ctx, req...)
+}
+
 var _ api.Storager = (*ContextAdapter)(nil)
+var _ api.Operator = (*ContextAdapter)(nil)
+
+var empty = metrica.Metrica{}

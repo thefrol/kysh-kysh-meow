@@ -5,7 +5,6 @@ package apiv2
 
 import (
 	"context"
-	"errors"
 	"net/http"
 
 	"github.com/mailru/easyjson"
@@ -13,18 +12,13 @@ import (
 	"github.com/thefrol/kysh-kysh-meow/internal/server/api"
 )
 
-var (
-	ErrorDeltaEmpty = errors.New("поле Delta не может быть пустым, для когда id=counter")
-	ErrorValueEmpty = errors.New("поле Value не может быть пустым, для когда id=gauge")
-)
-
 // API это колленция http.HanlderFunc, которые обращаются к единому хранилищу store
 type API struct {
-	store api.Storager
+	store api.Operator
 }
 
 // New создает новую апиху для джейсонов
-func New(store api.Storager) API {
+func New(store api.Operator) API {
 	if store == nil {
 		panic("Хранилище - пустой указатель")
 	}
@@ -33,7 +27,7 @@ func New(store api.Storager) API {
 
 // MarshallUnmarshallMetrica - это функция обертка, которая размаршаливает и замаршаливает значения полученные по HTTP в структуру metrica.Metrica,
 // используется, чтобы избавиться от дублирования кода в конктретных хендлерах /value и /update
-func MarshallUnmarshallMerica(handler func(context.Context, metrica.Metrica) (out metrica.Metrica, err error)) func(http.ResponseWriter, *http.Request) {
+func MarshallUnmarshallMerica(handler func(context.Context, ...metrica.Metrica) (out []metrica.Metrica, err error)) func(http.ResponseWriter, *http.Request) {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		/*
@@ -60,7 +54,7 @@ func MarshallUnmarshallMerica(handler func(context.Context, metrica.Metrica) (ou
 		}
 
 		// Запускаем обработчик handler()
-		out, err := handler(r.Context(), in)
+		arr, err := handler(r.Context(), in)
 		if err != nil {
 			if err == api.ErrorNotFoundMetric {
 				api.HTTPErrorWithLogging(w, http.StatusNotFound, "В хранилище не найдена метрика %v", in.ID)
@@ -69,6 +63,14 @@ func MarshallUnmarshallMerica(handler func(context.Context, metrica.Metrica) (ou
 			api.HTTPErrorWithLogging(w, http.StatusBadRequest, "Ошибка обновления метрики %+v: %v", in, err) // todo, а как бы сделать так, чтобы %v подсвечивался
 			return
 		}
+
+		// поскольку мы обрабаываем кучей, то как бы нужно взять из массива одно какое-то
+		// возможно мне понадобится еще один дополнительный оберточник
+		if len(arr) != 1 {
+			api.HTTPErrorWithLogging(w, http.StatusInternalServerError, "После обработки операции над хранилищем получено неправильное количество выходящих значений")
+			return
+		}
+		out := arr[0]
 
 		// Замаршаливаем результат работы хендлера
 		_, _, err = easyjson.MarshalToHTTPResponseWriter(&out, w)
@@ -79,47 +81,3 @@ func MarshallUnmarshallMerica(handler func(context.Context, metrica.Metrica) (ou
 	}
 
 }
-
-// UpdateStorage обновляет хранилище, используя струтуру типа metrica.Metrica для получения типа и имени счетчика,
-// возвращает обновленное значение структурой out
-func (a API) UpdateStorage(ctx context.Context, in metrica.Metrica) (newVal metrica.Metrica, err error) {
-
-	switch in.MType {
-	case "counter":
-		if in.Delta == nil {
-			return empty, ErrorDeltaEmpty
-		}
-		c, err := a.store.IncrementCounter(ctx, in.ID, *in.Delta)
-		return metrica.Metrica{MType: in.MType, ID: in.ID, Delta: &c}, err // это получается отправится в хип
-	case "gauge":
-		if in.Value == nil {
-			return empty, ErrorValueEmpty
-		}
-		g, err := a.store.UpdateGauge(ctx, in.ID, *in.Value)
-		return metrica.Metrica{MType: in.MType, ID: in.ID, Value: &g}, err
-	default:
-		return empty, api.ErrorUnknownMetricType
-	}
-}
-
-// GetStorage получает данные из хранилища, которые указаны в Api. Выбирает тиип и имя счетчика из струтуры in,
-// возвращает труктурой out
-func (a API) GetStorage(ctx context.Context, in metrica.Metrica) (newVal metrica.Metrica, err error) {
-	switch in.MType {
-	case "counter":
-		c, err := a.store.Counter(ctx, in.ID)
-		return metrica.Metrica{MType: in.MType, ID: in.ID, Delta: &c}, err // это получается отправится в хип
-	case "gauge":
-		g, err := a.store.Gauge(ctx, in.ID)
-		return metrica.Metrica{MType: in.MType, ID: in.ID, Value: &g}, err
-	default:
-		return empty, api.ErrorUnknownMetricType
-	}
-}
-
-var empty = metrica.Metrica{}
-
-// TODO
-//
-// Если бы мы могли сделать структуру StorageController из Storager, то мы могли бы все перенести в storage, всю эту
-// логику работы метрик, а в хендлерах оставить только высокоуровневое уже все

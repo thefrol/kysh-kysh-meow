@@ -38,12 +38,12 @@ func InstallAPIV1(r chi.Router, v1 apiv1.API) {
 // Испрользуется так
 // router := chi.NewRouter()
 // InstallAPIV2(router, store)
-func InstallAPIV2(r chi.Router, v2 apiv2.API) {
+func InstallAPIV2(r chi.Router, op api.Operator) {
 	r.Group(func(r chi.Router) {
 		r.With(chimiddleware.AllowContentType("application/json"))
 
-		update := apiv2.MarshallUnmarshallMerica(v2.UpdateStorage)
-		get := apiv2.MarshallUnmarshallMerica(v2.GetStorage)
+		update := apiv2.MarshallUnmarshallMerica(op.Update)
+		get := apiv2.MarshallUnmarshallMerica(op.Get)
 
 		r.Post("/value", get)
 		r.Post("/value/", get)
@@ -74,11 +74,10 @@ func MeowRouter(store api.Storager, app *app.App) (router chi.Router) {
 
 	// Добавляем маршруты, которые я разделил на два раздела
 	v1 := apiv1.New(store)
-	v2 := apiv2.New(store)
 	v3 := apiv3.New(app)
 
 	InstallAPIV1(router, v1)
-	InstallAPIV2(router, v2)
+	InstallAPIV2(router, store.(api.Operator))
 
 	//создаем маршрут для проверки соединения с БД
 	router.Get("/ping", v3.CheckConnection)
