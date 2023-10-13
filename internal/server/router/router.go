@@ -43,7 +43,7 @@ func InstallAPIV2(r chi.Router, op api.Operator) {
 		r.With(chimiddleware.AllowContentType("application/json"))
 
 		update := apiv2.MarshallUnmarshallMerica(op.Update)
-		get := apiv2.MarshallUnmarshallMerica(op.Get)
+		get := apiv2.MarshallUnmarshallMerica(op.Get) // подозрительно похоже на абстракную фабрику
 
 		r.Post("/value", get)
 		r.Post("/value/", get)
@@ -73,7 +73,6 @@ func MeowRouter(store api.Storager, app *app.App) (router chi.Router) {
 	router.Use(middleware.GZIP(middleware.GZIPDefault))
 
 	// Добавляем маршруты, которые я разделил на два раздела
-	v1 := apiv1.New(store)
 	v3 := apiv3.New(app)
 
 	InstallAPIV1(router, store.(api.Operator))
@@ -85,7 +84,7 @@ func MeowRouter(store api.Storager, app *app.App) (router chi.Router) {
 	// а ещё вот HTML страничка, которая тоже по сути относится к apiV1
 	// она не объединяется с остальными, потому что не требует
 	// application/json или text/plain в заголовках
-	router.Get("/", v1.ListMetrics)
+	router.Get("/", apiv1.ListMetrics(store.(api.Operator)))
 
 	// Тут добавляем стилизованные под кошки-мышки ответы сервера при 404 и 400
 	router.MethodNotAllowed(func(w http.ResponseWriter, r *http.Request) {

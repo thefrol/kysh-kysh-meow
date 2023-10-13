@@ -12,19 +12,6 @@ import (
 	"github.com/thefrol/kysh-kysh-meow/internal/server/api"
 )
 
-// API это колленция http.HanlderFunc, которые обращаются к единому хранилищу store
-type API struct {
-	store api.Storager
-}
-
-// New создает новую
-func New(store api.Storager) API {
-	if store == nil {
-		panic("Хранилище - пустой указатель")
-	}
-	return API{store: store}
-}
-
 func UnwrapURLParams(handler api.Operation) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -82,10 +69,11 @@ func UnwrapURLParams(handler api.Operation) http.HandlerFunc {
 }
 
 // listMetrics выводит список всех известных на данный момент метрик
-func (i API) ListMetrics(w http.ResponseWriter, r *http.Request) {
-	api.SetContentType(w, api.TypeTextHTML)
+func ListMetrics(op api.Operator) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		api.SetContentType(w, api.TypeTextHTML)
 
-	htmlTemplate := `
+		htmlTemplate := `
 	{{ if .ListCounters}}
 		Counters
 			<ul> 
@@ -108,23 +96,24 @@ func (i API) ListMetrics(w http.ResponseWriter, r *http.Request) {
 	{{end}}
 	`
 
-	tmpl, err := template.New("simple").Parse(htmlTemplate)
-	if err != nil {
-		api.HTTPErrorWithLogging(w, http.StatusInternalServerError, "Не удалось пропарсить HTML шаблон: %v", err)
-		return
-	}
-	cs, gs, err := i.store.List(r.Context())
-	if err != nil {
-		api.HTTPErrorWithLogging(w, http.StatusInternalServerError, "Ошибка получения списка метрик из хранилища: %v", err)
-		return
-	}
-	err = tmpl.Execute(w, struct {
-		ListCounters []string
-		ListGauges   []string
-	}{ListCounters: cs, ListGauges: gs})
-	if err != nil {
-		api.HTTPErrorWithLogging(w, http.StatusInternalServerError, "Ошибка запуска шаблона HTML: %v", err)
-		return
+		tmpl, err := template.New("simple").Parse(htmlTemplate)
+		if err != nil {
+			api.HTTPErrorWithLogging(w, http.StatusInternalServerError, "Не удалось пропарсить HTML шаблон: %v", err)
+			return
+		}
+		cs, gs, err := op.List(r.Context())
+		if err != nil {
+			api.HTTPErrorWithLogging(w, http.StatusInternalServerError, "Ошибка получения списка метрик из хранилища: %v", err)
+			return
+		}
+		err = tmpl.Execute(w, struct {
+			ListCounters []string
+			ListGauges   []string
+		}{ListCounters: cs, ListGauges: gs})
+		if err != nil {
+			api.HTTPErrorWithLogging(w, http.StatusInternalServerError, "Ошибка запуска шаблона HTML: %v", err)
+			return
+		}
 	}
 }
 
