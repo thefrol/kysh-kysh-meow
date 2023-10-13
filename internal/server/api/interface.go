@@ -13,6 +13,9 @@ var (
 
 	ErrorUpdateCheckFailed = errors.New("обновление не удалось")
 	ErrorNotFoundMetric    = errors.New("метрика с указанным именем не найдена")
+
+	ErrorDeltaEmpty = errors.New("поле Delta не может быть пустым, для когда id=counter")
+	ErrorValueEmpty = errors.New("поле Value не может быть пустым, для когда id=gauge")
 )
 
 // Storager это интерфейс к хранилищу, которое использует именно этот API. Таким образом мы делаем хранилище зависимым от
