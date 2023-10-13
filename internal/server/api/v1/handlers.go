@@ -9,6 +9,7 @@ import (
 	"text/template"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/thefrol/kysh-kysh-meow/internal/metrica"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/api"
 )
 
@@ -25,30 +26,59 @@ func New(store api.Storager) API {
 	return API{store: store}
 }
 
-func UnwrapURLParams(handler func(ctx context.Context, params urlParams) (out string, err error)) http.HandlerFunc {
+func UnwrapURLParams(handler api.Operation) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		api.SetContentType(w, api.TypeTextPlain)
 
-		params := getURLParams(r)
-		out, err := handler(r.Context(), params) // todo мы почти тут пришли к какому-то универсальному обработчику, черт, типа напрмер типа Metric
-		if err != nil {                          // todo вот этот код встречается в соседних обертках
-			if err == api.ErrorNotFoundMetric {
-				api.HTTPErrorWithLogging(w, http.StatusNotFound, "Не найдена метрика %v с именем %v", params.mtype, params.id)
+		in := getURLParams(r).Parse()
+
+		// Валидиуем полученную структуру
+		if in.ID == "" {
+			api.HTTPErrorWithLogging(w, http.StatusBadRequest, "Получена направильно заполенная струкура %+v: имя метрики не может быть пустым", in)
+			return
+		}
+
+		arr, err := handler(r.Context(), in)
+
+		if err != nil { // todo вот этот код встречается в соседних обертках
+			if err == api.ErrorDeltaEmpty || err == api.ErrorValueEmpty {
+				api.HTTPErrorWithLogging(w, http.StatusBadRequest, "Ошибка входных данных: %v", err)
+			} else if err == api.ErrorNotFoundMetric {
+				api.HTTPErrorWithLogging(w, http.StatusNotFound, "Не найдена метрика %v с именем %v", in.MType, in.ID)
+				return
+			} else if err == api.ErrorUnknownMetricType {
+				api.HTTPErrorWithLogging(w, http.StatusBadRequest, "Неизвестный тип счетчика: %v", in.MType)
 				return
 			}
-			if err == api.ErrorUnknownMetricType {
-				api.HTTPErrorWithLogging(w, http.StatusBadRequest, "Неизвестный тип счетчика: %v", params.mtype)
-				return
-			} else if err == api.ErrorParseError {
-				api.HTTPErrorWithLogging(w, http.StatusBadRequest, "Не могу пропарсить новое значение счетчика типа %v с именем %v значением %v", params.mtype, params.id, params.value)
-				return
-			}
-			api.HTTPErrorWithLogging(w, http.StatusInternalServerError, "Неизвестная ошибка обработки счетчика типа %v с именем %v значением %v: %v", params.mtype, params.id, params.value, err)
+			api.HTTPErrorWithLogging(w, http.StatusInternalServerError, "Неизвестная ошибка обработки счетчика типа %v с именем %v значением %v: %v", in.MType, in.ID, in.Value, err)
 			return
 
 		}
-		w.Write([]byte(out))
+
+		// поскольку мы обрабаываем кучей, то как бы нужно взять из массива одно какое-то
+		// возможно мне понадобится еще один дополнительный оберточник
+		if len(arr) != 1 {
+			api.HTTPErrorWithLogging(w, http.StatusInternalServerError, "После обработки операции над хранилищем получено неправильное количество выходящих значений")
+			return
+		}
+		out := arr[0]
+
+		s, err := ValueString(out)
+		if err != nil {
+			api.HTTPErrorWithLogging(w, http.StatusInternalServerError, "Ошибка конвертации значения метрики %v в строку: %v", out.MType, err)
+		}
+
+		w.Write([]byte(s))
+
+		// TODO
+		//
+		// В общем мы видим как выглядит любая такая оболочка
+		// запрос -> конвертер в metrica -> opetation -> конвертирование обратно -> ответ
+		//
+		// В целом, даже проверка ошибок +- одинаковая + ещё устаовка контент тайпа, да
+		//
+		// Возможно конвертер это такой класс типа) класс класс на классе и классом погоняет
 	}
 }
 
@@ -105,6 +135,29 @@ type urlParams struct {
 	value string
 }
 
+func (p urlParams) Parse() metrica.Metrica {
+	out := metrica.Metrica{}
+	out.MType = p.mtype
+	out.ID = p.id
+
+	// если в значении не пустая строка, то пытаемся распарсить,
+	// просто и инт и флоат, чтобы не проверять типы счетчиков лишний раз
+
+	if p.value != "" {
+		c, err := strconv.ParseInt(p.value, 10, 64)
+		if err == nil {
+			out.Delta = &c
+		}
+		g, err := strconv.ParseFloat(p.value, 64)
+		if err == nil {
+			out.Value = &g
+		}
+	}
+
+	return out
+
+}
+
 // getURLParams достает из URL маршрута параметры счетчика, такие как
 // тип, имя, значение, и возвращает в виде структуры urlParams
 func getURLParams(r *http.Request) urlParams {
@@ -151,15 +204,19 @@ func (i API) UpdateString(ctx context.Context, params urlParams) (out string, er
 // просматриваем тип счетчика и решает куда писать.
 //
 // параметр s не используется, и нужен только для соответствия интерфейсу.
-func (i API) GetString(ctx context.Context, params urlParams) (value string, err error) {
+func ValueString(m metrica.Metrica) (string, error) {
 
-	switch params.mtype {
+	switch m.MType {
 	case "counter":
-		c, err := i.store.Counter(ctx, params.id)
-		return strconv.FormatInt(c, 10), err // лишний вызов форматирования конечно, но это для редких случаев ошики
+		if m.Delta == nil {
+			return "", api.ErrorDeltaEmpty
+		}
+		return strconv.FormatInt(*m.Delta, 10), nil // лишний вызов форматирования конечно, но это для редких случаев ошики
 	case "gauge":
-		g, err := i.store.Gauge(ctx, params.id)
-		return strconv.FormatFloat(g, 'f', -1, 64), err
+		if m.Value == nil {
+			return "", api.ErrorValueEmpty
+		}
+		return strconv.FormatFloat(*m.Value, 'f', -1, 64), nil
 	default:
 		return "", api.ErrorUnknownMetricType
 		// мне конечно очень не хочется проверять все эти статусы, но с другой стороны это редкие случаи все, то есть замедление

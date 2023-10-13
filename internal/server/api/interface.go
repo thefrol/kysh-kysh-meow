@@ -41,9 +41,13 @@ type Storager interface {
 
 type datastruct = metrica.Metrica
 
+type Operation func(context.Context, ...datastruct) (out []datastruct, err error)
+
 type Operator interface {
 	Get(ctx context.Context, req ...datastruct) (resp []datastruct, err error)
 	Update(ctx context.Context, req ...datastruct) (resp []datastruct, err error)
+
+	List(ctx context.Context) (counterNames []string, gaugeNames []string, err error)
 }
 
 // todo

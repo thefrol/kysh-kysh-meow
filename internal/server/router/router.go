@@ -21,13 +21,13 @@ import (
 // Испрользуется так
 // router := chi.NewRouter()
 // InstallAPIV1(router, store)
-func InstallAPIV1(r chi.Router, v1 apiv1.API) {
+func InstallAPIV1(r chi.Router, op api.Operator) {
 	r.Group(func(r chi.Router) {
 		// в какой-то момент, когда починят тесты, тут можно будет снять комменты
 		//r.With(chimiddleware.AllowContentType("text/plain"))
-		r.Get("/value/{type}/{name}", apiv1.UnwrapURLParams(v1.GetString))
+		r.Get("/value/{type}/{name}", apiv1.UnwrapURLParams(op.Get))
 
-		r.Post("/update/{type}/{name}/{value}", apiv1.UnwrapURLParams(v1.UpdateString))
+		r.Post("/update/{type}/{name}/{value}", apiv1.UnwrapURLParams(op.Update))
 
 	})
 }
@@ -76,7 +76,7 @@ func MeowRouter(store api.Storager, app *app.App) (router chi.Router) {
 	v1 := apiv1.New(store)
 	v3 := apiv3.New(app)
 
-	InstallAPIV1(router, v1)
+	InstallAPIV1(router, store.(api.Operator))
 	InstallAPIV2(router, store.(api.Operator))
 
 	//создаем маршрут для проверки соединения с БД
