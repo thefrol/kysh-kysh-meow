@@ -7,19 +7,19 @@ import (
 	"github.com/thefrol/kysh-kysh-meow/internal/server/api"
 )
 
-// ContextAdapter оборачивает классы на старом апи хранилища oldAPI,
+// OperatorAdapter оборачивает классы на старом апи хранилища oldAPI,
 // под новое апи api.Storager, делая так, контекст, конечно используется тупо вхолостую
-type ContextAdapter struct {
+type OperatorAdapter struct {
 	legacyStore legacyStorager
 }
 
-// NewAdapter оборачивает хранилища старого интерфейса, позволяя их подключать к хендлерам, работающим на новом интерфейсе api.Storager
-func NewAdapter(s legacyStorager) *ContextAdapter {
-	return &ContextAdapter{legacyStore: s}
+// AsOperator оборачивает хранилища старого интерфейса, позволяя их подключать к хендлерам, работающим на новом интерфейсе api.Storager
+func AsOperator(s legacyStorager) *OperatorAdapter {
+	return &OperatorAdapter{legacyStore: s}
 }
 
 // Counter implements api.Storager.
-func (a ContextAdapter) Counter(ctx context.Context, name string) (value int64, err error) {
+func (a OperatorAdapter) Counter(ctx context.Context, name string) (value int64, err error) {
 	c, found := a.legacyStore.Counter(name)
 	if !found {
 		return 0, api.ErrorNotFoundMetric
@@ -28,7 +28,7 @@ func (a ContextAdapter) Counter(ctx context.Context, name string) (value int64, 
 }
 
 // Gauge implements api.Storager.
-func (a ContextAdapter) Gauge(ctx context.Context, name string) (value float64, err error) {
+func (a OperatorAdapter) Gauge(ctx context.Context, name string) (value float64, err error) {
 	g, found := a.legacyStore.Gauge(name)
 	if !found {
 		return 0, api.ErrorNotFoundMetric
@@ -37,7 +37,7 @@ func (a ContextAdapter) Gauge(ctx context.Context, name string) (value float64, 
 }
 
 // IncrementCounter implements api.Storager.
-func (a *ContextAdapter) IncrementCounter(ctx context.Context, name string, delta int64) (value int64, err error) {
+func (a *OperatorAdapter) IncrementCounter(ctx context.Context, name string, delta int64) (value int64, err error) {
 	was, _ := a.legacyStore.Counter(name)
 	newVal := was + metrica.Counter(delta)
 	a.legacyStore.SetCounter(name, newVal)
@@ -45,17 +45,17 @@ func (a *ContextAdapter) IncrementCounter(ctx context.Context, name string, delt
 }
 
 // UpdateGauge implements api.Storager.
-func (a *ContextAdapter) UpdateGauge(ctx context.Context, name string, v float64) (value float64, err error) {
+func (a *OperatorAdapter) UpdateGauge(ctx context.Context, name string, v float64) (value float64, err error) {
 	a.legacyStore.SetGauge(name, metrica.Gauge(v))
 	return v, nil
 }
 
 // List implements api.Storager.
-func (a *ContextAdapter) List(ctx context.Context) (counterNames []string, gaugeNames []string, err error) {
+func (a *OperatorAdapter) List(ctx context.Context) (counterNames []string, gaugeNames []string, err error) {
 	return a.legacyStore.ListCounters(), a.legacyStore.ListGauges(), nil
 }
 
-func (a *ContextAdapter) getOne(ctx context.Context, r metrica.Metrica) (resp metrica.Metrica, err error) {
+func (a *OperatorAdapter) getOne(ctx context.Context, r metrica.Metrica) (resp metrica.Metrica, err error) {
 	if r.ID == "" {
 		return resp, api.ErrorUpdateCheckFailed // todo правильная ошибка?
 	}
@@ -71,7 +71,7 @@ func (a *ContextAdapter) getOne(ctx context.Context, r metrica.Metrica) (resp me
 	}
 }
 
-func (a *ContextAdapter) updateOne(ctx context.Context, in metrica.Metrica) (resp metrica.Metrica, err error) {
+func (a *OperatorAdapter) updateOne(ctx context.Context, in metrica.Metrica) (resp metrica.Metrica, err error) {
 
 	switch in.MType {
 	case "counter":
@@ -119,18 +119,18 @@ func aggregate(o Operator, ctx context.Context, rs ...datastruct) (resp []datast
 }
 
 // Get implemests Operator
-func (a *ContextAdapter) Get(ctx context.Context, req ...datastruct) (resp []datastruct, err error) {
+func (a *OperatorAdapter) Get(ctx context.Context, req ...datastruct) (resp []datastruct, err error) {
 	return aggregate(a.getOne, ctx, req...)
 }
 
 // Update implemests Operator
-func (a *ContextAdapter) Update(ctx context.Context, req ...datastruct) (resp []datastruct, err error) {
+func (a *OperatorAdapter) Update(ctx context.Context, req ...datastruct) (resp []datastruct, err error) {
 	return aggregate(a.updateOne, ctx, req...)
 }
 
 // Check implements Operator. Это функция, которая проверяет связь с базой данных. Возвращает ошибку если
 // связь отсутствует
-func (a *ContextAdapter) Check(ctx context.Context) error {
+func (a *OperatorAdapter) Check(ctx context.Context) error {
 	return api.ErrorNoDatabase
 
 	// TODO
@@ -142,7 +142,7 @@ func (a *ContextAdapter) Check(ctx context.Context) error {
 	// Кажется, что это меньшее из зол.
 }
 
-var _ api.Storager = (*ContextAdapter)(nil)
-var _ api.Operator = (*ContextAdapter)(nil)
+var _ api.Storager = (*OperatorAdapter)(nil)
+var _ api.Operator = (*OperatorAdapter)(nil)
 
 var empty = metrica.Metrica{}

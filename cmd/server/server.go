@@ -129,7 +129,7 @@ func ConfigureStorage(cfg config) (api.Operator, context.CancelFunc) {
 	// Если путь до хранилища не пустой, то нам нужно инициаизировать обертки над хранилищем
 	if cfg.FileStoragePath == "" {
 		log.Info().Msg("Установлено хранилище в памяти. Сохранение на диск отключено")
-		return storage.NewAdapter(m), func() {
+		return storage.AsOperator(m), func() {
 			log.Info().Msg("Хранилище сихронной записи получило сигнал о завершении, но файловая запись в текущей конфигурации сервера не используется. Ничего не записано")
 		}
 	}
@@ -149,7 +149,7 @@ func ConfigureStorage(cfg config) (api.Operator, context.CancelFunc) {
 		// инициализируем сихнронную запись,
 		// при этом сохраняться в конце нам не понадобится
 		log.Info().Msgf("Установлено синхронное сохранение в %v в при записи", fs.FileName)
-		return storage.NewAdapter(storage.NewSyncDump(&fs)), func() {
+		return storage.AsOperator(storage.NewSyncDump(&fs)), func() {
 			log.Info().Msg("Хранилище сихронной записи получило сигнал о завершении, но дополнительно сохранение не нужно")
 		}
 	}
@@ -161,7 +161,7 @@ func ConfigureStorage(cfg config) (api.Operator, context.CancelFunc) {
 
 	log.Info().Msgf("Установлено сохранение с интервалом %v в %v в при записи", s.Interval, s.FileName)
 
-	return storage.NewAdapter(s), func() {
+	return storage.AsOperator(s), func() {
 		// оберстка сделана под группу ожидаения
 		cancel()
 	}
