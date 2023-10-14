@@ -38,6 +38,23 @@ type datastruct = metrica.Metrica
 // хендлеры
 type Operation func(context.Context, ...datastruct) (out []datastruct, err error)
 
+// Operator это новый интерфейс хранилища, его название само по себе дает намек. Оператор -
+// в данном смысле это коллекция операций. Например, Get Update - мы хотим, чтобы они имели тип
+// Operation, чтобы в дальнейшем можно было использовать с функциями HandleJSONRequest и ему
+// подобным
+type Operator interface {
+	Get(ctx context.Context, req ...datastruct) (resp []datastruct, err error)
+	Update(ctx context.Context, req ...datastruct) (resp []datastruct, err error)
+
+	Check(ctx context.Context) error
+
+	List(ctx context.Context) (counterNames []string, gaugeNames []string, err error)
+}
+
+// mentor
+//
+// Где должны храниться ошибки?
+
 // TODO
 //
 // Внезапно пришла забавная идея.
@@ -51,22 +68,3 @@ type Operation func(context.Context, ...datastruct) (out []datastruct, err error
 // router.Post("/update", update.HandleWithJSON)
 //
 // пока выглядит не очень идиоматично, канеш)
-
-type Operator interface {
-	Get(ctx context.Context, req ...datastruct) (resp []datastruct, err error)
-	Update(ctx context.Context, req ...datastruct) (resp []datastruct, err error)
-
-	Check(ctx context.Context) error
-
-	List(ctx context.Context) (counterNames []string, gaugeNames []string, err error)
-}
-
-// todo
-//
-// КАжется в дальнейшем это надо вынести ещё выше в каталогах
-//
-// возможно тут так же должны быть операции создать и удалить
-//
-// mentor
-//
-// Где должны храниться ошибки?
