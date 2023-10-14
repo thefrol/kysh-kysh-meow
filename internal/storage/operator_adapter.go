@@ -142,7 +142,6 @@ func (a *OperatorAdapter) Check(ctx context.Context) error {
 	// Кажется, что это меньшее из зол.
 }
 
-var _ api.Storager = (*OperatorAdapter)(nil)
 var _ api.Operator = (*OperatorAdapter)(nil)
 
 var empty = metrica.Metrica{}

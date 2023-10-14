@@ -20,18 +20,6 @@ var (
 	ErrorNoConntectionToDatabase = errors.New("нет связи с базой данных")
 )
 
-// В общем случае от хранилища мы не ожидаем, что он будет проверять тип метрики. По сути он хранит все что не попадя куда ему скажут,
-// и не очень много знает о хранимых данных, это просто интерфейс ввода-вывода
-type Storager interface {
-	Counter(ctx context.Context, name string) (value int64, err error)
-	Gauge(ctx context.Context, name string) (value float64, err error)
-
-	IncrementCounter(ctx context.Context, name string, delta int64) (value int64, err error)
-	UpdateGauge(ctx context.Context, name string, v float64) (value float64, err error)
-
-	List(ctx context.Context) (counterNames []string, gaugeNames []string, err error)
-}
-
 type datastruct = metrica.Metrica
 
 // Operation представляет собой операцию над хранилищем. Мы передаем такие операции в
