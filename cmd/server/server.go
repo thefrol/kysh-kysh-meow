@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/rs/zerolog/log"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/api"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/router"
 	"github.com/thefrol/kysh-kysh-meow/internal/storage"
 )
@@ -20,6 +21,7 @@ func main() {
 
 	// создаем хранилище
 	s, cancelStorage := ConfigureStorage(cfg)
+	adapter := storage.NewAdapter(s)
 
 	// Создаем объект App, который в дальнейшем включит в себя все остальное тут
 	// app, err := app.New(context.TODO(), cfg.DatabaseDSN)
@@ -33,7 +35,7 @@ func main() {
 
 	// Запускаем сервер с поддержкой нежного завершения,
 	// занимаем текущий поток до вызова сигнатов выключения
-	Run(cfg, s)
+	Run(cfg, adapter)
 
 	// Завершаем последние дела
 	// попытаемся сохраниться в файл
@@ -49,10 +51,10 @@ func main() {
 
 // Run запускает сервер с поддержкой нежного завершения. Сервер можно будет выключить через
 // SIGINT, SIGTERM, SIGQUIT
-func Run(cfg config, s storage.Storager) {
+func Run(cfg config, s api.Operator) {
 	// Запускаем сервер с поддержкой нежного выключения
 	// вдохноввлено примерами роутера chi
-	server := http.Server{Addr: cfg.Addr, Handler: router.MeowRouter(storage.NewAdapter(s))}
+	server := http.Server{Addr: cfg.Addr, Handler: router.MeowRouter(s)}
 
 	// Server run context
 	serverCtx, serverStopCtx := context.WithCancel(context.Background())
