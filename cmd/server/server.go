@@ -21,7 +21,6 @@ func main() {
 
 	// создаем хранилище
 	s, cancelStorage := ConfigureStorage(cfg)
-	adapter := storage.NewAdapter(s)
 
 	// Создаем объект App, который в дальнейшем включит в себя все остальное тут
 	// app, err := app.New(context.TODO(), cfg.DatabaseDSN)
@@ -35,7 +34,7 @@ func main() {
 
 	// Запускаем сервер с поддержкой нежного завершения,
 	// занимаем текущий поток до вызова сигнатов выключения
-	Run(cfg, adapter)
+	Run(cfg, s)
 
 	// Завершаем последние дела
 	// попытаемся сохраниться в файл
@@ -103,7 +102,7 @@ func Run(cfg config, s api.Operator) {
 //
 // На входе получает экземпляр хранилища m, и далее оборачивает его другим классов,
 // наиболее соответсвующим задаче, исходя из cfg
-func ConfigureStorage(cfg config) (storage.Storager, context.CancelFunc) {
+func ConfigureStorage(cfg config) (api.Operator, context.CancelFunc) {
 	// 0. Если указана база данных, создаем хранилище с базой данных
 	// 1. Если путь не задан, то возвращаем хранилище в оперативке, без приблуд
 	// 2. Иначе оборачиваем файловым хранилищем, но не возвращаем пока
@@ -115,7 +114,7 @@ func ConfigureStorage(cfg config) (storage.Storager, context.CancelFunc) {
 	// Если путь до хранилища не пустой, то нам нужно инициаизировать обертки над хранилищем
 	if cfg.FileStoragePath == "" {
 		log.Info().Msg("Установлено хранилище в памяти. Сохранение на диск отключено")
-		return m, func() {
+		return storage.NewAdapter(m), func() {
 			log.Info().Msg("Хранилище сихронной записи получило сигнал о завершении, но файловая запись в текущей конфигурации сервера не используется. Ничего не записано")
 		}
 	}
@@ -135,7 +134,7 @@ func ConfigureStorage(cfg config) (storage.Storager, context.CancelFunc) {
 		// инициализируем сихнронную запись,
 		// при этом сохраняться в конце нам не понадобится
 		log.Info().Msgf("Установлено синхронное сохранение в %v в при записи", fs.FileName)
-		return storage.NewSyncDump(&fs), func() {
+		return storage.NewAdapter(storage.NewSyncDump(&fs)), func() {
 			log.Info().Msg("Хранилище сихронной записи получило сигнал о завершении, но дополнительно сохранение не нужно")
 		}
 	}
@@ -147,7 +146,7 @@ func ConfigureStorage(cfg config) (storage.Storager, context.CancelFunc) {
 
 	log.Info().Msgf("Установлено сохранение с интервалом %v в %v в при записи", s.Interval, s.FileName)
 
-	return s, func() {
+	return storage.NewAdapter(s), func() {
 		// оберстка сделана под группу ожидаения
 		cancel()
 	}
