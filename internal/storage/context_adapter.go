@@ -10,11 +10,11 @@ import (
 // ContextAdapter оборачивает классы на старом апи хранилища oldAPI,
 // под новое апи api.Storager, делая так, контекст, конечно используется тупо вхолостую
 type ContextAdapter struct {
-	legacyStore Storager
+	legacyStore legacyStorager
 }
 
 // NewAdapter оборачивает хранилища старого интерфейса, позволяя их подключать к хендлерам, работающим на новом интерфейсе api.Storager
-func NewAdapter(s Storager) *ContextAdapter {
+func NewAdapter(s legacyStorager) *ContextAdapter {
 	return &ContextAdapter{legacyStore: s}
 }
 

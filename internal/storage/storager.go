@@ -2,11 +2,10 @@ package storage
 
 import "github.com/thefrol/kysh-kysh-meow/internal/metrica"
 
-// DEPRECATED todo delete
-//
-// Storager это интерфейс хранилища данных для метрик,
-// Каждый новый тип метрики должен добавлять свой интерфейс сюда
-type Storager interface {
+// legacyStorager это интерфейс хранилища данных для метрик,
+// используется только для совместимости со старыми видами хранилищ,
+// использвуется чтобы оборачивать с помощью NewAdapter()
+type legacyStorager interface {
 	SetGauge(name string, v metrica.Gauge)
 	Gauge(name string) (metrica.Gauge, bool)
 	ListGauges() []string

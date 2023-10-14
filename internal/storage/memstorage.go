@@ -61,4 +61,4 @@ func (m MemStore) Metricas() (list []metrica.Metrica) {
 }
 
 // Проверка, что MemStore соответсвует нужному интерфейсу
-var _ Storager = (*MemStore)(nil)
+var _ legacyStorager = (*MemStore)(nil)
