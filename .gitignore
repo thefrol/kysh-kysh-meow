@@ -36,6 +36,3 @@ scripts/server-cover
 
 # postgres files
 .postgre*
-
-# easyjson generated files
-*_easyjson.go
