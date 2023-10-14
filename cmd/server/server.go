@@ -19,8 +19,7 @@ func main() {
 	cfg := mustConfigure(defaultConfig)
 
 	// создаем хранилище
-	m := storage.New()
-	s, cancelStorage := ConfigureStorage(&m, cfg)
+	s, cancelStorage := ConfigureStorage(cfg)
 
 	// Создаем объект App, который в дальнейшем включит в себя все остальное тут
 	// app, err := app.New(context.TODO(), cfg.DatabaseDSN)
@@ -102,11 +101,14 @@ func Run(cfg config, s storage.Storager) {
 //
 // На входе получает экземпляр хранилища m, и далее оборачивает его другим классов,
 // наиболее соответсвующим задаче, исходя из cfg
-func ConfigureStorage(m *storage.MemStore, cfg config) (storage.Storager, context.CancelFunc) {
+func ConfigureStorage(cfg config) (storage.Storager, context.CancelFunc) {
+	// 0. Если указана база данных, создаем хранилище с базой данных
 	// 1. Если путь не задан, то возвращаем хранилище в оперативке, без приблуд
 	// 2. Иначе оборачиваем файловым хранилищем, но не возвращаем пока
 	// 3. Если Restore=true, то читаем из файла. Если файла не существует, то игнорируем проблему
-	// 4. Оборачиваем файловое хранилище сихнронным или интервальным сохранением
+	// 4. Оборачиваем файловое хранилище сихнронным или интервальным
+
+	m := storage.New()
 
 	// Если путь до хранилища не пустой, то нам нужно инициаизировать обертки над хранилищем
 	if cfg.FileStoragePath == "" {
@@ -117,7 +119,7 @@ func ConfigureStorage(m *storage.MemStore, cfg config) (storage.Storager, contex
 	}
 
 	// Оборачиваем файловым хранилищем, в случае, есл и
-	fs := storage.NewFileStorage(m, cfg.FileStoragePath)
+	fs := storage.NewFileStorage(&m, cfg.FileStoragePath)
 	if cfg.Restore {
 		err := fs.Restore()
 		// в случае, если файла не существует, игнорируем эту проблему
