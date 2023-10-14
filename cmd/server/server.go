@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/rs/zerolog/log"
-	"github.com/thefrol/kysh-kysh-meow/internal/server/app"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/router"
 	"github.com/thefrol/kysh-kysh-meow/internal/storage"
 )
@@ -24,18 +23,18 @@ func main() {
 	s, cancelStorage := ConfigureStorage(&m, cfg)
 
 	// Создаем объект App, который в дальнейшем включит в себя все остальное тут
-	app, err := app.New(context.TODO(), cfg.DatabaseDSN)
-	if err != nil {
-		log.Fatal().Msgf("Ошибка во время конфигурирования сервера %v", err)
-		panic(err)
-	}
-	if err := app.CheckConnection(context.Background()); err == nil {
-		log.Info().Msg("Связь с базой данных в порядке")
-	}
+	// app, err := app.New(context.TODO(), cfg.DatabaseDSN)
+	// if err != nil {
+	// 	log.Fatal().Msgf("Ошибка во время конфигурирования сервера %v", err)
+	// 	panic(err)
+	// }
+	// if err := app.CheckConnection(context.Background()); err == nil {
+	// 	log.Info().Msg("Связь с базой данных в порядке")
+	// }
 
 	// Запускаем сервер с поддержкой нежного завершения,
 	// занимаем текущий поток до вызова сигнатов выключения
-	Run(cfg, s, app)
+	Run(cfg, s)
 
 	// Завершаем последние дела
 	// попытаемся сохраниться в файл
@@ -51,7 +50,7 @@ func main() {
 
 // Run запускает сервер с поддержкой нежного завершения. Сервер можно будет выключить через
 // SIGINT, SIGTERM, SIGQUIT
-func Run(cfg config, s storage.Storager, app *app.App) {
+func Run(cfg config, s storage.Storager) {
 	// Запускаем сервер с поддержкой нежного выключения
 	// вдохноввлено примерами роутера chi
 	server := http.Server{Addr: cfg.Addr, Handler: router.MeowRouter(storage.NewAdapter(s))}
