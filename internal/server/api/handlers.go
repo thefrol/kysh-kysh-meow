@@ -1,6 +1,6 @@
 // Этот пакет содержит хендлеры старого образца, где мы передавали значения при помощи URL
 // например, /update/counter/PollCount/120
-package apiv1
+package api
 
 import (
 	"net/http"
@@ -9,35 +9,34 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/thefrol/kysh-kysh-meow/internal/metrica"
-	"github.com/thefrol/kysh-kysh-meow/internal/server/api"
 )
 
-func UnwrapURLParams(handler api.Operation) http.HandlerFunc {
+func UnwrapURLParams(handler Operation) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		api.SetContentType(w, api.TypeTextPlain)
+		SetContentType(w, TypeTextPlain)
 
 		in := getURLParams(r).Parse()
 
 		// Валидиуем полученную структуру
 		if in.ID == "" {
-			api.HTTPErrorWithLogging(w, http.StatusBadRequest, "Получена направильно заполенная струкура %+v: имя метрики не может быть пустым", in)
+			HTTPErrorWithLogging(w, http.StatusBadRequest, "Получена направильно заполенная струкура %+v: имя метрики не может быть пустым", in)
 			return
 		}
 
 		arr, err := handler(r.Context(), in)
 
 		if err != nil { // todo вот этот код встречается в соседних обертках
-			if err == api.ErrorDeltaEmpty || err == api.ErrorValueEmpty {
-				api.HTTPErrorWithLogging(w, http.StatusBadRequest, "Ошибка входных данных: %v", err)
-			} else if err == api.ErrorNotFoundMetric {
-				api.HTTPErrorWithLogging(w, http.StatusNotFound, "Не найдена метрика %v с именем %v", in.MType, in.ID)
+			if err == ErrorDeltaEmpty || err == ErrorValueEmpty {
+				HTTPErrorWithLogging(w, http.StatusBadRequest, "Ошибка входных данных: %v", err)
+			} else if err == ErrorNotFoundMetric {
+				HTTPErrorWithLogging(w, http.StatusNotFound, "Не найдена метрика %v с именем %v", in.MType, in.ID)
 				return
-			} else if err == api.ErrorUnknownMetricType {
-				api.HTTPErrorWithLogging(w, http.StatusBadRequest, "Неизвестный тип счетчика: %v", in.MType)
+			} else if err == ErrorUnknownMetricType {
+				HTTPErrorWithLogging(w, http.StatusBadRequest, "Неизвестный тип счетчика: %v", in.MType)
 				return
 			}
-			api.HTTPErrorWithLogging(w, http.StatusInternalServerError, "Неизвестная ошибка обработки счетчика типа %v с именем %v значением %v: %v", in.MType, in.ID, in.Value, err)
+			HTTPErrorWithLogging(w, http.StatusInternalServerError, "Неизвестная ошибка обработки счетчика типа %v с именем %v значением %v: %v", in.MType, in.ID, in.Value, err)
 			return
 
 		}
@@ -45,14 +44,14 @@ func UnwrapURLParams(handler api.Operation) http.HandlerFunc {
 		// поскольку мы обрабаываем кучей, то как бы нужно взять из массива одно какое-то
 		// возможно мне понадобится еще один дополнительный оберточник
 		if len(arr) != 1 {
-			api.HTTPErrorWithLogging(w, http.StatusInternalServerError, "После обработки операции над хранилищем получено неправильное количество выходящих значений")
+			HTTPErrorWithLogging(w, http.StatusInternalServerError, "После обработки операции над хранилищем получено неправильное количество выходящих значений")
 			return
 		}
 		out := arr[0]
 
 		s, err := ValueString(out)
 		if err != nil {
-			api.HTTPErrorWithLogging(w, http.StatusInternalServerError, "Ошибка конвертации значения метрики %v в строку: %v", out.MType, err)
+			HTTPErrorWithLogging(w, http.StatusInternalServerError, "Ошибка конвертации значения метрики %v в строку: %v", out.MType, err)
 		}
 
 		w.Write([]byte(s))
@@ -69,9 +68,9 @@ func UnwrapURLParams(handler api.Operation) http.HandlerFunc {
 }
 
 // listMetrics выводит список всех известных на данный момент метрик
-func ListMetrics(op api.Operator) http.HandlerFunc {
+func ListMetrics(op Operator) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		api.SetContentType(w, api.TypeTextHTML)
+		SetContentType(w, TypeTextHTML)
 
 		htmlTemplate := `
 	{{ if .ListCounters}}
@@ -98,12 +97,12 @@ func ListMetrics(op api.Operator) http.HandlerFunc {
 
 		tmpl, err := template.New("simple").Parse(htmlTemplate)
 		if err != nil {
-			api.HTTPErrorWithLogging(w, http.StatusInternalServerError, "Не удалось пропарсить HTML шаблон: %v", err)
+			HTTPErrorWithLogging(w, http.StatusInternalServerError, "Не удалось пропарсить HTML шаблон: %v", err)
 			return
 		}
 		cs, gs, err := op.List(r.Context())
 		if err != nil {
-			api.HTTPErrorWithLogging(w, http.StatusInternalServerError, "Ошибка получения списка метрик из хранилища: %v", err)
+			HTTPErrorWithLogging(w, http.StatusInternalServerError, "Ошибка получения списка метрик из хранилища: %v", err)
 			return
 		}
 		err = tmpl.Execute(w, struct {
@@ -111,7 +110,7 @@ func ListMetrics(op api.Operator) http.HandlerFunc {
 			ListGauges   []string
 		}{ListCounters: cs, ListGauges: gs})
 		if err != nil {
-			api.HTTPErrorWithLogging(w, http.StatusInternalServerError, "Ошибка запуска шаблона HTML: %v", err)
+			HTTPErrorWithLogging(w, http.StatusInternalServerError, "Ошибка запуска шаблона HTML: %v", err)
 			return
 		}
 	}
@@ -161,16 +160,16 @@ func ValueString(m metrica.Metrica) (string, error) {
 	switch m.MType {
 	case "counter":
 		if m.Delta == nil {
-			return "", api.ErrorDeltaEmpty
+			return "", ErrorDeltaEmpty
 		}
 		return strconv.FormatInt(*m.Delta, 10), nil // лишний вызов форматирования конечно, но это для редких случаев ошики
 	case "gauge":
 		if m.Value == nil {
-			return "", api.ErrorValueEmpty
+			return "", ErrorValueEmpty
 		}
 		return strconv.FormatFloat(*m.Value, 'f', -1, 64), nil
 	default:
-		return "", api.ErrorUnknownMetricType
+		return "", ErrorUnknownMetricType
 		// мне конечно очень не хочется проверять все эти статусы, но с другой стороны это редкие случаи все, то есть замедление
 		// на интроспецию ошибок будет идти в редких случаях, когда не тот тип метрики или неправильное значение передано. В идеале это
 		// большая редкость

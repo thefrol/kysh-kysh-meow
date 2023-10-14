@@ -6,9 +6,6 @@ import (
 	"github.com/go-chi/chi/v5"
 	chimiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/api"
-	apiv1 "github.com/thefrol/kysh-kysh-meow/internal/server/api/v1"
-	apiv2 "github.com/thefrol/kysh-kysh-meow/internal/server/api/v2"
-	apiv3 "github.com/thefrol/kysh-kysh-meow/internal/server/api/v3"
 
 	"github.com/thefrol/kysh-kysh-meow/internal/server/middleware"
 )
@@ -25,9 +22,9 @@ func InstallAPIV1(r chi.Router, op api.Operator) {
 	r.Group(func(r chi.Router) {
 		// в какой-то момент, когда починят тесты, тут можно будет снять комменты
 		//r.With(chimiddleware.AllowContentType("text/plain"))
-		r.Get("/value/{type}/{name}", apiv1.UnwrapURLParams(op.Get))
+		r.Get("/value/{type}/{name}", api.UnwrapURLParams(op.Get))
 
-		r.Post("/update/{type}/{name}/{value}", apiv1.UnwrapURLParams(op.Update))
+		r.Post("/update/{type}/{name}/{value}", api.UnwrapURLParams(op.Update))
 
 	})
 }
@@ -42,8 +39,8 @@ func InstallAPIV2(r chi.Router, op api.Operator) {
 	r.Group(func(r chi.Router) {
 		r.With(chimiddleware.AllowContentType("application/json"))
 
-		update := apiv2.MarshallUnmarshallMerica(op.Update)
-		get := apiv2.MarshallUnmarshallMerica(op.Get) // подозрительно похоже на абстракную фабрику
+		update := api.MarshallUnmarshallMerica(op.Update)
+		get := api.MarshallUnmarshallMerica(op.Get) // подозрительно похоже на абстракную фабрику
 
 		r.Post("/value", get)
 		r.Post("/value/", get)
@@ -76,12 +73,12 @@ func MeowRouter(store api.Operator) (router chi.Router) {
 	InstallAPIV2(router, store)
 
 	//создаем маршрут для проверки соединения с БД
-	router.Get("/ping", apiv3.CheckConnection(store))
+	router.Get("/ping", api.CheckConnection(store))
 
 	// а ещё вот HTML страничка, которая тоже по сути относится к apiV1
 	// она не объединяется с остальными, потому что не требует
 	// application/json или text/plain в заголовках
-	router.Get("/", apiv1.ListMetrics(store))
+	router.Get("/", api.ListMetrics(store))
 
 	// Тут добавляем стилизованные под кошки-мышки ответы сервера при 404 и 400
 	router.MethodNotAllowed(func(w http.ResponseWriter, r *http.Request) {
