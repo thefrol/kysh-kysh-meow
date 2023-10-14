@@ -5,7 +5,6 @@ package api
 import (
 	"net/http"
 	"strconv"
-	"text/template"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/thefrol/kysh-kysh-meow/internal/metrica"
@@ -72,61 +71,13 @@ func HandleURLRequest(op Operation) http.HandlerFunc {
 	}
 }
 
-// DisplayHTML создает хендлер HTTP запроса. Этот хендлер формирует простую
-// HTML страничку, где указаны все известные на данный момент метрики
-func DisplayHTML(op Operator) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		SetContentType(w, TypeTextHTML)
-
-		htmlTemplate := `
-	{{ if .ListCounters}}
-		Counters
-			<ul> 
-				{{range .ListCounters -}}
-					<li>{{.}}</li>
-				{{ end }}
-			</ul>
-	{{ else }}
-		<p>No Counters</p>
-	{{end}}
-	{{ if .ListGauges}}
-		Gauges
-			<ul> 
-				{{range .ListGauges -}}
-					<li>{{.}}</li>
-				{{ end }}
-			</ul>
-	{{ else }}
-		<p>No Gauges</p>
-	{{end}}
-	`
-
-		tmpl, err := template.New("simple").Parse(htmlTemplate)
-		if err != nil {
-			HTTPErrorWithLogging(w, http.StatusInternalServerError, "Не удалось пропарсить HTML шаблон: %v", err)
-			return
-		}
-		cs, gs, err := op.List(r.Context())
-		if err != nil {
-			HTTPErrorWithLogging(w, http.StatusInternalServerError, "Ошибка получения списка метрик из хранилища: %v", err)
-			return
-		}
-		err = tmpl.Execute(w, struct {
-			ListCounters []string
-			ListGauges   []string
-		}{ListCounters: cs, ListGauges: gs})
-		if err != nil {
-			HTTPErrorWithLogging(w, http.StatusInternalServerError, "Ошибка запуска шаблона HTML: %v", err)
-			return
-		}
-	}
-}
-
 type urlParams struct {
 	mtype string //type
 	id    string
 	value string
 }
+
+// TODO хочу уже избавиться от этой структуры urlParams
 
 func (p urlParams) Parse() metrica.Metrica {
 	out := metrica.Metrica{}
