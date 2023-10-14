@@ -3,7 +3,6 @@ package storage
 import (
 	"context"
 	"database/sql"
-	"fmt"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
@@ -19,9 +18,9 @@ const sqldriver = "pgx"
 // New cоздает новый объект приложения, получая на вход параметры конфигурации
 func NewPostGresDatabase(ctx context.Context, connString string) (*Database, error) {
 
-	db, err := createDataBase(sqldriver, connString)
+	db, err := sql.Open(sqldriver, connString)
 	if err != nil {
-		return nil, fmt.Errorf("не могу создать базу данных %v", err)
+		return nil, err
 	}
 	return &Database{
 		db:  db,
@@ -41,12 +40,4 @@ func (d Database) Database() *sql.DB {
 func (d Database) Context() context.Context {
 	// todo не понимаю можно ли так передавать контекст по значению
 	return d.ctx
-}
-
-func createDataBase(driver string, connstring string) (*sql.DB, error) {
-	conn, err := sql.Open(driver, connstring)
-	if err != nil {
-		return nil, err
-	}
-	return conn, nil
 }
