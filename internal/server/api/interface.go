@@ -42,7 +42,23 @@ type Storager interface {
 
 type datastruct = metrica.Metrica
 
+// Operation представляет собой операцию над хранилищем. Мы передаем такие операции в
+// хендлеры
 type Operation func(context.Context, ...datastruct) (out []datastruct, err error)
+
+// TODO
+//
+// Внезапно пришла забавная идея.
+//
+// Если Operation это тип, то мы могли бы сделать к нему методов, которые и были бы этими хендлерами
+// func (op Operation) HandleJSON
+//
+// И тогда бы наши вызовы выглядели вот так
+//
+// router.Post("/value", get.HadleWithJSON)
+// router.Post("/update", update.HandleWithJSON)
+//
+// пока выглядит не очень идиоматично, канеш)
 
 type Operator interface {
 	Get(ctx context.Context, req ...datastruct) (resp []datastruct, err error)
