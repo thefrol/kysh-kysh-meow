@@ -109,6 +109,21 @@ func ConfigureStorage(cfg config) (api.Operator, context.CancelFunc) {
 	// 3. Если Restore=true, то читаем из файла. Если файла не существует, то игнорируем проблему
 	// 4. Оборачиваем файловое хранилище сихнронным или интервальным
 
+	// Если база данных
+	if cfg.DatabaseDSN != "" {
+		dbs, err := storage.NewPostGresDatabase(context.TODO(), cfg.DatabaseDSN) // todo зачем тут контекст???
+		if err != nil {
+			log.Error().Msgf("Ошибка создания хранилища в базе данных - %v", err)
+			panic(err)
+		}
+
+		if err := dbs.Check(context.TODO()); err != nil {
+			log.Error().Msgf("Нет соединения с БД - %v", err)
+		}
+		return dbs, nil
+	}
+
+	// Если не база данных, то начинаем с начала - создаем хранилище в памяти, и оборачиваем его всякими штучками если надо
 	m := storage.New()
 
 	// Если путь до хранилища не пустой, то нам нужно инициаизировать обертки над хранилищем
