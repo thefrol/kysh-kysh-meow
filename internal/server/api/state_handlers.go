@@ -4,7 +4,10 @@ import (
 	"net/http"
 )
 
-func CheckConnection(store Operator) http.HandlerFunc {
+// PingStore создает хендлер, который пингует хранилище. Если хранилище может связаться с базой данных,
+// то оно ответит 200(OK), иначе 500(Internal Server Error). Отвечает без ошибки, только если хранилищем установлена
+// база данных, и если с ней есть связь.
+func PingStore(store Operator) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		err := store.Check(r.Context())
 		if err != nil {

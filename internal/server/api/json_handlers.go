@@ -24,9 +24,11 @@ func New(store Operator) API {
 	return API{store: store}
 }
 
-// MarshallUnmarshallMetrica - это функция обертка, которая размаршаливает и замаршаливает значения полученные по HTTP в структуру metrica.Metrica,
+// HandleJSONRequest создает HTTP хендлер. Это функция обертка, которая размаршаливает и замаршаливает значения,
+// полученные по HTTP в структуру metrica.Metrica, и запускает операцию над хранилищем op
+//
 // используется, чтобы избавиться от дублирования кода в конктретных хендлерах /value и /update
-func MarshallUnmarshallMerica(handler func(context.Context, ...metrica.Metrica) (out []metrica.Metrica, err error)) func(http.ResponseWriter, *http.Request) {
+func HandleJSONRequest(handler func(context.Context, ...metrica.Metrica) (out []metrica.Metrica, err error)) func(http.ResponseWriter, *http.Request) {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		/*

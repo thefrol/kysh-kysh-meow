@@ -22,9 +22,9 @@ func InstallAPIV1(r chi.Router, op api.Operator) {
 	r.Group(func(r chi.Router) {
 		// в какой-то момент, когда починят тесты, тут можно будет снять комменты
 		//r.With(chimiddleware.AllowContentType("text/plain"))
-		r.Get("/value/{type}/{name}", api.UnwrapURLParams(op.Get))
+		r.Get("/value/{type}/{name}", api.HandleURLRequest(op.Get))
 
-		r.Post("/update/{type}/{name}/{value}", api.UnwrapURLParams(op.Update))
+		r.Post("/update/{type}/{name}/{value}", api.HandleURLRequest(op.Update))
 
 	})
 }
@@ -39,8 +39,8 @@ func InstallAPIV2(r chi.Router, op api.Operator) {
 	r.Group(func(r chi.Router) {
 		r.With(chimiddleware.AllowContentType("application/json"))
 
-		update := api.MarshallUnmarshallMerica(op.Update)
-		get := api.MarshallUnmarshallMerica(op.Get) // подозрительно похоже на абстракную фабрику
+		update := api.HandleJSONRequest(op.Update)
+		get := api.HandleJSONRequest(op.Get) // подозрительно похоже на абстракную фабрику
 
 		r.Post("/value", get)
 		r.Post("/value/", get)
@@ -73,12 +73,12 @@ func MeowRouter(store api.Operator) (router chi.Router) {
 	InstallAPIV2(router, store)
 
 	//создаем маршрут для проверки соединения с БД
-	router.Get("/ping", api.CheckConnection(store))
+	router.Get("/ping", api.PingStore(store))
 
 	// а ещё вот HTML страничка, которая тоже по сути относится к apiV1
 	// она не объединяется с остальными, потому что не требует
 	// application/json или text/plain в заголовках
-	router.Get("/", api.ListMetrics(store))
+	router.Get("/", api.DisplayHTML(store))
 
 	// Тут добавляем стилизованные под кошки-мышки ответы сервера при 404 и 400
 	router.MethodNotAllowed(func(w http.ResponseWriter, r *http.Request) {

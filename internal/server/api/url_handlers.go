@@ -11,7 +11,12 @@ import (
 	"github.com/thefrol/kysh-kysh-meow/internal/metrica"
 )
 
-func UnwrapURLParams(handler Operation) http.HandlerFunc {
+// HandleURLRequest создает хендлер, который бедет данные из URL. На входе
+// мы имеем URL типа /.../{type}/{name}[/{value}], - эти данные
+// будут преобразованы к типу datastruct и переданы в операцию op. Таким образом
+// позволяет обрабатывать разные операции над хранилищем, при этом имея один способ
+// ввода вывода.
+func HandleURLRequest(op Operation) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		SetContentType(w, TypeTextPlain)
@@ -24,7 +29,7 @@ func UnwrapURLParams(handler Operation) http.HandlerFunc {
 			return
 		}
 
-		arr, err := handler(r.Context(), in)
+		arr, err := op(r.Context(), in)
 
 		if err != nil { // todo вот этот код встречается в соседних обертках
 			if err == ErrorDeltaEmpty || err == ErrorValueEmpty {
@@ -67,8 +72,9 @@ func UnwrapURLParams(handler Operation) http.HandlerFunc {
 	}
 }
 
-// listMetrics выводит список всех известных на данный момент метрик
-func ListMetrics(op Operator) http.HandlerFunc {
+// DisplayHTML создает хендлер HTTP запроса. Этот хендлер формирует простую
+// HTML страничку, где указаны все известные на данный момент метрики
+func DisplayHTML(op Operator) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		SetContentType(w, TypeTextHTML)
 
@@ -176,3 +182,14 @@ func ValueString(m metrica.Metrica) (string, error) {
 	}
 
 }
+
+// TODO
+//
+// Хотелось бы видеть такую сигнатуру, например
+//
+// wrap.URL(op.Get)
+
+// TODO
+//
+// Вообще перечитывая свои документации становится понятно, что http.Handler может быть не единственным способом воода- вывода таки.
+// А что если у нас gRPC, например. То есть логика пока что ещё сильно зависит от того что это именно сервер
