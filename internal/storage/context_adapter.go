@@ -118,14 +118,28 @@ func aggregate(o Operator, ctx context.Context, rs ...datastruct) (resp []datast
 	return
 }
 
-// Get implemests BatchOperator
+// Get implemests Operator
 func (a *ContextAdapter) Get(ctx context.Context, req ...datastruct) (resp []datastruct, err error) {
 	return aggregate(a.getOne, ctx, req...)
 }
 
-// Update implemests BatchOperator
+// Update implemests Operator
 func (a *ContextAdapter) Update(ctx context.Context, req ...datastruct) (resp []datastruct, err error) {
 	return aggregate(a.updateOne, ctx, req...)
+}
+
+// Check implements Operator. Это функция, которая проверяет связь с базой данных. Возвращает ошибку если
+// связь отсутствует
+func (a *ContextAdapter) Check(ctx context.Context) error {
+	return api.ErrorNoDatabase
+
+	// TODO
+	//
+	// Мне кажется это немного неправильно иметь такой метод.
+	// По сути все классы хранилища теперь должны знать о базе данных,
+	// Но и прокидывать базу данных как-то в обход не хочется пока.
+	//
+	// Кажется, что это меньшее из зол.
 }
 
 var _ api.Storager = (*ContextAdapter)(nil)

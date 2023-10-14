@@ -12,12 +12,13 @@ import (
 var (
 	ErrorParseError        = errors.New("невозможно распарсить значение метрики в int или float")
 	ErrorUnknownMetricType = errors.New("неизвестная метрика, доступны значения counter и gauge")
-
 	ErrorUpdateCheckFailed = errors.New("обновление не удалось")
 	ErrorNotFoundMetric    = errors.New("метрика с указанным именем не найдена")
+	ErrorDeltaEmpty        = errors.New("поле Delta не может быть пустым, для когда id=counter")
+	ErrorValueEmpty        = errors.New("поле Value не может быть пустым, для когда id=gauge")
 
-	ErrorDeltaEmpty = errors.New("поле Delta не может быть пустым, для когда id=counter")
-	ErrorValueEmpty = errors.New("поле Value не может быть пустым, для когда id=gauge")
+	ErrorNoDatabase              = errors.New("база данных в текущей конфигурации не исползуется")
+	ErrorNoConntectionToDatabase = errors.New("нет связи с базой данных")
 )
 
 // Storager это интерфейс к хранилищу, которое использует именно этот API. Таким образом мы делаем хранилище зависимым от
@@ -46,6 +47,8 @@ type Operation func(context.Context, ...datastruct) (out []datastruct, err error
 type Operator interface {
 	Get(ctx context.Context, req ...datastruct) (resp []datastruct, err error)
 	Update(ctx context.Context, req ...datastruct) (resp []datastruct, err error)
+
+	Check(ctx context.Context) error
 
 	List(ctx context.Context) (counterNames []string, gaugeNames []string, err error)
 }
