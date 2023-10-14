@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/thefrol/kysh-kysh-meow/internal/storage"
 )
 
 // Список сохраняемых метрик из пакета runtime
@@ -91,10 +90,6 @@ func Test_fetchAdditionalStats(t *testing.T) {
 
 		})
 	}
-}
-
-func CountValues(s storage.Storager) int {
-	return len(s.ListCounters()) + len(s.ListGauges())
 }
 
 func findMetric(st Stats, mtype string, name string) bool {

@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/rs/zerolog/log"
-	"github.com/thefrol/kysh-kysh-meow/internal/server/app"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/api"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/router"
 	"github.com/thefrol/kysh-kysh-meow/internal/storage"
 )
@@ -20,22 +20,21 @@ func main() {
 	cfg := mustConfigure(defaultConfig)
 
 	// создаем хранилище
-	m := storage.New()
-	s, cancelStorage := ConfigureStorage(&m, cfg)
+	s, cancelStorage := ConfigureStorage(cfg)
 
 	// Создаем объект App, который в дальнейшем включит в себя все остальное тут
-	app, err := app.New(context.TODO(), cfg.DatabaseDSN)
-	if err != nil {
-		log.Fatal().Msgf("Ошибка во время конфигурирования сервера %v", err)
-		panic(err)
-	}
-	if err := app.CheckConnection(context.Background()); err == nil {
-		log.Info().Msg("Связь с базой данных в порядке")
-	}
+	// app, err := app.New(context.TODO(), cfg.DatabaseDSN)
+	// if err != nil {
+	// 	log.Fatal().Msgf("Ошибка во время конфигурирования сервера %v", err)
+	// 	panic(err)
+	// }
+	// if err := app.CheckConnection(context.Background()); err == nil {
+	// 	log.Info().Msg("Связь с базой данных в порядке")
+	// }
 
 	// Запускаем сервер с поддержкой нежного завершения,
 	// занимаем текущий поток до вызова сигнатов выключения
-	Run(cfg, s, app)
+	Run(cfg, s)
 
 	// Завершаем последние дела
 	// попытаемся сохраниться в файл
@@ -51,10 +50,10 @@ func main() {
 
 // Run запускает сервер с поддержкой нежного завершения. Сервер можно будет выключить через
 // SIGINT, SIGTERM, SIGQUIT
-func Run(cfg config, s storage.Storager, app *app.App) {
+func Run(cfg config, s api.Operator) {
 	// Запускаем сервер с поддержкой нежного выключения
 	// вдохноввлено примерами роутера chi
-	server := http.Server{Addr: cfg.Addr, Handler: router.MeowRouter(s, app)}
+	server := http.Server{Addr: cfg.Addr, Handler: router.MeowRouter(s)}
 
 	// Server run context
 	serverCtx, serverStopCtx := context.WithCancel(context.Background())
@@ -103,22 +102,40 @@ func Run(cfg config, s storage.Storager, app *app.App) {
 //
 // На входе получает экземпляр хранилища m, и далее оборачивает его другим классов,
 // наиболее соответсвующим задаче, исходя из cfg
-func ConfigureStorage(m *storage.MemStore, cfg config) (storage.Storager, context.CancelFunc) {
+func ConfigureStorage(cfg config) (api.Operator, context.CancelFunc) {
+	// 0. Если указана база данных, создаем хранилище с базой данных
 	// 1. Если путь не задан, то возвращаем хранилище в оперативке, без приблуд
 	// 2. Иначе оборачиваем файловым хранилищем, но не возвращаем пока
 	// 3. Если Restore=true, то читаем из файла. Если файла не существует, то игнорируем проблему
-	// 4. Оборачиваем файловое хранилище сихнронным или интервальным сохранением
+	// 4. Оборачиваем файловое хранилище сихнронным или интервальным
+
+	// Если база данных
+	if cfg.DatabaseDSN != "" {
+		dbs, err := storage.NewPostGresDatabase(context.TODO(), cfg.DatabaseDSN) // todo зачем тут контекст???
+		if err != nil {
+			log.Error().Msgf("Ошибка создания хранилища в базе данных - %v", err)
+			panic(err)
+		}
+
+		if err := dbs.Check(context.TODO()); err != nil {
+			log.Error().Msgf("Нет соединения с БД - %v", err)
+		}
+		return dbs, nil
+	}
+
+	// Если не база данных, то начинаем с начала - создаем хранилище в памяти, и оборачиваем его всякими штучками если надо
+	m := storage.New()
 
 	// Если путь до хранилища не пустой, то нам нужно инициаизировать обертки над хранилищем
 	if cfg.FileStoragePath == "" {
 		log.Info().Msg("Установлено хранилище в памяти. Сохранение на диск отключено")
-		return m, func() {
+		return storage.AsOperator(m), func() {
 			log.Info().Msg("Хранилище сихронной записи получило сигнал о завершении, но файловая запись в текущей конфигурации сервера не используется. Ничего не записано")
 		}
 	}
 
 	// Оборачиваем файловым хранилищем, в случае, есл и
-	fs := storage.NewFileStorage(m, cfg.FileStoragePath)
+	fs := storage.NewFileStorage(&m, cfg.FileStoragePath)
 	if cfg.Restore {
 		err := fs.Restore()
 		// в случае, если файла не существует, игнорируем эту проблему
@@ -132,7 +149,7 @@ func ConfigureStorage(m *storage.MemStore, cfg config) (storage.Storager, contex
 		// инициализируем сихнронную запись,
 		// при этом сохраняться в конце нам не понадобится
 		log.Info().Msgf("Установлено синхронное сохранение в %v в при записи", fs.FileName)
-		return storage.NewSyncDump(&fs), func() {
+		return storage.AsOperator(storage.NewSyncDump(&fs)), func() {
 			log.Info().Msg("Хранилище сихронной записи получило сигнал о завершении, но дополнительно сохранение не нужно")
 		}
 	}
@@ -144,7 +161,7 @@ func ConfigureStorage(m *storage.MemStore, cfg config) (storage.Storager, contex
 
 	log.Info().Msgf("Установлено сохранение с интервалом %v в %v в при записи", s.Interval, s.FileName)
 
-	return s, func() {
+	return storage.AsOperator(s), func() {
 		// оберстка сделана под группу ожидаения
 		cancel()
 	}

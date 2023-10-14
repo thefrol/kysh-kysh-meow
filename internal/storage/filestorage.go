@@ -3,13 +3,10 @@ package storage
 import (
 	"encoding/gob"
 	"errors"
-	"fmt"
 	"os"
 
 	"github.com/rs/zerolog/log"
 )
-
-var ErrorRestoreFileNotExist = fmt.Errorf("файла, чтобы выгрузить хранилише, не существует")
 
 // FileStorage позволяет писать и восстанавливаться из файда
 // при помощи функций Dump() и Restore(). Является оберткой над
