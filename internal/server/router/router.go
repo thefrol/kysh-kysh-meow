@@ -9,7 +9,7 @@ import (
 	apiv1 "github.com/thefrol/kysh-kysh-meow/internal/server/api/v1"
 	apiv2 "github.com/thefrol/kysh-kysh-meow/internal/server/api/v2"
 	apiv3 "github.com/thefrol/kysh-kysh-meow/internal/server/api/v3"
-	"github.com/thefrol/kysh-kysh-meow/internal/server/app"
+
 	"github.com/thefrol/kysh-kysh-meow/internal/server/middleware"
 )
 
@@ -63,7 +63,7 @@ func InstallAPIV2(r chi.Router, op api.Operator) {
 //
 // на входе получает store - объект хранилища, из которого он будет
 // брать все нужные данные о метриках
-func MeowRouter(store api.Storager, app *app.App) (router chi.Router) {
+func MeowRouter(store api.Operator) (router chi.Router) {
 
 	router = chi.NewRouter()
 
@@ -72,16 +72,16 @@ func MeowRouter(store api.Storager, app *app.App) (router chi.Router) {
 	router.Use(middleware.UnGZIP)
 	router.Use(middleware.GZIP(middleware.GZIPDefault))
 
-	InstallAPIV1(router, store.(api.Operator))
-	InstallAPIV2(router, store.(api.Operator))
+	InstallAPIV1(router, store)
+	InstallAPIV2(router, store)
 
 	//создаем маршрут для проверки соединения с БД
-	router.Get("/ping", apiv3.CheckConnection(store.(api.Operator)))
+	router.Get("/ping", apiv3.CheckConnection(store))
 
 	// а ещё вот HTML страничка, которая тоже по сути относится к apiV1
 	// она не объединяется с остальными, потому что не требует
 	// application/json или text/plain в заголовках
-	router.Get("/", apiv1.ListMetrics(store.(api.Operator)))
+	router.Get("/", apiv1.ListMetrics(store))
 
 	// Тут добавляем стилизованные под кошки-мышки ответы сервера при 404 и 400
 	router.MethodNotAllowed(func(w http.ResponseWriter, r *http.Request) {
