@@ -16,7 +16,7 @@ var (
 )
 
 const (
-	initQuery = "CREATE TABLE IF NOT EXISTS counters(id TEXT PRIMARY KEY, delta INTEGER);" +
+	initQuery = "CREATE TABLE IF NOT EXISTS counters(id TEXT PRIMARY KEY, delta BIGINT);" +
 		"CREATE TABLE IF NOT EXISTS gauges(id TEXT PRIMARY KEY, value DOUBLE PRECISION);" // todo вот тут я бы уже делал ошибку обертку, соишком много тонкостей и синтакс и ещё соединения
 
 	queryGetCounter = "SELECT id, delta FROM counters WHERE id=$1;"
