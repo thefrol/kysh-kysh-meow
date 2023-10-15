@@ -13,8 +13,8 @@ var (
 	ErrorUnknownMetricType = errors.New("неизвестная метрика, доступны значения counter и gauge")
 	ErrorUpdateCheckFailed = errors.New("обновление не удалось")
 	ErrorNotFoundMetric    = errors.New("метрика с указанным именем не найдена")
-	ErrorDeltaEmpty        = errors.New("поле Delta не может быть пустым, для когда id=counter")
-	ErrorValueEmpty        = errors.New("поле Value не может быть пустым, для когда id=gauge")
+	ErrorDeltaEmpty        = errors.New("поле Delta не может быть пустым, для когда mtype=counter")
+	ErrorValueEmpty        = errors.New("поле Value не может быть пустым, для когда mtype=gauge")
 
 	ErrorNoDatabase              = errors.New("база данных в текущей конфигурации не исползуется")
 	ErrorNoConntectionToDatabase = errors.New("нет связи с базой данных")
