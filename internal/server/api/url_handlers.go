@@ -3,6 +3,7 @@
 package api
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -31,12 +32,12 @@ func HandleURLRequest(op Operation) http.HandlerFunc {
 		arr, err := op(r.Context(), in)
 
 		if err != nil { // todo вот этот код встречается в соседних обертках
-			if err == ErrorDeltaEmpty || err == ErrorValueEmpty {
+			if errors.Is(err, ErrorDeltaEmpty) || errors.Is(err, ErrorValueEmpty) {
 				HTTPErrorWithLogging(w, http.StatusBadRequest, "Ошибка входных данных: %v", err)
-			} else if err == ErrorNotFoundMetric {
+			} else if errors.Is(err, ErrorNotFoundMetric) {
 				HTTPErrorWithLogging(w, http.StatusNotFound, "Не найдена метрика %v с именем %v", in.MType, in.ID)
 				return
-			} else if err == ErrorUnknownMetricType {
+			} else if errors.Is(err, ErrorUnknownMetricType) {
 				HTTPErrorWithLogging(w, http.StatusBadRequest, "Неизвестный тип счетчика: %v", in.MType)
 				return
 			}

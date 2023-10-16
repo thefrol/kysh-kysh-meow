@@ -69,7 +69,7 @@ func (d *Database) Get(ctx context.Context, req ...metrica.Metrica) (resp []metr
 			err := rw.Scan(&result.ID, result.Delta)
 			if err != nil {
 				if errors.Is(err, sql.ErrNoRows) {
-					return nil, api.ErrorNotFoundMetric
+					return nil, api.ErrorNotFoundMetric // todo, вот тут можно упаковку ошибки сделать впринципе
 				}
 				return nil, err
 			}
@@ -81,7 +81,7 @@ func (d *Database) Get(ctx context.Context, req ...metrica.Metrica) (resp []metr
 			err := rw.Scan(&result.ID, result.Value)
 			if err != nil {
 				if errors.Is(err, sql.ErrNoRows) {
-					return nil, api.ErrorNotFoundMetric
+					return nil, api.ErrorNotFoundMetric // todo упаковать ошибку???
 				}
 				return nil, err
 			}
