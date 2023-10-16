@@ -136,7 +136,16 @@ func ConfigureStorage(cfg config) (api.Operator, context.CancelFunc) {
 		if err := dbs.Check(context.TODO()); err != nil {
 			log.Error().Msgf("Нет соединения с БД - %v", err)
 		}
-		return dbs, nil
+		return dbs, func() {
+			err := db.Close()
+			if err != nil {
+				log.Error().Msgf("Не могу закрыть базу данных: %v", err)
+			}
+
+			// todo
+			//
+			// Конечно, я хочу делать это defer или как-то так, можно у нас будет некий app.Close()
+		}
 	}
 
 	// Если не база данных, то начинаем с начала - создаем хранилище в памяти, и оборачиваем его всякими штучками если надо

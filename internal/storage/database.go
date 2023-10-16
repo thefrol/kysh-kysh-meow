@@ -49,7 +49,11 @@ func NewDatabase(db *sql.DB) (*Database, error) {
 
 // Check implements api.Operator. проверяет соединение с базой данных, в случае ошибки возвращает error!=nil
 func (d *Database) Check(ctx context.Context) error {
-	//в pgx есть прикольная функция для этого и можно выделить этот метод из Storage
+	// todo
+	//
+	// в pgx есть прикольная функция для этого и можно выделить этот метод из Storage
+	//
+	// конечно, хотчется вынести этот метод в app
 	return d.db.PingContext(ctx)
 }
 
