@@ -29,11 +29,13 @@ func (s FileStorage) Restore() error {
 	if !fileExist(s.FileName) {
 		return ErrorRestoreFileNotExist
 	}
+
 	file, err := os.Open(s.FileName)
 	if err != nil {
 		log.Error().Msgf("Cant open file %v: %+v", s.FileName, err)
 		return err
 	}
+	defer file.Close()
 
 	err = gob.NewDecoder(file).Decode(&s.MemStore)
 	if err != nil {
@@ -58,6 +60,8 @@ func (s FileStorage) Dump() error {
 		log.Error().Msgf("Cant open file %v: %+v", s.FileName, err)
 		return err
 	}
+	defer file.Close()
+
 	err = gob.NewEncoder(file).Encode(&s.MemStore)
 	if err != nil {
 		log.Error().Msgf("Cant marshal to gob %v: %+v", s.FileName, err)
