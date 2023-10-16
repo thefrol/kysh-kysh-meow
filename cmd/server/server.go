@@ -4,6 +4,8 @@ package main
 
 import (
 	"context"
+	"database/sql"
+	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
@@ -14,6 +16,8 @@ import (
 	"github.com/thefrol/kysh-kysh-meow/internal/server/api"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/router"
 	"github.com/thefrol/kysh-kysh-meow/internal/storage"
+
+	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 func main() {
@@ -109,9 +113,21 @@ func ConfigureStorage(cfg config) (api.Operator, context.CancelFunc) {
 	// 3. Если Restore=true, то читаем из файла. Если файла не существует, то игнорируем проблему
 	// 4. Оборачиваем файловое хранилище сихнронным или интервальным
 
+	// TODO
+	//
+	// Думаю эта функция должна получать на вход контекст, а не возвращать CancelFunc
+	//
+	// И нужно убрать отсюда все паники
+
 	// Если база данных
 	if cfg.DatabaseDSN != "" {
-		dbs, err := storage.NewPostGresDatabase(context.TODO(), cfg.DatabaseDSN) // todo зачем тут контекст???
+		db, err := sql.Open("pgx", cfg.DatabaseDSN)
+		if err != nil {
+			e := fmt.Errorf("не могу создать соединение с БД: %w", err)
+			panic(e)
+		}
+
+		dbs, err := storage.NewDatabase(db) // todo зачем тут контекст???
 		if err != nil {
 			log.Error().Msgf("Ошибка создания хранилища в базе данных - %v", err)
 			panic(err)

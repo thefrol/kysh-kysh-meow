@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"errors"
 
-	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/rs/zerolog/log"
 	"github.com/thefrol/kysh-kysh-meow/internal/metrica"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/api"
@@ -34,17 +33,12 @@ type Database struct {
 	db *sql.DB
 }
 
-const sqldriver = "pgx"
-
 // New cоздает новый объект приложения, получая на вход параметры конфигурации
-func NewPostGresDatabase(ctx context.Context, connString string) (*Database, error) {
-	db, err := sql.Open(sqldriver, connString)
-	if err != nil {
-		return nil, err
-	}
-
+func NewDatabase(db *sql.DB) (*Database, error) {
 	// инициализуем таблицы для гаужей и каунтеров
-	_, err = db.ExecContext(ctx, initQuery)
+	//
+	// todo использовать транзации с отменой
+	_, err := db.Exec(initQuery)
 	if err != nil {
 		return nil, ErrorInitDatabase
 	}
@@ -55,6 +49,7 @@ func NewPostGresDatabase(ctx context.Context, connString string) (*Database, err
 
 // Check implements api.Operator. проверяет соединение с базой данных, в случае ошибки возвращает error!=nil
 func (d *Database) Check(ctx context.Context) error {
+	//в pgx есть прикольная функция для этого и можно выделить этот метод из Storage
 	return d.db.PingContext(ctx)
 }
 
