@@ -7,6 +7,9 @@ import (
 
 type Option func(opt *Options) error
 
+// DelaySeconds позволяет указать задержки между попытками,
+// если повторов будет больше, чем задержек, то задержки
+// будут повторяться по кругу
 func DelaySeconds(seconds ...uint) Option {
 	return func(opt *Options) error {
 		var delays []time.Duration
@@ -25,9 +28,11 @@ func OnRetry(funs ...func(int)) Option {
 	}
 }
 
+// Attempts позволяет установить количество повторных попыток,
+// и это значит что указав Attempts(2), мы запустим функцию ровно три раза
 func Attempts(count uint) Option {
 	return func(opt *Options) error {
-		opt.maxretries = int(count)
+		opt.maxretries = int(count) + 1
 		return nil
 	}
 }

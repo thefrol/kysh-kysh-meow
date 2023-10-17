@@ -19,9 +19,11 @@ type Options struct {
 // одно из условий переданных при помощи If() или IfError()
 func This(f func() error, opts ...Option) error {
 
-	options := Options{
-		maxretries: 1,
-	}
+	options := Options{}
+
+	// укажем стандартные настройки
+	Attempts(1)(&options)
+	DelaySeconds(1)(&options)
 
 	for _, opt := range opts {
 		err := opt(&options)
@@ -31,7 +33,7 @@ func This(f func() error, opts ...Option) error {
 	}
 
 	var err error
-	for i := 0; i < options.maxretries; i++ {
+	for i := 0; i <= options.maxretries; i++ {
 		// Мы пускаем массив задержек по кругу, кроме первой попытки
 		if i > 0 {
 			currentI := int((i - 1) % len(options.delays))

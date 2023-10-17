@@ -31,7 +31,7 @@ func Test_RetriableErrorWorks(t *testing.T) {
 
 		start := time.Now()
 		retry.This(callee,
-			retry.Attempts(1),
+			retry.Attempts(2),
 			retry.DelaySeconds(1, 1, 2))
 
 		dur := time.Since(start)
@@ -53,7 +53,7 @@ func Test_Callbacks(t *testing.T) {
 		}
 
 		retry.This(callee,
-			retry.Attempts(3),
+			retry.Attempts(2),
 			retry.DelaySeconds(1, 1, 1),
 			retry.OnRetry(increment))
 
