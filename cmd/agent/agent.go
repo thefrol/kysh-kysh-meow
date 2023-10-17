@@ -1,7 +1,6 @@
 package main
 
 import (
-	"compress/gzip"
 	"fmt"
 	"path"
 	"time"
@@ -10,11 +9,6 @@ import (
 	"github.com/thefrol/kysh-kysh-meow/internal/report"
 	"github.com/thefrol/kysh-kysh-meow/lib/scheduler"
 )
-
-func init() {
-	// Добавим компрессию при отправке данных
-	report.UseBeforeRequest(ApplyGZIP(20, gzip.BestCompression))
-}
 
 const updateRoute = "/updates"
 

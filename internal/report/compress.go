@@ -1,4 +1,4 @@
-package main
+package report
 
 import (
 	"bytes"
@@ -9,6 +9,12 @@ import (
 	"github.com/go-resty/resty/v2"
 	"github.com/rs/zerolog/log"
 )
+
+const compressMinLenght = 20
+
+func init() {
+	UseBeforeRequest(ApplyGZIP(compressMinLenght, gzip.BestCompression))
+}
 
 func ApplyGZIP(minLenght int, level int) func(c *resty.Client, r *resty.Request) error {
 	return func(c *resty.Client, r *resty.Request) error {
