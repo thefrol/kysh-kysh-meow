@@ -13,7 +13,7 @@ import (
 const compressMinLenght = 20
 
 func init() {
-	UseBeforeRequest(ApplyGZIP(compressMinLenght, gzip.BestCompression))
+	AddMiddleware(ApplyGZIP(compressMinLenght, gzip.BestCompression))
 }
 
 func ApplyGZIP(minLenght int, level int) func(c *resty.Client, r *resty.Request) error {

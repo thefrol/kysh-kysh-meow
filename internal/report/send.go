@@ -59,12 +59,12 @@ func Send(metricas []metrica.Metrica, url string) error {
 	return nil
 }
 
-// UseBeforeRequest встраивает мидлварь в цепочку отправки сообщений. Все обработчики получают доступ
+// AddMiddleware встраивает мидлварь в цепочку отправки сообщений. Все обработчики получают доступ
 // к рести клиенту и текущему подготавливаемому запросу. Таким образом можно сделать дополнительное поггирование,
 // или сжатие
 //
-// пример: report.UseBeforeRequest(GZIP)
-func UseBeforeRequest(middlewares ...func(c *resty.Client, r *resty.Request) error) {
+// пример: report.AddMiddleware(GZIP)
+func AddMiddleware(middlewares ...func(c *resty.Client, r *resty.Request) error) {
 	for _, m := range middlewares {
 		defaultClient.OnBeforeRequest(m)
 	}
