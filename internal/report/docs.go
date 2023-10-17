@@ -12,17 +12,18 @@
 // stats собирает информацию о использовании памяти, и сохраняет в хранилище
 // так же имеет методы для управления счетчиком количества опросов PollCount
 //
-// # UseBeforeRequest() - позволяет добавить мидлварь в цепочку отправки, например ApplyGZIP
+// # AddMiddleware() - добавляет мидлварь для клиента, делающего HTTP запросы
 //
 // Типичное использование:
 //
-// report.UseBeforeRequest(ApplyGZIP)
 // s := report.Fetch()
-// err := report.Send(s,"http://my.serv.er/update")
+// err := report.Send(s.ToTransport(),"http://my.serv.er/update")
 //
 //	if err != nil{
 //		...
 //	}
+//
+// Имеет встроенное сжатие gzip, так что не надо об этом беспокоится
 package report
 
 // TODO

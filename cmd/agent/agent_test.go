@@ -12,12 +12,12 @@ func TestEndpoint(t *testing.T) {
 		{
 			name: "positive",
 			cfg:  config{Addr: "localhost"},
-			want: "http://localhost/update",
+			want: "http://localhost/updates",
 		},
 		{
 			name: "positive 2",
 			cfg:  config{Addr: ":8080"},
-			want: "http://:8080/update",
+			want: "http://:8080/updates",
 		},
 	}
 	for _, tt := range tests {

@@ -26,6 +26,7 @@ func HandleJSONBatch(handler func(context.Context, ...metrica.Metrica) (out []me
 				И возвращает структуру out.
 			4. Замаршаливаем результат работы хендлера
 		*/
+		SetContentType(w, TypeApplicationJSON)
 
 		// Размаршаливаем полученное сообщение в структуру metrica.Metrica
 		in := make([]metrica.Metrica, 40)

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"compress/gzip"
 	"fmt"
 	"path"
 	"time"
@@ -11,10 +10,7 @@ import (
 	"github.com/thefrol/kysh-kysh-meow/lib/scheduler"
 )
 
-func init() {
-	// Добавим компрессию при отправке данных
-	report.UseBeforeRequest(ApplyGZIP(20, gzip.BestCompression))
-}
+const updateRoute = "/updates"
 
 func main() {
 	config := mustConfigure(defaultConfig)
@@ -49,5 +45,5 @@ func main() {
 
 // Endpoint формирует точку, куда агент будет посылать все запросы на основе своей текущей конфигурации
 func Endpoint(cfg config) string {
-	return fmt.Sprintf("%s%s", "http://", path.Join(cfg.Addr, "update"))
+	return fmt.Sprintf("%s%s", "http://", path.Join(cfg.Addr, updateRoute))
 }
