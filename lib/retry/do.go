@@ -10,7 +10,7 @@ type Options struct {
 	delays     []time.Duration
 	maxretries int
 	conditions []func(error) bool
-	callbacks  []func(n int)
+	callbacks  []RetryCallback
 }
 
 // This запускает несколько попыток запустить функцию,
@@ -46,7 +46,7 @@ func This(f func() error, opts ...Option) error {
 		}
 		if canretry(err, options) {
 			for _, c := range options.callbacks {
-				c(i)
+				c(i, err)
 			}
 			continue
 		}

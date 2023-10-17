@@ -48,7 +48,9 @@ func Send(metricas []metrica.Metrica, url string) error {
 		retry.Attempts(3),
 		retry.DelaySeconds(1, 3, 5, 7),
 		retry.If(fails.OnDial), // черт, так красиво
-		retry.OnRetry(func(n int) { log.Info().Msgf("%v попытка отправить данные", n+1) }),
+		retry.OnRetry(func(n int, err error) {
+			log.Info().Msgf("%v попытка отправить данные, ошибка: %v", n+1, err)
+		}),
 	)
 	// todo в данный момент мы не используем тут easyjson
 

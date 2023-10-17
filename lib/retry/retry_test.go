@@ -48,7 +48,7 @@ func Test_Callbacks(t *testing.T) {
 		}
 
 		counter := 0
-		increment := func(int) {
+		increment := func(int, error) {
 			counter++
 		}
 

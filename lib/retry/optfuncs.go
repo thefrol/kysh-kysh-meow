@@ -7,6 +7,8 @@ import (
 
 type Option func(opt *Options) error
 
+type RetryCallback func(int, error)
+
 // DelaySeconds позволяет указать задержки между попытками,
 // если повторов будет больше, чем задержек, то задержки
 // будут повторяться по кругу
@@ -21,7 +23,7 @@ func DelaySeconds(seconds ...uint) Option {
 	}
 }
 
-func OnRetry(funs ...func(int)) Option {
+func OnRetry(funs ...RetryCallback) Option {
 	return func(opt *Options) error {
 		opt.callbacks = append(opt.callbacks, funs...)
 		return nil
