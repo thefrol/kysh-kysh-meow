@@ -46,7 +46,7 @@ func This(f func() error, opts ...Option) error {
 		}
 		if canretry(err, options) {
 			for _, c := range options.callbacks {
-				c(i, err)
+				c(i+1, err) // i+1 потому что тут возвращаем человеческое значение, где попытки начинаются с 1
 			}
 			continue
 		}
