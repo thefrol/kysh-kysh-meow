@@ -2,6 +2,7 @@ package report_test
 
 import (
 	"bytes"
+	"encoding/json"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -9,7 +10,6 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/mailru/easyjson"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/thefrol/kysh-kysh-meow/internal/metrica"
@@ -54,16 +54,15 @@ func TestSend(t *testing.T) {
 				assert.Error(t, err, "Должна быть ошибка")
 			}
 
-			var sended []metrica.Metrica
-			for _, r := range h.requests {
-				m := new(metrica.Metrica)
-				body, err := r.GetBody()
-				require.NoError(t, err, "Тест сервер не смог прочитать тело полученного запроса")
-				err = easyjson.UnmarshalFromReader(body, m)
-				require.NoError(t, err, "Не возможно размаршалить джейсон из отправленного джейсона")
-				defer r.Body.Close()
-				sended = append(sended, *m)
-			}
+			require.Equal(t, len(h.requests), 1, "Должен быть только один запрос на сервер")
+			req := h.requests[0]
+			defer req.Body.Close()
+
+			sended := make([]metrica.Metrica, 0, len(tt.metricas))
+			body, err := req.GetBody()
+			require.NoError(t, err, "Ошибка получения тела")
+			err = json.NewDecoder(body).Decode(&sended)
+			require.NoError(t, err, "Не возможно размаршалить джейсон из отправленного джейсона: %v", err)
 
 			eq := reflect.DeepEqual(tt.metricas, sended)
 			assert.True(t, eq, "Ожидаемые к отправке данные не совпадают с полученными сервером")
