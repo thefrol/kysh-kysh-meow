@@ -2,12 +2,14 @@ package report_test
 
 import (
 	"bytes"
+	"compress/gzip"
 	"encoding/json"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
 	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -90,8 +92,20 @@ type testHandler struct {
 
 // ServerHTTP отвечает на запросы к серверы, исполяет интерфейс http.Handle
 func (server *testHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	bb, _ := io.ReadAll(r.Body)
+	var bb []byte
 	defer r.Body.Close()
+
+	// разархивируем если надо
+	if strings.Contains(r.Header.Get("Content-Encoding"), "gzip") {
+		unzipped, _ := gzip.NewReader(r.Body)
+		defer unzipped.Close()
+		bb, _ = io.ReadAll(unzipped)
+
+	} else {
+		bb, _ = io.ReadAll(r.Body)
+
+	}
+
 	// чтобы потом можно было прочитать тело запроса,
 	// мы его сохраняем в сцециализированную переменную внутри запроса,
 	// которая работает как замыкаение
