@@ -5,11 +5,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net"
 	"net/http"
 
 	"github.com/go-resty/resty/v2"
 	"github.com/rs/zerolog/log"
 	"github.com/thefrol/kysh-kysh-meow/internal/metrica"
+	"github.com/thefrol/kysh-kysh-meow/lib/retry"
 )
 
 var (
@@ -34,7 +36,19 @@ func Send(metricas []metrica.Metrica, url string) error {
 	// у нас существует очень важный контракт,
 	// что тело сюда передается в формате io.Reader,
 	// тогда могут работать разные мидлвари
-	resp, err := defaultClient.R().SetBody(buf).Post(url) // todo в данный момент мы не используем тут easyjson
+	var resp *resty.Response
+	err = retry.This(
+		func() error {
+			var err error
+			resp, err = defaultClient.R().SetBody(buf).Post(url)
+			return err
+		},
+		retry.Attempts(3),
+		retry.DelaySeconds(1, 3, 5, 7),
+		retry.If(failsOnDial),
+		retry.OnRetry(func(n int) { log.Info().Msgf("%v попытка отправить данные", n+1) }),
+	)
+	// todo в данный момент мы не используем тут easyjson
 
 	if err != nil {
 		log.Error().Str("location", "internal/report").Msgf("Не могу отправить сообщение c пачкой метрик по приничине %+v", err)
@@ -57,6 +71,16 @@ func Send(metricas []metrica.Metrica, url string) error {
 	dropPollCount()
 
 	return nil
+}
+
+// failsOnDial возвращает true, если err связана с ошибкой подключения
+// то есть ошибка net.OpError, где operr.Op=="dial"
+func failsOnDial(err error) bool {
+	var oe *net.OpError
+	if errors.As(err, &oe) {
+		return oe.Op == "dial" // если ошибка в операции dial
+	}
+	return false
 }
 
 // AddMiddleware встраивает мидлварь в цепочку отправки сообщений. Все обработчики получают доступ
