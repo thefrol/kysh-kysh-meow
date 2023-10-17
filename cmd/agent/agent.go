@@ -16,6 +16,8 @@ func init() {
 	report.UseBeforeRequest(ApplyGZIP(20, gzip.BestCompression))
 }
 
+const updateRoute = "/updates"
+
 func main() {
 	config := mustConfigure(defaultConfig)
 
@@ -49,5 +51,5 @@ func main() {
 
 // Endpoint формирует точку, куда агент будет посылать все запросы на основе своей текущей конфигурации
 func Endpoint(cfg config) string {
-	return fmt.Sprintf("%s%s", "http://", path.Join(cfg.Addr, "update"))
+	return fmt.Sprintf("%s%s", "http://", path.Join(cfg.Addr, updateRoute))
 }
