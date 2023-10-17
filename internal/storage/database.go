@@ -8,6 +8,8 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/thefrol/kysh-kysh-meow/internal/metrica"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/api"
+	"github.com/thefrol/kysh-kysh-meow/lib/retry"
+	"github.com/thefrol/kysh-kysh-meow/lib/retry/fails"
 )
 
 var (
@@ -38,7 +40,20 @@ func NewDatabase(db *sql.DB) (*Database, error) {
 	// инициализуем таблицы для гаужей и каунтеров
 	//
 	// todo использовать транзации с отменой
-	_, err := db.Exec(initQuery)
+	err :=
+		retry.This(
+			func() error {
+				_, err := db.Exec(initQuery)
+				return err
+			},
+			retry.If(fails.OnDial),
+			retry.Attempts(2),
+			retry.DelaySeconds(1, 3, 5, 7),
+			retry.OnRetry(
+				func(i int, err error) {
+					log.Error().Msgf("Попытка инициализации базы %v: %v", i, err)
+				}))
+
 	if err != nil {
 		return nil, ErrorInitDatabase
 	}
