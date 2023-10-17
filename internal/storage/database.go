@@ -51,7 +51,7 @@ func NewDatabase(db *sql.DB) (*Database, error) {
 			retry.DelaySeconds(1, 3, 5, 7),
 			retry.OnRetry(
 				func(i int, err error) {
-					log.Error().Msgf("Попытка инициализации базы %v: %v", i, err)
+					log.Info().Msgf("Попытка инициализации базы %v: %v", i, err)
 				}))
 
 	if err != nil {
