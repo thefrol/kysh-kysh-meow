@@ -39,6 +39,8 @@ func HandleJSONRequest(handler func(context.Context, ...metrica.Metrica) (out []
 			4. Замаршаливаем результат работы хендлера
 		*/
 
+		SetContentType(w, TypeApplicationJSON)
+
 		// Размаршаливаем полученное сообщение в структуру metrica.Metrica
 		in := metrica.Metrica{}
 		err := easyjson.UnmarshalFromReader(r.Body, &in)
