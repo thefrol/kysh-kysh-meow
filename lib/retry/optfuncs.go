@@ -32,7 +32,7 @@ func OnRetry(funs ...func(int)) Option {
 // и это значит что указав Attempts(2), мы запустим функцию ровно три раза
 func Attempts(count uint) Option {
 	return func(opt *Options) error {
-		opt.maxretries = int(count) + 1
+		opt.maxretries = int(count)
 		return nil
 	}
 }

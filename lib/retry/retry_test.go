@@ -57,6 +57,6 @@ func Test_Callbacks(t *testing.T) {
 			retry.DelaySeconds(1, 1, 1),
 			retry.OnRetry(increment))
 
-		assert.Equal(t, counter, 3, "Коллбеки должны были запуститься три раза")
+		assert.Equal(t, 3, counter, "Коллбеки должны были запуститься три раза")
 	})
 }
