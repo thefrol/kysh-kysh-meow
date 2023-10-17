@@ -47,23 +47,34 @@ func ApplyGZIP(minLenght int, level int) func(c *resty.Client, r *resty.Request)
 
 		// тут мы часть буфера прочитали, и хотим прочитать оставшееся, и скомпрессировать все вместе
 
-		b := new(bytes.Buffer)
+		b := new(bytes.Buffer) // todo мы можем писать сразу в тело сообщения я думаю при желании, возможноо.... И если не будем выводить инфу по сжатию
 		gz, err := gzip.NewWriterLevel(b, level)
 		if err != nil {
 			return fmt.Errorf("cant create compressor")
 		}
 
+		bytesBefore := n // посчитаем успешность нашей компрессии, для этого запомним сколько байт было изначально
+
 		_, err = gz.Write(t)
 		if err != nil {
 			return fmt.Errorf("cant write min lenght buffer back to zipper")
 		}
-		_, err = io.Copy(gz, v)
+
+		nAfter, err := io.Copy(gz, v)
 		if err != nil {
 			return fmt.Errorf("cant write to gzip writer")
 		}
+		bytesBefore += int(nAfter)
+
 		r.Header.Add("Content-Encoding", "gzip")
 		r.SetBody(b)
 		gz.Close()
+
+		log.Info().
+			Int("size_before", bytesBefore).
+			Int("size_after", b.Len()).
+			Float64("compression_ratio", float64(b.Len())/float64(bytesBefore)).
+			Msg("Компрессор закончил работать")
 
 		return nil
 	}
