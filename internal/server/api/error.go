@@ -38,7 +38,7 @@ func Retry3Times(op Operation) Operation {
 					return err
 				},
 				retry.If(fails.OnDial),
-				retry.Attempts(2),
+				retry.Attempts(3),
 				retry.DelaySeconds(1, 3, 5, 7),
 				retry.OnRetry(
 					func(i int, err error) {

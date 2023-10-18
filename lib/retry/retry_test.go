@@ -41,7 +41,7 @@ func Test_RetriableErrorWorks(t *testing.T) {
 }
 
 func Test_Callbacks(t *testing.T) {
-	t.Run("три запуска, три коллбека запуска", func(t *testing.T) {
+	t.Run("четыре запуска, три ретрая, три коллбека", func(t *testing.T) {
 
 		callee := func() error {
 			return retry.Retriable(errors.New("test error"))
@@ -53,7 +53,7 @@ func Test_Callbacks(t *testing.T) {
 		}
 
 		retry.This(callee,
-			retry.Attempts(2),
+			retry.Attempts(3),
 			retry.DelaySeconds(1, 1, 1),
 			retry.OnRetry(increment))
 

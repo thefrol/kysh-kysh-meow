@@ -31,7 +31,9 @@ func OnRetry(funs ...RetryCallback) Option {
 }
 
 // Attempts позволяет установить количество повторных попыток,
-// и это значит что указав Attempts(2), мы запустим функцию ровно три раза
+// и это значит что указав Attempts(3), мы запуст функцию
+// максимум четыре раза - один штатный запуск, и три попытки
+// чтобы она сработала после.
 func Attempts(count uint) Option {
 	return func(opt *Options) error {
 		opt.maxretries = int(count)
