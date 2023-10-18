@@ -38,6 +38,14 @@ func This(f func() error, opts ...Option) error {
 		if i > 0 {
 			currentI := int((i - 1) % len(options.delays))
 			time.Sleep(options.delays[currentI])
+
+			// вызываем коллбеки перед вызовом функции, то есть после того
+			// как счетчик i поменял значение, а раньше нужно было бы проверить,
+			// что следущая итерация случится
+			for _, c := range options.callbacks {
+				c(i+1, err) // i+1 потому что тут возвращаем человеческое значение, где попытки начинаются с 1
+			}
+			continue
 		}
 
 		err = f()
@@ -45,9 +53,7 @@ func This(f func() error, opts ...Option) error {
 			return nil
 		}
 		if canretry(err, options) {
-			for _, c := range options.callbacks {
-				c(i+1, err) // i+1 потому что тут возвращаем человеческое значение, где попытки начинаются с 1
-			}
+			// отсюда перенесен код, чтобы аглоритм легче читался
 			continue
 		}
 
