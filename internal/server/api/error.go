@@ -1,10 +1,13 @@
 package api
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
 	"github.com/rs/zerolog/log"
+	"github.com/thefrol/kysh-kysh-meow/lib/retry"
+	"github.com/thefrol/kysh-kysh-meow/lib/retry/fails"
 )
 
 // httpErrorWithLogging отправляет сообщение об ошибке, параллельно дублируя в журнал. Работает быстрее, чем просто две функции отдельно.
@@ -20,4 +23,31 @@ func HTTPErrorWithLogging(w http.ResponseWriter, statusCode int, format string, 
 	// TODO
 	//
 	// Возможно это пока единственный повод держать кастомный логгер, чтобы в нем была функция типа withHttpError(w)
+}
+
+// Retry3Times позволяет повторить операцию ресколько раз
+//
+// retriableHandler:=Retry3Times(handler)
+// out, err:=retryableHandler(ctx, in)
+func Retry3Times(op Operation) Operation {
+	return func(ctx context.Context, d ...datastruct) (out []datastruct, err error) {
+		err =
+			retry.This(
+				func() error {
+					out, err = op(ctx, d...)
+					return err
+				},
+				retry.If(fails.OnDial),
+				retry.Attempts(2),
+				retry.DelaySeconds(1, 3, 5, 7),
+				retry.OnRetry(
+					func(i int, err error) {
+						log.Info().Msgf("Выполняется повторная попытка %v после ошибки %v", i, err)
+					}),
+			)
+		if err != nil {
+			return nil, err
+		}
+		return
+	}
 }
