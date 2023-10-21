@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io"
 	"net/http"
 	"strconv"
 	"strings"
@@ -20,7 +19,7 @@ func updateCounter(w http.ResponseWriter, r *http.Request, params URLParams) {
 	if err != nil {
 		w.Header().Add("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintf(w, "^0^ Ошибка значение, не могу пропарсить %v в %T", params.value, value)
+		http.Error(w, "^0^ Ошибка значения, не могу пропарсить", http.StatusBadRequest)
 		return
 	}
 	old, _ := store.Counter(params.name)
@@ -28,9 +27,6 @@ func updateCounter(w http.ResponseWriter, r *http.Request, params URLParams) {
 	new := old + metrica.Counter(value)
 	store.SetCounter(params.name, new)
 	w.Header().Add("Content-Type", "text/plain")
-	fmt.Fprintf(w, "^.^ мур! Меняем Counter %v на %v. Новое значение %v", params.name, value, new)
-
-	fmt.Printf("200(OK) at request to %v\n", r.URL.Path)
 }
 
 // updateGauge отвечает за маршрут, по которому будет обновляться метрика типа gauge
@@ -41,15 +37,11 @@ func updateGauge(w http.ResponseWriter, r *http.Request, params URLParams) {
 	value, err := strconv.ParseFloat(params.value, 64)
 	if err != nil {
 		w.Header().Add("Content-Type", "text/plain")
-		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintf(w, "^0^ Ошибка значение, не могу пропарсить %v в %T", params.value, value)
+		http.Error(w, "^0^ Ошибка значения, не могу пропарсить", http.StatusBadRequest)
 		return
 	}
 	store.SetGauge(params.name, metrica.Gauge(value))
 	w.Header().Add("Content-Type", "text/plain")
-	fmt.Fprintf(w, "^.^ мур! меняем Gauge %v на %v.", params.name, value)
-
-	fmt.Printf("200(OK) at request to %v\n", r.URL.Path)
 }
 
 // updateGauge отвечает за маршрут, по которому будет обновляться счетчик неизвестного типа
@@ -57,9 +49,7 @@ func updateGauge(w http.ResponseWriter, r *http.Request, params URLParams) {
 // #TODO переименовать в BadRequest
 func updateUnknownType(w http.ResponseWriter, r *http.Request, params URLParams) {
 	w.Header().Add("Content-Type", "text/plain")
-	w.WriteHeader(http.StatusBadRequest) //обязательно за вызова w.Write() #INSIGHT добавить в README
-	io.WriteString(w, "Фшшш! Я не знаю такой тип счетчика")
-	fmt.Printf("400(BadRequest) at request to %v\n", r.URL.Path)
+	http.Error(w, "Фшшш! Я не знаю такой тип счетчика", http.StatusBadRequest)
 }
 
 // getValue возвращает значение уже записанной метрики,
@@ -68,6 +58,7 @@ func updateUnknownType(w http.ResponseWriter, r *http.Request, params URLParams)
 func getValue(w http.ResponseWriter, r *http.Request, params URLParams) {
 	var value fmt.Stringer
 	var found bool
+
 	switch params.metric {
 	case "counter":
 		value, found = store.Counter(params.name)
@@ -128,13 +119,6 @@ func makeHandler(fn updateMetricFunc) http.HandlerFunc {
 			name:   chi.URLParam(r, "name"),
 			value:  chi.URLParam(r, "value"),
 		}
-		// Этот блок закомментирован, чтобы пройти автотесты. В тестах отправляется запрос без text/plain и это вызывает ошибку
-		// if slices.Contains(r.Header("Content-Type"),"text/plain)" { // возможно это все щеё неправильно. Мне приходило такое "text/plain; encoging: utf8"
-		// 	w.WriteHeader(http.StatusNotFound)
-		// 	fmt.Printf("Wront content type at %v\n", r.URL.Path)
-		// 	io.WriteString(w, "Мяу! Мы поддерживаем только Content-Type:text/plain")
-		// 	return
-		// }
 		fn(w, r, p)
 	}
 }
