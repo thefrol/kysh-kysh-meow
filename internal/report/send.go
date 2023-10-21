@@ -1,62 +1,39 @@
 package report
 
 import (
-	"fmt"
-	"io"
-	"net/http"
-	"time"
-
-	"github.com/thefrol/kysh-kysh-meow/internal/storage"
+	"github.com/go-resty/resty/v2"
+	"github.com/thefrol/kysh-kysh-meow/internal/metrica"
+	"github.com/thefrol/kysh-kysh-meow/internal/ololog"
 )
 
-// WithSimpleProtocol отправляет данные из хранилища store на сервер url,
-// испрользуя простой протокол отправки, то есть ПОСТ запросами с пустыми телами.
-// где запросы идут на server.addr/update/%counter_type%/%counter_name%/%value%
+var defaultClient = resty.New() // todo .SetJSONMarshaler(easyjson.Marshal())
+
+// Send отправляет метрики из указанного хранилища store на сервер host.
+// При возникновении ошибок будет стараться отправить как можно больше метрик,
+// и продолжать работу, то есть, если первая метрика даст сбой, остальные двадцать он все же попытается отправить
+// и вернет ошибку.
 //
-// Возвращает ошибку, если хотя бы один запрос не отправился. Так же сбрасывает
-// запросы по середине, то есть если второй не отправился - остальные десять он даже
-// и пытаться не будет.
-func WithSimpleProtocol(store storage.Storager, url string) error {
-	var errors []error
-	for _, key := range store.ListCounters() {
-		value, _ := store.Counter(key)
-		err := DoRequest(url, "counter", key, value) //#TODO counter to some const
+// При возникнвении ошибок возвращается только последняя
+func Send(metricas []metrica.Metrica, url string) (lastErr error) {
+	for _, m := range metricas {
+		resp, err := defaultClient.R().SetBody(m).Post(url) // todo в данный момент мы не используем тут easyjson
 		if err != nil {
-			errors = append(errors, err)
+			ololog.Error().Str("location", "internal/report").Msgf("Не могу отправить сообщение с метрикой [%v]%v, по приничине %+v", m.MType, m.ID, err)
+			lastErr = err
+			continue
 		}
+		defer resp.RawBody().Close()
+		ololog.Info().Msgf("Успешно отправлено %v %v", m.MType, m.ID)
 	}
-
-	for _, key := range store.ListGauges() {
-		value, _ := store.Gauge(key)
-		err := DoRequest(url, "gauge", key, value) //#TODO counter to some const
-		if err != nil {
-			errors = append(errors, err)
-		}
-	}
-	if len(errors) > 0 {
-		s := ""
-		for _, e := range errors {
-			s += e.Error() + "\n"
-		}
-		//s = strings.TrimRight(s, ",")
-		return fmt.Errorf(s)
-	}
-	return nil
+	return
 }
 
-// DoRequest создает запрос на сервер по нужному марштуру для обновления указанной метрики
-func DoRequest(host, metric, name string, value fmt.Stringer) error {
-	url := fmt.Sprintf("%s/update/%s/%s/%s", host, metric, name, value)
-	r, err := http.Post(url, "text/plain", nil)
-	if err == nil {
-		//прочитать тело и закрыть запрос, чтобы переиспользовать открытые tcp соединия
-		_, err := io.Copy(io.Discard, r.Body)
-		defer r.Body.Close()
-		if err != nil {
-			return err
-		}
-
-	}
-	time.Sleep(200 * time.Millisecond) //защита от map concurrent write
-	return err
-}
+// todo
+//
+// По-хорошему storage должен уметь вернуть мне все метрики в формате metrica.Metrica() и отказаться при этом от ListCounters()
+//
+// как будето на данный момент мы даже не можем представить какой-то список метрик, например которые были отправлены, или не были
+//
+// до сих пор не понимаю, что делать если счетчик PollCount не отправился, надо ли его сбрасывать, и вообще что делать...
+// или у нас есть как бы текущая сессия? Мол складываем с исходным значением текущей сессии
+// Но тогда это уже не REST

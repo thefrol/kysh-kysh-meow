@@ -9,6 +9,14 @@ import (
 	"github.com/thefrol/kysh-kysh-meow/internal/storage"
 )
 
+// todo
+//
+// мне кажется нужно отвязать Fetch от storager, он может работать как-то иначе,
+// например, возвращать массив metrica.Metrica, или типа того. Или у нас может быть какая-то структура
+// с ленивой инициализацией. Например, она содержит в себе структуру мемстатс и два других счетчика,
+// и если уж надо, то формирует из них массив для отправки на сервер. А то иначе получается мы делаем лишнюю работу
+// каждые две секунды наполняем хранилище, а пользуемся им только раз в десять секунд, а может быть и другая ситуация даже!
+
 // Fetch собирает метрики мамяти и сохраняет их в хранилище store
 func Fetch(s storage.Storager) {
 	m := runtime.MemStats{}
@@ -23,6 +31,7 @@ func Fetch(s storage.Storager) {
 	s.SetGauge("HeapIdle", metrica.Gauge(m.HeapIdle))
 	s.SetGauge("HeapInuse", metrica.Gauge(m.HeapInuse))
 	s.SetGauge("HeapObjects", metrica.Gauge(m.HeapObjects))
+	s.SetGauge("HeapReleased", metrica.Gauge(m.HeapReleased))
 	s.SetGauge("HeapSys", metrica.Gauge(m.HeapSys))
 	s.SetGauge("LastGC", metrica.Gauge(m.LastGC))
 	s.SetGauge("Lookups", metrica.Gauge(m.Lookups))

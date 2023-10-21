@@ -19,6 +19,7 @@ var metricsMem = []string{
 	"HeapInuse",
 	"HeapObjects",
 	"HeapSys",
+	"HeapReleased",
 	"LastGC",
 	"Lookups",
 	"MCacheInuse",

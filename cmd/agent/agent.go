@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"path"
 	"time"
 
 	"github.com/thefrol/kysh-kysh-meow/internal/report"
@@ -35,7 +36,7 @@ func main() {
 	// отправляем данные раз в repostInterval
 	c.AddJob(time.Duration(config.ReportInterval)*time.Second, func() {
 		//отправляем на сервер
-		err := report.WithSimpleProtocol(store, "http://"+config.Addr)
+		err := report.Send(store.Metricas(), "http://"+path.Join(config.Addr, "update"))
 		if err != nil {
 			fmt.Println("Попытка отправить метрики завершилась с  ошибками:")
 			fmt.Print(err)
