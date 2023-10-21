@@ -127,7 +127,7 @@ func ConfigureStorage(cfg config) (api.Operator, context.CancelFunc) {
 			panic(e)
 		}
 
-		dbs, err := storage.NewDatabase(db) // todo зачем тут контекст???
+		dbs, err := storage.NewDatabase(db)
 		if err != nil {
 			log.Error().Msgf("Ошибка создания хранилища в базе данных - %v", err)
 			panic(err)
