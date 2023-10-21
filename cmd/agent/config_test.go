@@ -35,6 +35,20 @@ func Test_configure(t *testing.T) {
 			wantCfg:     config{Addr: "localhost:8092", ReportInterval: 2, PollingInterval: 1},
 		},
 		{
+			name:        "Указать ключ через командную строку",
+			defaults:    config{Key: "will be rewrited"},
+			env:         nil,
+			commandLine: "agent -k abcde",
+			wantCfg:     config{Key: "abcde"},
+		},
+		{
+			name:        "Указать ключ через переменные окружения",
+			defaults:    config{Key: "will be rewrited"},
+			env:         map[string]string{"KEY": "qwerty"},
+			commandLine: "agent -k abcde",
+			wantCfg:     config{Key: "qwerty"},
+		},
+		{
 			name:        "Указать интервалы через командную строку",
 			defaults:    config{Addr: "localhost:8081", ReportInterval: 2, PollingInterval: 1},
 			env:         nil,
@@ -95,6 +109,7 @@ func Test_configure(t *testing.T) {
 			os.Unsetenv("ADDRESS")
 			os.Unsetenv("REPORT_INTERVAL")
 			os.Unsetenv("POLLING_INTERVAL")
+			os.Unsetenv("KEY")
 
 			if tt.env != nil {
 				for k, v := range tt.env {

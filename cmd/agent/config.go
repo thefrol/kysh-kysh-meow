@@ -15,6 +15,7 @@ type config struct {
 	Addr            string `env:"ADDRESS" flag:"~a" desc:"(строка) адрес сервера в формате host:port"`
 	ReportInterval  uint   `env:"REPORT_INTERVAL" flag:"~r" desc:"(число, секунды) частота отправки данных на сервер"`
 	PollingInterval uint   `env:"POLLING_INTERVAL" flag:"~p" desc:"(число, секунды) частота отпроса метрик"`
+	Key             string `env:"KEY" flag:"~p" desc:"(строка) секретный ключ подписи"`
 }
 
 var defaultConfig = config{
@@ -34,6 +35,7 @@ func mustConfigure(defaults config) (cfg config) {
 	flag.UintVar(&cfg.PollingInterval, "p", defaults.PollingInterval, "число, частота опроса метрик")
 	flag.UintVar(&cfg.ReportInterval, "r", defaults.ReportInterval, "число, частота отправки данных на сервер")
 	flag.StringVar(&cfg.Addr, "a", defaults.Addr, "строка, адрес сервера в формате host:port")
+	flag.StringVar(&cfg.Key, "k", defaults.Key, "строка, секретный ключ подписи")
 
 	flag.Parse()
 
