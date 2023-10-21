@@ -1,4 +1,4 @@
-package report
+package main
 
 import (
 	"bytes"
@@ -7,31 +7,20 @@ import (
 	"io"
 
 	"github.com/go-resty/resty/v2"
-	"github.com/thefrol/kysh-kysh-meow/internal/ololog"
+	"github.com/rs/zerolog/log"
 )
-
-// UseBeforeRequest встраиваем мидлварь в цепочку отправки сообщений. Все обработчики получают доступ
-// к рести клиенту и текущему подготавливаемому запросу. Таким образом можно сделать дополнительное поггирование,
-// или сжатие
-//
-// пример: report.UseBeforeRequest(GZIP)
-func UseBeforeRequest(middlewares ...func(c *resty.Client, r *resty.Request) error) {
-	for _, m := range middlewares {
-		defaultClient.OnBeforeRequest(m)
-	}
-}
 
 func ApplyGZIP(minLenght int, level int) func(c *resty.Client, r *resty.Request) error {
 	return func(c *resty.Client, r *resty.Request) error {
 		// проверяем, что контент уже не закодирован каким-нибудт другим мидлварью или кодом
 		if r.Header.Values("Content-Encoding") != nil {
-			ololog.Warn().Str("location", "agent/middleware/gzip").Fields(r.Header).Msg("Запрос на сервер уже сжат")
+			log.Warn().Str("location", "agent/middleware/gzip").Fields(r.Header).Msg("Запрос на сервер уже сжат")
 			return nil
 		}
 
 		v, ok := r.Body.(io.Reader)
 		if !ok {
-			ololog.Warn().Str("location", "agent/middleware/gzip").Msg("Тело сообщение передано не в формате io.Reader, а значит мы не можем его заархивировать. Вообще мы хотим передавать тело сообщения именно ридером")
+			log.Warn().Str("location", "agent/middleware/gzip").Msg("Тело сообщение передано не в формате io.Reader, а значит мы не можем его заархивировать. Вообще мы хотим передавать тело сообщения именно ридером")
 			return nil
 		}
 
@@ -46,7 +35,7 @@ func ApplyGZIP(minLenght int, level int) func(c *resty.Client, r *resty.Request)
 			// только первые n символов, потому что остальные будут просто нулями
 			// вплоть до minLenght
 			r.SetBody(bytes.NewBuffer(t[:n]))
-			ololog.Info().Msg("Request too short for compressing, sending as is")
+			log.Info().Msg("Request too short for compressing, sending as is")
 			return nil
 		}
 

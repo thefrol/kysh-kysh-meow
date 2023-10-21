@@ -1,7 +1,0 @@
-#!/bin/bash
-go build -o ./cmd/server/server ./cmd/server
-go build -o ./cmd/agent/agent ./cmd/agent
-./metricstest -test.run=^TestIteration6*$ -agent-binary-path=./cmd/agent/agent -source-path=. -binary-path=./cmd/server/server --server-port 8081
-
-
-# а можно запускать тесты в зависимости от имени активного git бранча! 

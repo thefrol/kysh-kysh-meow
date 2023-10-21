@@ -5,8 +5,8 @@ import (
 
 	"github.com/go-resty/resty/v2"
 	"github.com/mailru/easyjson"
+	"github.com/rs/zerolog/log"
 	"github.com/thefrol/kysh-kysh-meow/internal/metrica"
-	"github.com/thefrol/kysh-kysh-meow/internal/ololog"
 )
 
 var defaultClient = resty.New() // todo .SetJSONMarshaler(easyjson.Marshal())
@@ -20,29 +20,38 @@ var defaultClient = resty.New() // todo .SetJSONMarshaler(easyjson.Marshal())
 func Send(metricas []metrica.Metrica, url string) (lastErr error) {
 	for _, m := range metricas {
 		buf := new(bytes.Buffer)
-		easyjson.MarshalToWriter(m, buf)
+		_, err := easyjson.MarshalToWriter(m, buf)
+		if err != nil {
+			log.Error().Str("location", "internal/report").Msgf("Не могу замаршалить [%v]%v, по приничине %+v", m.MType, m.ID, err)
+			lastErr = err
+			continue
+		}
 		// у нас существует очень важный контракт,
 		// что тело сюда передается в формате io.Reader,
 		// тогда могут работать разные мидлвари
 		resp, err := defaultClient.R().SetBody(buf).Post(url) // todo в данный момент мы не используем тут easyjson
 
 		if err != nil {
-			ololog.Error().Str("location", "internal/report").Msgf("Не могу отправить сообщение с метрикой [%v]%v, по приничине %+v", m.MType, m.ID, err)
+			log.Error().Str("location", "internal/report").Msgf("Не могу отправить сообщение с метрикой [%v]%v, по приничине %+v", m.MType, m.ID, err)
 			lastErr = err
 			continue
 		}
 		defer resp.RawBody().Close()
-		ololog.Info().Msgf("Успешно отправлено %v %v", m.MType, m.ID)
+		log.Info().Msgf("Успешно отправлено %v %v", m.MType, m.ID)
 	}
+
+	// сбрасываем счетчик PollCount
+	dropPollCount() // todo вот этот сброс надо проверять
 	return
 }
 
-// todo
+// UseBeforeRequest встраивает мидлварь в цепочку отправки сообщений. Все обработчики получают доступ
+// к рести клиенту и текущему подготавливаемому запросу. Таким образом можно сделать дополнительное поггирование,
+// или сжатие
 //
-// По-хорошему storage должен уметь вернуть мне все метрики в формате metrica.Metrica() и отказаться при этом от ListCounters()
-//
-// как будето на данный момент мы даже не можем представить какой-то список метрик, например которые были отправлены, или не были
-//
-// до сих пор не понимаю, что делать если счетчик PollCount не отправился, надо ли его сбрасывать, и вообще что делать...
-// или у нас есть как бы текущая сессия? Мол складываем с исходным значением текущей сессии
-// Но тогда это уже не REST
+// пример: report.UseBeforeRequest(GZIP)
+func UseBeforeRequest(middlewares ...func(c *resty.Client, r *resty.Request) error) {
+	for _, m := range middlewares {
+		defaultClient.OnBeforeRequest(m)
+	}
+}

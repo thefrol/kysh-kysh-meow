@@ -17,7 +17,10 @@ func New() Chron {
 	return Chron{}
 }
 
-// Serve запускает запланированные работы, и занимает текущий поток
+// Serve запускает запланированные работы, и занимает текущий поток.
+// Планировщик будет ходить по списку задач, с начала до конца,
+// и потом опять. Если задачу уже можно запустить, то запускать.
+// При этом делая паузу между такими циклами на interval
 func (c *Chron) Serve(interval time.Duration) {
 	if len(c.jobs) == 0 {
 		fmt.Println("У планировщика нет задач. Ничего не выполняется...")
@@ -28,7 +31,7 @@ func (c *Chron) Serve(interval time.Duration) {
 		for _, job := range c.jobs {
 
 			if job.Elapsed() {
-				job.Run()
+				job.run()
 			}
 		}
 	}
@@ -52,9 +55,14 @@ func (j *Job) Elapsed() bool {
 	return time.Since(j.lastCall) > j.interval
 }
 
-// Run Запускает функцию
-func (j *Job) Run() {
+// run Запускает функцию
+func (j *Job) run() {
 	t := time.Now()
 	j.function()
 	j.lastCall = t
 }
+
+// TODO
+//
+// Придумать способ остановки. Желательно, который занимает текущий поток. Чтобы мы точно знали, что у нас остановлено.
+// Может быть после урока про контексты, я смогу припилить контекст к функции Server
