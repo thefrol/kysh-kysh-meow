@@ -25,7 +25,8 @@ func HTTPErrorWithLogging(w http.ResponseWriter, statusCode int, format string, 
 	// Возможно это пока единственный повод держать кастомный логгер, чтобы в нем была функция типа withHttpError(w)
 }
 
-// Retry3Times позволяет повторить операцию ресколько раз
+// Retry3Times повторяет операцию op ровно три раза
+// с промежутками 1,3,5 секунд.
 //
 // retriableHandler:=Retry3Times(handler)
 // out, err:=retryableHandler(ctx, in)
