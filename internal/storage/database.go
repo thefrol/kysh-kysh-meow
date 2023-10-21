@@ -8,6 +8,8 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/thefrol/kysh-kysh-meow/internal/metrica"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/api"
+	"github.com/thefrol/kysh-kysh-meow/lib/retry"
+	"github.com/thefrol/kysh-kysh-meow/lib/retry/fails"
 )
 
 var (
@@ -23,8 +25,7 @@ const (
 
 	queryList = "SELECT 'counter',id FROM counters UNION SELECT 'gauge',id from gauges;"
 
-	queryUpdateCounter = "UPDATE counters SET delta=delta+$2 WHERE id=$1"
-	queryInsertCounter = "INSERT INTO counters VALUES ($1,$2);"
+	queryUpsertCounter = "INSERT INTO counters VALUES ($1,$2) ON CONFLICT (id) DO UPDATE SET delta=counters.delta+$2;"
 	queryUpsertGauge   = "INSERT INTO gauges VALUES ($1,$2) ON CONFLICT (id) DO UPDATE SET value=$2;"
 )
 
@@ -38,7 +39,20 @@ func NewDatabase(db *sql.DB) (*Database, error) {
 	// инициализуем таблицы для гаужей и каунтеров
 	//
 	// todo использовать транзации с отменой
-	_, err := db.Exec(initQuery)
+	err :=
+		retry.This(
+			func() error {
+				_, err := db.Exec(initQuery)
+				return err
+			},
+			retry.If(fails.OnDial),
+			retry.Attempts(3),
+			retry.DelaySeconds(1, 3, 5, 7),
+			retry.OnRetry(
+				func(i int, err error) {
+					log.Info().Msgf("Попытка инициализации базы %v: %v", i, err)
+				}))
+
 	if err != nil {
 		return nil, ErrorInitDatabase
 	}
@@ -69,7 +83,7 @@ func (d *Database) Get(ctx context.Context, req ...metrica.Metrica) (resp []metr
 			err := rw.Scan(&result.ID, result.Delta)
 			if err != nil {
 				if errors.Is(err, sql.ErrNoRows) {
-					return nil, api.ErrorNotFoundMetric
+					return nil, api.ErrorNotFoundMetric // todo, вот тут можно упаковку ошибки сделать впринципе
 				}
 				return nil, err
 			}
@@ -81,7 +95,7 @@ func (d *Database) Get(ctx context.Context, req ...metrica.Metrica) (resp []metr
 			err := rw.Scan(&result.ID, result.Value)
 			if err != nil {
 				if errors.Is(err, sql.ErrNoRows) {
-					return nil, api.ErrorNotFoundMetric
+					return nil, api.ErrorNotFoundMetric // todo упаковать ошибку???
 				}
 				return nil, err
 			}
@@ -132,33 +146,13 @@ func (d *Database) Update(ctx context.Context, req ...metrica.Metrica) (resp []m
 	for _, r := range req {
 		switch r.MType {
 		case "counter":
-			/*
-				1. Пробуем делать UPDATE ... SET value=value+delta
-				2. Если количество обновленных полей =0, делаем INSERT INTO
-			*/
-
 			if r.Delta == nil {
 				return nil, api.ErrorDeltaEmpty
 			}
 
-			// todo не помню, надо ли тут проверять на всякие пустые ссылки...
-			rs, err := tx.ExecContext(ctx, queryUpdateCounter, r.ID, r.Delta)
+			_, err := tx.ExecContext(ctx, queryUpsertCounter, r.ID, r.Delta)
 			if err != nil {
 				return nil, err
-			}
-			count, err := rs.RowsAffected()
-			if err != nil {
-				return nil, err
-			}
-			if count > 1 {
-				log.Warn().Msgf("При транзакции обновлено несколько строк %+v", r)
-			}
-			if count == 0 {
-				// Значит счетчик не создан, значит создадим
-				_, err := tx.ExecContext(ctx, queryInsertCounter, r.ID, r.Delta)
-				if err != nil {
-					return nil, err
-				}
 			}
 
 		case "gauge":

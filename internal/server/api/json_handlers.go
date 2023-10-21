@@ -5,6 +5,7 @@ package api
 
 import (
 	"context"
+	"errors"
 	"net/http"
 
 	"github.com/mailru/easyjson"
@@ -59,7 +60,7 @@ func HandleJSONRequest(handler func(context.Context, ...metrica.Metrica) (out []
 		// Запускаем обработчик handler()
 		arr, err := handler(r.Context(), in)
 		if err != nil {
-			if err == ErrorNotFoundMetric {
+			if errors.Is(err, ErrorNotFoundMetric) {
 				HTTPErrorWithLogging(w, http.StatusNotFound, "В хранилище не найдена метрика %v", in.ID)
 				return
 			}

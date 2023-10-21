@@ -6,6 +6,7 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 
 	"github.com/thefrol/kysh-kysh-meow/internal/metrica"
@@ -48,7 +49,7 @@ func HandleJSONBatch(handler func(context.Context, ...metrica.Metrica) (out []me
 		// Запускаем обработчик handler()
 		out, err := handler(r.Context(), in...)
 		if err != nil {
-			if err == ErrorNotFoundMetric {
+			if errors.Is(err, ErrorNotFoundMetric) {
 				HTTPErrorWithLogging(w, http.StatusNotFound, "В хранилище не найдена одна из метрик %v", in)
 				return
 			}

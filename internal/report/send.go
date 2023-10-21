@@ -10,6 +10,8 @@ import (
 	"github.com/go-resty/resty/v2"
 	"github.com/rs/zerolog/log"
 	"github.com/thefrol/kysh-kysh-meow/internal/metrica"
+	"github.com/thefrol/kysh-kysh-meow/lib/retry"
+	"github.com/thefrol/kysh-kysh-meow/lib/retry/fails"
 )
 
 var (
@@ -34,7 +36,23 @@ func Send(metricas []metrica.Metrica, url string) error {
 	// у нас существует очень важный контракт,
 	// что тело сюда передается в формате io.Reader,
 	// тогда могут работать разные мидлвари
-	resp, err := defaultClient.R().SetBody(buf).Post(url) // todo в данный момент мы не используем тут easyjson
+	var resp *resty.Response
+	sendCall := func() error {
+		var err error
+		resp, err = defaultClient.R().SetBody(buf).Post(url)
+		return err
+	}
+
+	// запустим отправку с тремя попытками дополнительными
+	err = retry.This(sendCall,
+		retry.Attempts(3),
+		retry.DelaySeconds(1, 3, 5, 7),
+		retry.If(fails.OnDial), // черт, так красиво
+		retry.OnRetry(func(n int, err error) {
+			log.Info().Msgf("%v попытка отправить данные, ошибка: %v", n, err)
+		}),
+	)
+	// todo в данный момент мы не используем тут easyjson
 
 	if err != nil {
 		log.Error().Str("location", "internal/report").Msgf("Не могу отправить сообщение c пачкой метрик по приничине %+v", err)

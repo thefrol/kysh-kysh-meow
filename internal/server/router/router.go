@@ -28,20 +28,20 @@ func MeowRouter(store api.Operator) (router chi.Router) {
 	router.Group(func(r chi.Router) {
 		// в какой-то момент, когда починят тесты, тут можно будет снять комменты
 		//r.With(chimiddleware.AllowContentType("text/plain")) todo
-		r.Get("/value/{type}/{name}", api.HandleURLRequest(store.Get))
-		r.Post("/update/{type}/{name}/{value}", api.HandleURLRequest(store.Update))
+		r.Get("/value/{type}/{name}", api.HandleURLRequest(api.Retry3Times(store.Get)))
+		r.Post("/update/{type}/{name}/{value}", api.HandleURLRequest(api.Retry3Times(store.Update)))
 	})
 
 	// Создаем маршруты для обработки JSON запросов
 	router.Group(func(r chi.Router) {
 		r.With(chimiddleware.AllowContentType("application/json"))
 
-		r.Post("/value", api.HandleJSONRequest(store.Get))
-		r.Post("/value/", api.HandleJSONRequest(store.Get))
-		r.Post("/update", api.HandleJSONRequest(store.Update))
-		r.Post("/update/", api.HandleJSONRequest(store.Update))
-		r.Post("/updates", api.HandleJSONBatch(store.Update))
-		r.Post("/updates/", api.HandleJSONBatch(store.Update))
+		r.Post("/value", api.HandleJSONRequest(api.Retry3Times(store.Get)))
+		r.Post("/value/", api.HandleJSONRequest(api.Retry3Times(store.Get)))
+		r.Post("/update", api.HandleJSONRequest(api.Retry3Times(store.Update)))
+		r.Post("/update/", api.HandleJSONRequest(api.Retry3Times(store.Update)))
+		r.Post("/updates", api.HandleJSONBatch(api.Retry3Times(store.Update)))
+		r.Post("/updates/", api.HandleJSONBatch(api.Retry3Times(store.Update)))
 
 		// TODO
 		//
