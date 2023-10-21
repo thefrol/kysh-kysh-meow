@@ -40,6 +40,8 @@ func MeowRouter(store api.Operator) (router chi.Router) {
 		r.Post("/value/", api.HandleJSONRequest(store.Get))
 		r.Post("/update", api.HandleJSONRequest(store.Update))
 		r.Post("/update/", api.HandleJSONRequest(store.Update))
+		r.Post("/updates", api.HandleJSONBatch(store.Update))
+		r.Post("/updates/", api.HandleJSONBatch(store.Update))
 
 		// TODO
 		//

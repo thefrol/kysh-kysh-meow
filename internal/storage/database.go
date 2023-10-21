@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"errors"
 
-	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/rs/zerolog/log"
 	"github.com/thefrol/kysh-kysh-meow/internal/metrica"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/api"
@@ -16,7 +15,7 @@ var (
 )
 
 const (
-	initQuery = "CREATE TABLE IF NOT EXISTS counters(id TEXT PRIMARY KEY, delta INTEGER);" +
+	initQuery = "CREATE TABLE IF NOT EXISTS counters(id TEXT PRIMARY KEY, delta BIGINT);" +
 		"CREATE TABLE IF NOT EXISTS gauges(id TEXT PRIMARY KEY, value DOUBLE PRECISION);" // todo вот тут я бы уже делал ошибку обертку, соишком много тонкостей и синтакс и ещё соединения
 
 	queryGetCounter = "SELECT id, delta FROM counters WHERE id=$1;"
@@ -34,17 +33,12 @@ type Database struct {
 	db *sql.DB
 }
 
-const sqldriver = "pgx"
-
 // New cоздает новый объект приложения, получая на вход параметры конфигурации
-func NewPostGresDatabase(ctx context.Context, connString string) (*Database, error) {
-	db, err := sql.Open(sqldriver, connString)
-	if err != nil {
-		return nil, err
-	}
-
+func NewDatabase(db *sql.DB) (*Database, error) {
 	// инициализуем таблицы для гаужей и каунтеров
-	_, err = db.ExecContext(ctx, initQuery)
+	//
+	// todo использовать транзации с отменой
+	_, err := db.Exec(initQuery)
 	if err != nil {
 		return nil, ErrorInitDatabase
 	}
@@ -55,6 +49,11 @@ func NewPostGresDatabase(ctx context.Context, connString string) (*Database, err
 
 // Check implements api.Operator. проверяет соединение с базой данных, в случае ошибки возвращает error!=nil
 func (d *Database) Check(ctx context.Context) error {
+	// todo
+	//
+	// в pgx есть прикольная функция для этого и можно выделить этот метод из Storage
+	//
+	// конечно, хотчется вынести этот метод в app
 	return d.db.PingContext(ctx)
 }
 
