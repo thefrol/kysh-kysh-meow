@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/thefrol/kysh-kysh-meow/cmd/server/middleware"
 )
 
 // todo hlog.FromRequest(r).Info() !!!
@@ -11,7 +12,23 @@ import (
 func MeowRouter() (router chi.Router) {
 	router = chi.NewRouter()
 
-	router.Use(MeowLogging())
+	router.Use(middleware.MeowLogging())
+	router.Use(middleware.UnGZIP) // еще бы сообщать, что такой энкодинг не поддерживается
+	router.Use(middleware.GZIP(
+		middleware.GZIPBestCompression,
+		middleware.ContentTypes("text/plain", "text/html", "application/json", "application/xml"),
+		middleware.StatusCodes(http.StatusOK),
+		middleware.MinLenght(1),
+		// todo
+		//
+		// Хочу чтобы это выглядело так compress.ContentType(...)
+	))
+	//todo
+	//
+	// по красоте было бы, если миддлеварь выглядела так router.Use(middleware.Uncompress(Gzip,Deflate,Brotli))
+	// и может uncompress.Brotli, uncompress.GZIP
+	//
+	// а compress вот так compress.GZIP(WithMinLenght(100),WithContentType("text/html")
 
 	router.Get("/", listMetrics)
 	router.Route("/value", func(r chi.Router) {

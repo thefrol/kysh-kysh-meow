@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"strings"
+	"text/template"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/mailru/easyjson"
@@ -194,31 +194,43 @@ func getValue(w http.ResponseWriter, r *http.Request, params URLParams) {
 
 // listMetrics выводит список всех известных на данный момент метрик
 func listMetrics(w http.ResponseWriter, r *http.Request) {
-	b := strings.Builder{}
-	const indent = "    "
+	w.Header().Add("Content-Type", "text/html")
 
-	cl := store.ListCounters()
-	gl := store.ListGauges()
+	t := `
+	{{ if .ListCounters}}
+		Counters
+			<ul> 
+				{{range .ListCounters -}}
+					<li>{{.}}</li>
+				{{ end }}
+			</ul>
+	{{ else }}
+		<p>No Counters</p>
+	{{end}}
+	{{ if .ListGauges}}
+		Gauges
+			<ul> 
+				{{range .ListGauges -}}
+					<li>{{.}}</li>
+				{{ end }}
+			</ul>
+	{{ else }}
+		<p>No Gauges</p>
+	{{end}}
+	`
 
-	if len(cl)+len(gl) == 0 {
-		b.WriteString("No metrics stored")
-		w.Write([]byte(b.String()))
+	tmpl, err := template.New("simple").Parse(t)
+	if err != nil {
+		ololog.Error().Str("location", "server/handlers/listCounters").Err(err).Msg("Не удается создать и пропарсить HTML шаблон")
+		http.Error(w, "error creating template", http.StatusInternalServerError)
 		return
 	}
-	if len(cl) > 0 {
-		fmt.Fprintln(&b, "Counters:")
-		for _, v := range cl {
-			fmt.Fprintln(&b, indent, v)
-		}
-
+	err = tmpl.Execute(w, store)
+	if err != nil {
+		ololog.Error().Str("location", "server/handlers/listCounters").Err(err).Msg("Ошибка запуска шаблона HTML")
+		http.Error(w, "error executing template", http.StatusInternalServerError)
+		return
 	}
-	if len(gl) > 0 {
-		fmt.Fprintln(&b, "Gauges:")
-		for _, v := range gl {
-			fmt.Fprintln(&b, indent, v)
-		}
-	}
-	w.Write([]byte(b.String()))
 }
 
 // updateMetricFunc это типа функций обработчков, таких как updateCounter, updateGauge

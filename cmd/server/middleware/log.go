@@ -1,4 +1,4 @@
-package main
+package middleware
 
 import (
 	"net/http"
@@ -32,6 +32,7 @@ func MeowLogging() func(http.Handler) http.Handler {
 			ololog.Info().
 				Str("method", r.Method).
 				Str("uri", r.RequestURI).
+				Bool("gzip", encoded(r, "gzip")).
 				Dur("duration", d).
 				Msg("Request ->")
 
@@ -85,10 +86,17 @@ func (ww *writerWrapper) WriteHeader(statusCode int) {
 
 		// TODO: проверки я бы вынес в отдельную мидлварь тогда,
 		// например, ещё можно проверять какой контент тайп мы выдаем
-		ololog.Error().Str("location", "http processing").Msg("Попытка записи заголовков после использования функции Write(). Заголовки и статус уже не изменить")
+		ololog.Error().Str("location", "logger middleware").Msg("Попытка записи заголовков после использования функции Write(). Заголовки и статус уже не изменить")
+	}
+
+	// TODO
+	//
+	// надо что-то придумать с этим уродцем
+	if statusCode == 0 {
+		ololog.Error().Str("location", "logger middleware").Msg("Кто-то пытается записать в ответ статус код 0, это ошибка и приведет к падению сервера")
 	}
 	ww.originalWriter.WriteHeader(statusCode)
-	ww.statusCode = statusCode
+
 }
 
 // проверить что writeWrapper отвечает интерфейсу http.ResponseWriter
