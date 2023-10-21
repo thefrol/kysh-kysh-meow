@@ -52,3 +52,45 @@ func Retry3Times(op Operation) Operation {
 		return
 	}
 }
+
+// RetryWithTimeouts повторяет операцию c паузузами между операциями,
+// указанными при закуске. Количество повторений зависит от колчества таймаутов
+// Если таймауты не указаны, то используется три повтора с интевалами 1,3,5 секунд
+//
+// retriableHandler:=Retry3Times(handler)
+// out, err:=retryableHandler(ctx, in)
+func RetryWithTimeouts(op Operation, timeOutSeconds ...uint) Operation {
+	return func(ctx context.Context, d ...datastruct) (out []datastruct, err error) {
+		var (
+			timeouts retry.Option
+			attempts retry.Option
+		)
+
+		if len(timeOutSeconds) == 0 {
+			timeouts = retry.DelaySeconds(1, 3, 5)
+			attempts = retry.Attempts(3)
+		} else {
+			timeouts = retry.DelaySeconds(timeOutSeconds...)
+			attempts = retry.Attempts(uint(len(timeOutSeconds)))
+		}
+
+		err =
+			retry.This(
+				func() error {
+					out, err = op(ctx, d...)
+					return err
+				},
+				retry.If(fails.OnDial),
+				attempts,
+				timeouts,
+				retry.OnRetry(
+					func(i int, err error) {
+						log.Info().Msgf("Выполняется повторная попытка %v после ошибки %v", i, err)
+					}),
+			)
+		if err != nil {
+			return nil, err
+		}
+		return
+	}
+}
