@@ -7,6 +7,7 @@ import (
 
 	"github.com/rs/zerolog/log"
 	"github.com/thefrol/kysh-kysh-meow/internal/report"
+	reportmw "github.com/thefrol/kysh-kysh-meow/internal/report/middleware"
 	"github.com/thefrol/kysh-kysh-meow/lib/scheduler"
 )
 
@@ -19,6 +20,9 @@ func main() {
 	// где они хранятся в сыром виде и готовы превратиться
 	// в массив metrica.Metrica
 	var s report.Stats
+
+	//
+	report.AddMiddleware(reportmw.Signing(config.Key))
 
 	// запуск планировщика
 	c := scheduler.New()
