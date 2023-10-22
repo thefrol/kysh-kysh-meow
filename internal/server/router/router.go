@@ -15,12 +15,15 @@ import (
 // стилизованные ответы.
 //
 // на входе получает store - объект хранилища, операции над которым он будет проворачивать
-func MeowRouter(store api.Operator) (router chi.Router) {
+func MeowRouter(store api.Operator, key string) (router chi.Router) {
 
 	router = chi.NewRouter()
 
 	// настраиваем мидлвари, логгер, распаковщик и запаковщик
 	router.Use(middleware.MeowLogging())
+	if key != "" {
+		router.Use(middleware.Signing(key))
+	}
 	router.Use(middleware.UnGZIP)
 	router.Use(middleware.GZIP(middleware.GZIPDefault))
 

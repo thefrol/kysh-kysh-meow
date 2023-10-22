@@ -57,7 +57,7 @@ func main() {
 func Run(cfg config, s api.Operator) {
 	// Запускаем сервер с поддержкой нежного выключения
 	// вдохноввлено примерами роутера chi
-	server := http.Server{Addr: cfg.Addr, Handler: router.MeowRouter(s)}
+	server := http.Server{Addr: cfg.Addr, Handler: router.MeowRouter(s, cfg.Key)}
 
 	// Server run context
 	serverCtx, serverStopCtx := context.WithCancel(context.Background())
