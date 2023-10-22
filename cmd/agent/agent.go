@@ -1,12 +1,12 @@
 package main
 
 import (
-	"compress/gzip"
 	"fmt"
 	"path"
 	"time"
 
 	"github.com/rs/zerolog/log"
+	"github.com/thefrol/kysh-kysh-meow/internal/compress"
 	"github.com/thefrol/kysh-kysh-meow/internal/report"
 	"github.com/thefrol/kysh-kysh-meow/lib/scheduler"
 )
@@ -23,8 +23,8 @@ func main() {
 
 	// Настроим отправку
 	report.SetSigningKey(config.Key)
-	report.CompressLevel = gzip.BestCompression
-	report.CompressMinLenght = 100
+	report.CompressLevel = compress.BestCompression
+	report.CompressMinLength = 100
 
 	// запуск планировщика
 	c := scheduler.New()

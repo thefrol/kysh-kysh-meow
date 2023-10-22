@@ -8,6 +8,7 @@ import (
 
 	"github.com/go-resty/resty/v2"
 	"github.com/rs/zerolog/log"
+	"github.com/thefrol/kysh-kysh-meow/internal/compress"
 	"github.com/thefrol/kysh-kysh-meow/internal/metrica"
 	"github.com/thefrol/kysh-kysh-meow/internal/report/internal/pollcount"
 	"github.com/thefrol/kysh-kysh-meow/internal/sign"
@@ -46,8 +47,8 @@ func Send(metricas []metrica.Metrica, url string) error {
 		return err
 	}
 
-	if len(b) >= int(CompressMinLenght) {
-		b, err = compress(b)
+	if len(b) >= int(CompressMinLength) {
+		b, err = compress.Bytes(b, CompressLevel)
 		if err != nil {
 			return fmt.Errorf("ошибка компрессии: %w", err)
 		}
@@ -107,4 +108,20 @@ func Send(metricas []metrica.Metrica, url string) error {
 	pollcount.Drop()
 
 	return nil
+}
+
+// CompressLevel устанавливает минимальное число байт в теле сообения, после которого
+// начинается комапрессия
+var CompressMinLength uint = 100
+
+// CompressLevel устанавливает профиль сжатия gzip, по умолчанию равен
+// gzip.BestCompression
+var CompressLevel int = compress.BestCompression
+
+// signingKey содержит ключ подписывания
+var signingKey []byte
+
+// SetSigningKey устанавливает ключ подписывания для отправляемых запросов
+func SetSigningKey(key string) {
+	signingKey = []byte(key)
 }

@@ -1,4 +1,4 @@
-package report
+package compress
 
 import (
 	"bytes"
@@ -8,17 +8,11 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-var CompressMinLenght uint = 100
-
-// CompressLevel устанавливает профиль сжатия gzip, по умолчанию равен
-// gzip.BestCompression
-var CompressLevel int = gzip.BestCompression
-
-// compress возвращает сжатый массив байт
-func compress(data []byte) ([]byte, error) {
+// Bytes возвращает сжатый массив байт
+func Bytes(data []byte, level int) ([]byte, error) {
 
 	b := bytes.NewBuffer(make([]byte, 0, 500)) //todo нужна какая-то константа
-	gz, err := gzip.NewWriterLevel(b, CompressLevel)
+	gz, err := gzip.NewWriterLevel(b, level)
 	if err != nil {
 		return nil, fmt.Errorf("cant create compressor")
 	}
@@ -41,3 +35,9 @@ func compress(data []byte) ([]byte, error) {
 
 	return b.Bytes(), nil
 }
+
+var ()
+
+// TODO
+//
+// все вот это вот я бы сделал отдельным пакетом compress
