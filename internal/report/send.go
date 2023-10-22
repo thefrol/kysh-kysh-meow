@@ -9,6 +9,7 @@ import (
 	"github.com/go-resty/resty/v2"
 	"github.com/rs/zerolog/log"
 	"github.com/thefrol/kysh-kysh-meow/internal/metrica"
+	"github.com/thefrol/kysh-kysh-meow/internal/sign"
 	"github.com/thefrol/kysh-kysh-meow/lib/retry"
 	"github.com/thefrol/kysh-kysh-meow/lib/retry/fails"
 )
@@ -26,15 +27,46 @@ var defaultClient = resty.New() // todo .SetJSONMarshaler(easyjson.Marshal())
 //
 // При возникнвении ошибок возвращается только последняя
 func Send(metricas []metrica.Metrica, url string) error {
+	/*
+		1. Замаршалить метрики в b
+		2. Скомпрессировать полученные данные и заменить b,
+			установить заголовок Content-Encoding
+		3. Создать подпись на основе b, установить заголовок Sha256
+		4. Попробовать отправить preparedRequest, если не получится, то ничего страшного
+		5. Если получилось, обнуляем pollCounter
+	*/
+	preparedRequest := defaultClient.R()
+
+	var b []byte // тут будет тело, которое в итоге запишем в сообщение
+
 	b, err := json.Marshal(metricas)
 	if err != nil {
 		log.Error().Str("location", "internal/report").Msgf("Не могу замаршалить массив метрик по приничине %+v", err)
 		return err
 	}
-	// у нас существует очень важный контракт,
-	// что тело сюда передается в формате []byte,
-	// тогда могут работать разные мидлвари
-	preparedRequest := defaultClient.R().SetBody(b)
+
+	if len(b) >= int(CompressMinLenght) {
+		b, err = compress(b)
+		if err != nil {
+			return fmt.Errorf("ошибка компрессии: %w", err)
+		}
+		preparedRequest.Header.Set("Content-Encoding", "gzip")
+	}
+
+	if len(signingKey) != 0 {
+		s, err := sign.Bytes(b, []byte(signingKey))
+		if err != nil {
+			return fmt.Errorf("ошибка подписывания: %w", err)
+		}
+		preparedRequest.Header.Set(sign.SignHeaderName, s)
+		log.Info().Str("sign", s).Msg("Тело сообщения подписано")
+
+		// мда, канеш цену за отсуствие мидлвари приходится платить
+		// в таких не вполне очевидных ветвлениях
+	}
+
+	// подготавливаем запрос, в который теперь не будут вмешиваться мидвари
+	preparedRequest.SetBody(b)
 	var resp *resty.Response
 	sendCall := func() error {
 		var err error
@@ -59,7 +91,7 @@ func Send(metricas []metrica.Metrica, url string) error {
 	}
 	defer resp.RawBody().Close()
 
-	log.Info().Str("location", "internal/report").Msgf("Метрики отправлены. Статус ответа %v, размер %v", resp.StatusCode(), resp.Size())
+	log.Info().Str("location", "internal/report").Msgf("Метрики отправлены. Статус ответа %v, размер ответа %v", resp.StatusCode(), resp.Size())
 
 	if resp.StatusCode() != http.StatusOK {
 		log.Info().
@@ -74,15 +106,4 @@ func Send(metricas []metrica.Metrica, url string) error {
 	dropPollCount()
 
 	return nil
-}
-
-// AddMiddleware встраивает мидлварь в цепочку отправки сообщений. Все обработчики получают доступ
-// к рести клиенту и текущему подготавливаемому запросу. Таким образом можно сделать дополнительное поггирование,
-// или сжатие
-//
-// пример: report.AddMiddleware(GZIP)
-func AddMiddleware(middlewares ...func(c *resty.Client, r *resty.Request) error) {
-	for _, m := range middlewares {
-		defaultClient.OnBeforeRequest(m)
-	}
 }
