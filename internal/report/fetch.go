@@ -9,6 +9,13 @@ import (
 	"github.com/thefrol/kysh-kysh-meow/internal/report/internal/pollcount"
 )
 
+const (
+	// название рамндомной метрики среди всех данных, что мы собираем
+	randomValueName = "RandomValue"
+	// Счетчик поличества опросов
+	metricPollCount = "PollCount"
+)
+
 // Fetch собирает метрики мамяти и сохраняет их во временное хранилище
 func Fetch() Stats {
 	m := runtime.MemStats{}
