@@ -1,7 +1,6 @@
 package report
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -27,16 +26,15 @@ var defaultClient = resty.New() // todo .SetJSONMarshaler(easyjson.Marshal())
 //
 // При возникнвении ошибок возвращается только последняя
 func Send(metricas []metrica.Metrica, url string) error {
-	buf := new(bytes.Buffer)
-	err := json.NewEncoder(buf).Encode(metricas)
+	b, err := json.Marshal(metricas)
 	if err != nil {
 		log.Error().Str("location", "internal/report").Msgf("Не могу замаршалить массив метрик по приничине %+v", err)
 		return err
 	}
 	// у нас существует очень важный контракт,
-	// что тело сюда передается в формате io.Reader,
+	// что тело сюда передается в формате []byte,
 	// тогда могут работать разные мидлвари
-	preparedRequest := defaultClient.R().SetBody(buf)
+	preparedRequest := defaultClient.R().SetBody(b)
 	var resp *resty.Response
 	sendCall := func() error {
 		var err error
