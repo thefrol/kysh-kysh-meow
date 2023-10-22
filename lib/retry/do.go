@@ -45,7 +45,6 @@ func This(f func() error, opts ...Option) error {
 			for _, c := range options.callbacks {
 				c(i, err)
 			}
-			continue
 		}
 
 		err = f()
