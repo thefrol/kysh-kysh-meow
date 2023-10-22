@@ -9,6 +9,7 @@ import (
 	"github.com/go-resty/resty/v2"
 	"github.com/rs/zerolog/log"
 	"github.com/thefrol/kysh-kysh-meow/internal/metrica"
+	"github.com/thefrol/kysh-kysh-meow/internal/report/internal/pollcount"
 	"github.com/thefrol/kysh-kysh-meow/internal/sign"
 	"github.com/thefrol/kysh-kysh-meow/lib/retry"
 	"github.com/thefrol/kysh-kysh-meow/lib/retry/fails"
@@ -103,7 +104,7 @@ func Send(metricas []metrica.Metrica, url string) error {
 	}
 
 	// Если сервер принял, то сбрасываем счетчик
-	dropPollCount()
+	pollcount.Drop()
 
 	return nil
 }

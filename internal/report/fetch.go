@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/thefrol/kysh-kysh-meow/internal/metrica"
+	"github.com/thefrol/kysh-kysh-meow/internal/report/internal/pollcount"
 )
 
 // Fetch собирает метрики мамяти и сохраняет их во временное хранилище
@@ -16,11 +17,11 @@ func Fetch() Stats {
 	s := Stats{
 		memStats:    &m,
 		randomValue: randomGauge(),
-		pollCount:   metrica.Counter(pollCount),
+		pollCount:   metrica.Counter(pollcount.Get()),
 	}
 
 	// Добавить ко счетчику опросов
-	incrementPollCount()
+	pollcount.Increment()
 
 	return s
 }
