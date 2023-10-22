@@ -36,10 +36,11 @@ func Send(metricas []metrica.Metrica, url string) error {
 	// у нас существует очень важный контракт,
 	// что тело сюда передается в формате io.Reader,
 	// тогда могут работать разные мидлвари
+	preparedRequest := defaultClient.R().SetBody(buf)
 	var resp *resty.Response
 	sendCall := func() error {
 		var err error
-		resp, err = defaultClient.R().SetBody(buf).Post(url)
+		resp, err = preparedRequest.Post(url)
 		return err
 	}
 
