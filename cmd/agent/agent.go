@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/rs/zerolog/log"
+	"github.com/thefrol/kysh-kysh-meow/internal/compress"
 	"github.com/thefrol/kysh-kysh-meow/internal/report"
-	reportmw "github.com/thefrol/kysh-kysh-meow/internal/report/middleware"
 	"github.com/thefrol/kysh-kysh-meow/lib/scheduler"
 )
 
@@ -21,8 +21,10 @@ func main() {
 	// в массив metrica.Metrica
 	var s report.Stats
 
-	//
-	report.AddMiddleware(reportmw.Signing(config.Key))
+	// Настроим отправку
+	report.SetSigningKey(config.Key)
+	report.CompressLevel = compress.BestCompression
+	report.CompressMinLength = 100
 
 	// запуск планировщика
 	c := scheduler.New()
