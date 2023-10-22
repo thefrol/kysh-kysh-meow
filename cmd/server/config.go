@@ -16,6 +16,7 @@ type config struct {
 	FileStoragePath      string `env:"FILE_STORAGE_PATH"`
 	Restore              bool   `env:"RESTORE"`
 	DatabaseDSN          string `env:"DATABASE_DSN"`
+	Key                  string `env:"KEY"`
 }
 
 var defaultConfig = config{
@@ -38,6 +39,7 @@ func mustConfigure(defaults config) (cfg config) {
 	flag.StringVar(&cfg.FileStoragePath, "f", defaults.FileStoragePath, "[строка] путь к файлу, откуда будут читаться при запуске и куда будут сохраняться метрики полученные сервером, если файл пустой, то сохранение будет отменено")
 	flag.BoolVar(&cfg.Restore, "r", defaultConfig.Restore, "[флаг] если установлен, загружает из файла ранее записанные метрики")
 	flag.StringVar(&cfg.DatabaseDSN, "d", defaults.DatabaseDSN, "[строка] подключения к базе данных")
+	flag.StringVar(&cfg.Key, "k", defaults.Key, "строка, секретный ключ подписи")
 
 	flag.Parse()
 	err := env.Parse(&cfg)

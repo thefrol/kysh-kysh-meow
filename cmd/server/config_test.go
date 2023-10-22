@@ -49,6 +49,20 @@ func Test_configure(t *testing.T) {
 			wantCfg:     config{Addr: "localhost:8081", StoreIntervalSeconds: 300, Restore: true, FileStoragePath: "/tmp/file"},
 		},
 		{
+			name:        "Указать ключ через командную строку",
+			defaults:    config{Key: "will be rewrited"},
+			env:         nil,
+			commandLine: "serv -k abcde",
+			wantCfg:     config{Key: "abcde", Restore: true},
+		},
+		{
+			name:        "Указать ключ через переменные окружения",
+			defaults:    config{Key: "will be rewrited"},
+			env:         map[string]string{"KEY": "qwerty"},
+			commandLine: "serv -k abcde",
+			wantCfg:     config{Key: "qwerty", Restore: true},
+		},
+		{
 			name:        "командной строкой указать файл куда писать",
 			defaults:    config{Addr: "localhost:8081", StoreIntervalSeconds: 300, Restore: false, FileStoragePath: "/tmp/file"},
 			env:         map[string]string{"RESTORE": "true"},
@@ -117,6 +131,7 @@ func Test_configure(t *testing.T) {
 			os.Unsetenv("STORE_INTERVAL")
 			os.Unsetenv("FILE_STORAGE_PATH")
 			os.Unsetenv("RESTORE")
+			os.Unsetenv("KEY")
 
 			if tt.env != nil {
 				for k, v := range tt.env {
