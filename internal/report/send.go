@@ -38,6 +38,7 @@ func Send(metricas []metrica.Metrica, url string) error {
 		5. Если получилось, обнуляем pollCounter
 	*/
 	preparedRequest := defaultClient.R()
+	preparedRequest.Header.Set("Content-Type", "application/json")
 
 	var b []byte // тут будет тело, которое в итоге запишем в сообщение
 
@@ -74,6 +75,14 @@ func Send(metricas []metrica.Metrica, url string) error {
 		var err error
 		resp, err = preparedRequest.Post(url)
 		return err
+		// bug
+		//
+		// Есть небольшая проблема с этим resty:
+		// Если будет ошибка распаковки сообщени после gzip,
+		// то она звучит вот так "gzip: invalid header", а это
+		// значит что мы воспримем это как ошибку отправки.
+		// то есть мы даже не знаем получил ли метрики сервер,
+		// а ошибка звучит как ошибка отправки
 	}
 
 	// запустим отправку с тремя попытками дополнительными
