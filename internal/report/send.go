@@ -17,7 +17,7 @@ import (
 )
 
 var (
-	ErrorsServerError = errors.New("ошибка сервера")
+	ErrorRequestRejected = errors.New("Запрос не принят, статус код не 200")
 )
 
 var defaultClient = resty.New() // todo .SetJSONMarshaler(easyjson.Marshal())
@@ -110,7 +110,7 @@ func Send(metricas []metrica.Metrica, url string) error {
 			Str("server_response", string(resp.Body())).
 			Msg("Метрики отправлены, но не получены.")
 
-		return fmt.Errorf("%w: сервер вернул %v: %v", ErrorsServerError, resp.StatusCode(), resp.Body())
+		return fmt.Errorf("%w: сервер вернул %v: %v", ErrorRequestRejected, resp.StatusCode(), string(resp.Body()))
 	}
 
 	// Если сервер принял, то сбрасываем счетчик
