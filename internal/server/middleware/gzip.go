@@ -77,7 +77,7 @@ type CompressedWriter struct {
 	ignore  bool // true - не будем сжимать
 	checked bool // true- прошел все проверки по другим параментрам кроме минамальной длинны и собирается быть сжат
 
-}
+} // todo а этот класс я бы вынес в отдельный пакет наверн
 
 func NewCompressedWriter(originalWriter http.ResponseWriter, funcOpts ...gzipFuncOpt) *CompressedWriter {
 
