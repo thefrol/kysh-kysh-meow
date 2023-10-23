@@ -17,7 +17,7 @@ import (
 )
 
 var (
-	ErrorRequestRejected = errors.New("Запрос не принят, статус код не 200")
+	ErrorRequestRejected = errors.New("запрос не принят, статус код не 200")
 )
 
 var defaultClient = resty.New() // todo .SetJSONMarshaler(easyjson.Marshal())
