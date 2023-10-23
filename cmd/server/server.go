@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -21,6 +22,8 @@ import (
 )
 
 func main() {
+	log.Info().Msgf("Сервер запущен строкой %v", strings.Join(os.Args, " "))
+
 	cfg := mustConfigure(defaultConfig)
 
 	// создаем хранилище

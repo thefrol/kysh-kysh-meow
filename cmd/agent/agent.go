@@ -2,7 +2,9 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"path"
+	"strings"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -14,6 +16,8 @@ import (
 const updateRoute = "/updates"
 
 func main() {
+	log.Info().Msgf("Агент запущен строкой %v", strings.Join(os.Args, " "))
+
 	config := mustConfigure(defaultConfig)
 
 	// Метрики собираются во временное хранилище s,
