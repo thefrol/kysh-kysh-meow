@@ -38,6 +38,7 @@ func MeowLogging() func(http.Handler) http.Handler {
 
 			log.Info().
 				Int("statusCode", wr.statusCode).
+				Str("Content-Type", wr.Header().Get("Content-Type")).
 				Int("size", wr.bytesWritten).
 				// todo add gzipped response flag
 				Msg("Response ->")
@@ -68,7 +69,7 @@ type writerWrapper struct {
 	originalWriter http.ResponseWriter
 	bytesWritten   int
 	statusCode     int
-}
+} //  todo этот класс так или иначе используется в каждой мидлвари
 
 func (ww *writerWrapper) Header() http.Header {
 	return ww.originalWriter.Header()
@@ -84,7 +85,9 @@ func (ww *writerWrapper) WriteHeader(statusCode int) {
 		// я кое-что узнал в перерыве, что после использования Write()
 		// заголовки нельзя больше переписать даже при помощи WriteHeader()
 		// поэтому проверяем
-		log.Error().Str("location", "logger middleware").Msg("Попытка записи заголовков после использования функции Write(). Заголовки и статус уже не изменить")
+		log.Error().
+			Str("location", "logger middleware").
+			Msg("Попытка записи заголовков после использования функции Write(). Заголовки и статус уже не изменить")
 
 		// TODO
 		//
