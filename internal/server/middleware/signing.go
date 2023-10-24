@@ -68,6 +68,7 @@ func Signing(key string) func(http.Handler) http.Handler {
 				key:              keyBytes,
 				// todo переиспользуем наш буфер, а моем наверное целиком весь буфер если его почистить
 			}
+			defer fakew.Close()
 
 			next.ServeHTTP(&fakew, r)
 
