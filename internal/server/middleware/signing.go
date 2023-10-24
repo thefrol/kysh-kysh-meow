@@ -8,6 +8,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/api"
 	"github.com/thefrol/kysh-kysh-meow/internal/sign"
+	"github.com/thefrol/kysh-kysh-meow/lib/intercept"
 )
 
 func Signing(key string) func(http.Handler) http.Handler {
@@ -63,11 +64,8 @@ func Signing(key string) func(http.Handler) http.Handler {
 			// теперь займемся запросом:
 			// обернем в перехватчик врайтер и подпишем ответ
 			fakew := SignInterceptor{
-				WriteInterceptor: WriteInterceptor{
-					origWriter: w,
-					buf:        bytes.NewBuffer(data),
-				},
-				key: keyBytes,
+				WriteInterceptor: intercept.New(w, data), // todo если буфер слишком маленький
+				key:              keyBytes,
 				// todo переиспользуем наш буфер, а моем наверное целиком весь буфер если его почистить
 			}
 
@@ -80,44 +78,13 @@ func Signing(key string) func(http.Handler) http.Handler {
 	}
 }
 
-type WriteInterceptor struct {
-	statusCode int
-	origWriter http.ResponseWriter
-	buf        *bytes.Buffer
-}
-
-func (w *WriteInterceptor) WriteHeader(code int) {
-	w.statusCode = code
-}
-
-func (w *WriteInterceptor) Header() http.Header {
-	return w.origWriter.Header()
-}
-
 type SignInterceptor struct {
-	WriteInterceptor
+	intercept.WriteInterceptor
 	key []byte
 }
 
-func (w WriteInterceptor) Write(data []byte) (int, error) {
-	return w.buf.Write(data)
-}
-
-// Close говорит о том, что сообщение готовится к отправке, значит
-// можно установить нужные хедеры и отправлять
-func (w WriteInterceptor) Close() {
-	if w.statusCode != 0 {
-		w.origWriter.WriteHeader(w.statusCode)
-	}
-
-	_, err := io.Copy(w.origWriter, w.buf)
-	if err != nil {
-		log.Error().Msgf("copy a response to originalWriter: %v", err)
-	}
-}
-
 func (w SignInterceptor) Close() {
-	s, err := sign.Bytes(w.buf.Bytes(), w.key)
+	s, err := sign.Bytes(w.Buf().Bytes(), w.key)
 	if err != nil {
 		log.Error().Msgf("cant sign response: %v", err)
 	}
