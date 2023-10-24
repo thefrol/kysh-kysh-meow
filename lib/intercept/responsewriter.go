@@ -8,6 +8,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+// Необходимо закрыть
 type WriteInterceptor struct {
 	statusCode int
 	origWriter http.ResponseWriter
@@ -17,7 +18,7 @@ type WriteInterceptor struct {
 func New(w http.ResponseWriter, data []byte) WriteInterceptor {
 	return WriteInterceptor{
 		origWriter: w,
-		buf:        bytes.NewBuffer(data),
+		buf:        bytes.NewBuffer(data[:0]), // обнуляем массив, иначе пишет в конец, а читать будет с начала, и в выход выйдет мусор, что бы уже в буфере
 	}
 }
 
