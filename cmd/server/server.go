@@ -96,6 +96,11 @@ func Run(cfg config, s api.Operator) {
 
 	if err := server.ListenAndServe(); err != http.ErrServerClosed {
 		log.Error().Msgf("^0^ не могу запустить сервер: %v \n", err)
+		//todo
+		//
+		// если не биндится, то хотя бы выходить с ошибкой
+		//
+		// можно дать несколько попыток забиндиться
 	}
 
 	<-serverCtx.Done()
