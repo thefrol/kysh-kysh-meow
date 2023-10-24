@@ -24,9 +24,7 @@ func New(w http.ResponseWriter, data []byte) WriteInterceptor {
 }
 
 func (w *WriteInterceptor) WriteHeader(code int) {
-
 	w.statusCode = code
-	log.Info().Msgf("%v %v", w.statusCode, w)
 }
 
 func (w *WriteInterceptor) Header() http.Header {
@@ -55,5 +53,8 @@ func (w WriteInterceptor) Buf() *bytes.Buffer {
 }
 
 func (w WriteInterceptor) StatusCode() int {
+	if w.statusCode == 0 {
+		return 200
+	}
 	return w.statusCode
 }
