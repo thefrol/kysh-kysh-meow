@@ -46,7 +46,7 @@ func (w *Buffered) WriteHeader(code int) {
 // в оригинальный врайтер
 func (w Buffered) Flush() error {
 	if w.code != 0 {
-		w.WriteHeader(w.code)
+		w.ResponseWriter.WriteHeader(w.code)
 
 	}
 	_, err := io.Copy(w.ResponseWriter, w.buf)
