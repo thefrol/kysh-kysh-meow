@@ -13,10 +13,26 @@ func MeowLogging() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			faker := intercept.WithBytesCounter(w)
+
 			d := countTime(func() {
 				// запустить обработку
 				next.ServeHTTP(faker, r)
 			})
+
+			defer func() {
+				msg := recover()
+				if msg == nil {
+					return
+				}
+				log.Error().
+					Str("method", r.Method).
+					Str("uri", r.RequestURI).
+					Bool("gzippedRequest", encoded(r, "gzip")).
+					Str("Sign", r.Header.Get(sign.SignHeaderName)). // todo sign.HeaderName
+					Dur("Duration", d).
+					Msgf("PANIC -> %v", msg)
+			}()
+
 			log.Info().
 				Str("method", r.Method).
 				Str("uri", r.RequestURI).
