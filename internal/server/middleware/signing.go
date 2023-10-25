@@ -56,44 +56,31 @@ func Signing(key string) func(http.Handler) http.Handler {
 			}
 
 			if err := sign.Check(data[:n], keyBytes, receivedSign); err != nil {
-				log.Info().Str("receivedSign", receivedSign).Msg("подпись не прошла проверку")
 				api.HTTPErrorWithLogging(w, http.StatusNotFound, "Подпись не прошла проверку")
 				return
 			}
 
-			// теперь займемся запросом:
-			// обернем в перехватчик врайтер и подпишем ответ
-			fakew := SignInterceptor{
-				WriteInterceptor: intercept.New(w, data), // todo если буфер слишком маленький
-				key:              keyBytes,
-				// todo переиспользуем наш буфер, а моем наверное целиком весь буфер если его почистить
+			// теперь займемся ответом:
+			buf := bytes.NewBuffer(data[:0])
+			faker := intercept.WithBuffer(w, buf)
+
+			next.ServeHTTP(faker, r)
+
+			// теперь запишем все, что мы забуферизировали
+
+			s, err := sign.Bytes(buf.Bytes(), keyBytes)
+			if err != nil {
+				api.HTTPErrorWithLogging(w, http.StatusInternalServerError, "не удается подписать ответ: %v", err)
+				return
 			}
-			defer fakew.Close()
+			w.Header().Set(sign.SignHeaderName, s)
+			log.Info().Str("sign", s).Msg("Запрос подписан")
 
-			next.ServeHTTP(&fakew, r)
-
-			// todo  в целом мы могли бы вместо Close тут разобраться с перехваченными данными
-			// Это было чуть более переиспользуемо и наверное понятно
-
+			// записываем из буфера в оригинальный райтер
+			if err := faker.Flush(); err != nil {
+				api.HTTPErrorWithLogging(w, http.StatusNotFound, "Не переписать из фейк врайтера : %v", err)
+				return
+			}
 		})
 	}
-}
-
-type SignInterceptor struct {
-	intercept.WriteInterceptor
-	key []byte
-}
-
-func (w SignInterceptor) Close() {
-	s, err := sign.Bytes(w.Buf().Bytes(), w.key)
-	if err != nil {
-		log.Error().Msgf("cant sign response: %v", err)
-	}
-
-	// копируем все из временного хранилища по назначению
-	w.WriteInterceptor.Header().Set(sign.SignHeaderName, s)
-	log.Info().Str("sign", s).Msg("Запрос подписан")
-
-	w.WriteInterceptor.Close()
-
 }
