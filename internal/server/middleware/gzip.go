@@ -9,6 +9,8 @@ import (
 	"strings"
 
 	"github.com/rs/zerolog/log"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/api"
+	"github.com/thefrol/kysh-kysh-meow/lib/intercept"
 )
 
 // GZIP это мидлварь для сервера, которая сжимает содержимое запроса
@@ -26,7 +28,7 @@ import (
 // Можно воспользоваться опцией GZIPDefault, содержащую все базовые условия для сжатия
 //
 //	router.Use(GZIP(GZIPDefault))
-func GZIP(funcOpts ...gzipFuncOpt) func(http.Handler) http.Handler {
+func GZIP(minLen int, bufSize int) func(http.Handler) http.Handler {
 
 	// Тут описываемся сама мидлварь, получившая opts
 	// в качестве настроек
@@ -34,12 +36,57 @@ func GZIP(funcOpts ...gzipFuncOpt) func(http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// Eсли клиент поддерживает gzip, то подменяем врайтер, не забыв его закрыть, и отправляем
 			// запрос дальше по цепочке
-			if acceptsEncoding(r, "gzip") {
-				cw := NewCompressedWriter(w, funcOpts...)
-				w = cw
-				defer cw.Close()
+			fmt.Println("гзип начат")
+			if !acceptsEncoding(r, "gzip") {
+				//не обжимаем
+				next.ServeHTTP(w, r)
+				return
 			}
-			next.ServeHTTP(w, r)
+
+			// буферизируем
+			buf := bytes.NewBuffer(make([]byte, 0, bufSize)) // todo что если у нас есть пул буферов?
+			faker := intercept.WithBuffer(w, buf)
+			next.ServeHTTP(faker, r)
+
+			if buf.Len() < minLen || faker.StatusCode() >= 300 {
+				// записываем все в оригинальный врайтер, не сжимая
+				faker.Flush()
+				return
+			}
+
+			// мы решили ужать ответ,
+			// для начала запишем новый заголовок,
+			// и запишем код ответа
+
+			w.Header().Add("Content-Encoding", "gzip")
+			w.Header().Del("Content-Length") // очень важно, иначе будет ошибка при попытке закрыть врайтер компрессора
+
+			if faker.StatusCode() != 0 {
+				w.WriteHeader(faker.StatusCode())
+			}
+
+			gz, err := gzip.NewWriterLevel(w, gzip.BestCompression)
+			if err != nil {
+				api.HTTPErrorWithLogging(w, http.StatusInternalServerError, "GZIP writer init failed %v", err)
+				return
+			}
+
+			n, err := io.Copy(gz, buf)
+			fmt.Println(n)
+			if err != nil {
+				api.HTTPErrorWithLogging(w, http.StatusInternalServerError, "Compressing %v", err) // todo нужны хелперы вроду api.InternalError
+				return
+			}
+
+			if buf.Len() > 0 {
+				log.Error().
+					Msg("В буфере остались непрочитанные байты") // мой страх почему-то
+			}
+
+			err = gz.Close()
+			if err != nil {
+				api.HTTPErrorWithLogging(w, http.StatusInternalServerError, "Не могу записать в зиппер: %v", err)
+			}
 
 		})
 	}

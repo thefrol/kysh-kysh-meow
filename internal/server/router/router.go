@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	chimiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/api"
 
 	"github.com/thefrol/kysh-kysh-meow/internal/server/middleware"
@@ -25,7 +24,7 @@ func MeowRouter(store api.Operator, key string) (router chi.Router) {
 		router.Use(middleware.Signing(key))
 	}
 	router.Use(middleware.UnGZIP)
-	router.Use(middleware.GZIP(middleware.GZIPDefault))
+	router.Use(middleware.GZIP(50, 2048)) //todo нормальные константы вместо магических чисел
 
 	// Создаем маршруты для обработки URL запросов
 	router.Group(func(r chi.Router) {
@@ -37,7 +36,7 @@ func MeowRouter(store api.Operator, key string) (router chi.Router) {
 
 	// Создаем маршруты для обработки JSON запросов
 	router.Group(func(r chi.Router) {
-		r.With(chimiddleware.AllowContentType("application/json"))
+		//r.With(chimiddleware.AllowContentType("application/json"))
 
 		r.Post("/value", api.HandleJSONRequest(api.Retry3Times(store.Get)))
 		r.Post("/value/", api.HandleJSONRequest(api.Retry3Times(store.Get)))
