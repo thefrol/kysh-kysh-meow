@@ -52,3 +52,7 @@ func (w Buffered) Flush() error {
 	_, err := io.Copy(w.ResponseWriter, w.buf)
 	return err
 }
+
+func (w Buffered) StatusCode() int {
+	return w.code
+}
