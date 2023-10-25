@@ -65,9 +65,9 @@ func MeowLogging() func(http.Handler) http.Handler {
 
 // countTime засекает время исполнения функции аргумента
 func countTime(f func()) (d time.Duration) {
-	defer func() {
-		d = time.Since(time.Now())
-	}()
+	defer func(t time.Time) {
+		d = time.Since(t)
+	}(time.Now())
 	f()
 	return
 	// хрена се, эта функция работает примерно в тысячу раз быстрее чем прошлая с указателем
