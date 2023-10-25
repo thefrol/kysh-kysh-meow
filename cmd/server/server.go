@@ -144,6 +144,8 @@ func ConfigureStorage(cfg config) (api.Operator, context.CancelFunc) {
 		if err := dbs.Check(context.TODO()); err != nil {
 			log.Error().Msgf("Нет соединения с БД - %v", err)
 		}
+
+		log.Info().Msg("Создано хранилише в Базе данных")
 		return dbs, func() {
 			err := db.Close()
 			if err != nil {
