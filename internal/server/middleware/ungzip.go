@@ -22,9 +22,7 @@ func UnGZIP(next http.Handler) http.Handler {
 		// в случае если перед нами gzip, заменяем исходное тело запроса на обертку с gzip
 		gz, err := gzip.NewReader(r.Body)
 		if err != nil {
-			log.Error().Str("location", "middleware/gzip").Strs("Content-Encoding", r.Header.Values("Content-Encoding")).Err(err).Msg("Cant unzip a request body")
-			http.Error(w, "cant unzip", http.StatusBadRequest)
-			//todo try recover and send data as is
+			api.HTTPErrorWithLogging(w, http.StatusBadRequest, "Не могу декомпрессировать тело запроса %v", err)
 			return
 		}
 		defer r.Body.Close()
