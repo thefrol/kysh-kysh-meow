@@ -82,7 +82,7 @@ func (cfg Server) MakeStorage() (api.Operator, context.CancelFunc, error) {
 
 		dbs, err := storage.NewDatabase(db)
 		if err != nil {
-			return nil, nil, fmt.Errorf("Ошибка создания хранилища в базе данных: %v", err)
+			return nil, nil, fmt.Errorf("ошибка создания хранилища в базе данных: %v", err)
 		}
 
 		if err := dbs.Check(context.TODO()); err != nil {
