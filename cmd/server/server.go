@@ -22,7 +22,7 @@ import (
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
-var defaultConfig = config.ServerConfig{
+var defaultConfig = config.Server{
 	Addr:                 ":8080",
 	StoreIntervalSeconds: 300,
 	FileStoragePath:      "/tmp/metrics-db.json",
@@ -32,7 +32,8 @@ var defaultConfig = config.ServerConfig{
 func main() {
 	log.Info().Msgf("Сервер запущен строкой %v", strings.Join(os.Args, " "))
 
-	cfg := config.MustConfigure(defaultConfig)
+	cfg := config.Server{}
+	cfg.Parse(defaultConfig)
 	fmt.Printf("%+v \n", cfg)
 
 	// создаем хранилище
@@ -66,7 +67,7 @@ func main() {
 
 // Run запускает сервер с поддержкой нежного завершения. Сервер можно будет выключить через
 // SIGINT, SIGTERM, SIGQUIT
-func Run(cfg config.ServerConfig, s api.Operator) {
+func Run(cfg config.Server, s api.Operator) {
 	// Запускаем сервер с поддержкой нежного выключения
 	// вдохноввлено примерами роутера chi
 	server := http.Server{Addr: cfg.Addr, Handler: router.MeowRouter(s, string(cfg.Key.ValueFunc()()))}
@@ -124,7 +125,7 @@ func Run(cfg config.ServerConfig, s api.Operator) {
 //
 // На входе получает экземпляр хранилища m, и далее оборачивает его другим классов,
 // наиболее соответсвующим задаче, исходя из cfg
-func ConfigureStorage(cfg config.ServerConfig) (api.Operator, context.CancelFunc) {
+func ConfigureStorage(cfg config.Server) (api.Operator, context.CancelFunc) {
 	// 0. Если указана база данных, создаем хранилище с базой данных
 	// 1. Если путь не задан, то возвращаем хранилище в оперативке, без приблуд
 	// 2. Иначе оборачиваем файловым хранилищем, но не возвращаем пока

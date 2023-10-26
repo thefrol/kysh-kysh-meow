@@ -10,7 +10,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-type ServerConfig struct {
+type Server struct {
 	Addr                 string `env:"ADDRESS"`
 	StoreIntervalSeconds uint   `env:"STORE_INTERVAL"`
 	FileStoragePath      string `env:"FILE_STORAGE_PATH"`
@@ -26,7 +26,7 @@ type ServerConfig struct {
 //   - Если другого не указано, будет использоваться defaults
 //   - То, что указано в командной строке переписывает то, что указано в defaults
 //   - То, что указано в переменной окружения, переписывает то, что было указано ранее
-func MustConfigure(defaults ServerConfig) (cfg ServerConfig) {
+func (cfg *Server) Parse(defaults Server) {
 	flag.StringVar(&cfg.Addr, "a", defaults.Addr, "[адрес:порт] устанавливает адрес сервера ")
 	flag.UintVar(&cfg.StoreIntervalSeconds, "i", defaults.StoreIntervalSeconds, "[время, сек] интервал сохранения показаний. При 0 запись делается почти синхронно")
 	flag.StringVar(&cfg.FileStoragePath, "f", defaults.FileStoragePath, "[строка] путь к файлу, откуда будут читаться при запуске и куда будут сохраняться метрики полученные сервером, если файл пустой, то сохранение будет отменено")
@@ -35,7 +35,7 @@ func MustConfigure(defaults ServerConfig) (cfg ServerConfig) {
 	flag.Var(&cfg.Key, "k", "строка, секретный ключ подписи")
 
 	flag.Parse()
-	err := env.Parse(&cfg)
+	err := env.Parse(cfg)
 	if err != nil {
 		panic(err)
 	}
@@ -46,8 +46,6 @@ func MustConfigure(defaults ServerConfig) (cfg ServerConfig) {
 	if v, ok := os.LookupEnv("FILE_STORAGE_PATH"); ok {
 		cfg.FileStoragePath = v
 	}
-
-	return
 }
 
 func init() {
