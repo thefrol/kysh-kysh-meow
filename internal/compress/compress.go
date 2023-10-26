@@ -8,10 +8,12 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+const Bufferlen = 500
+
 // Bytes возвращает сжатый массив байт
 func Bytes(data []byte, level int) ([]byte, error) {
 
-	b := bytes.NewBuffer(make([]byte, 0, 500)) //todo нужна какая-то константа
+	b := bytes.NewBuffer(make([]byte, 0, Bufferlen))
 	gz, err := gzip.NewWriterLevel(b, level)
 	if err != nil {
 		return nil, fmt.Errorf("cant create compressor")
@@ -35,3 +37,7 @@ func Bytes(data []byte, level int) ([]byte, error) {
 
 	return b.Bytes(), nil
 }
+
+// todo
+//
+// Думаю, именно в этом пакете я бы хотел объявить пулы с gzip.Ecoder и gzip.decoder
