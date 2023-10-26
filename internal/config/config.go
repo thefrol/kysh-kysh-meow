@@ -60,7 +60,7 @@ func (cfg *Server) Parse(defaults Server) error {
 //
 // На входе получает экземпляр хранилища m, и далее оборачивает его другим классов,
 // наиболее соответсвующим задаче, исходя из cfg
-func (cfg Server) MakeStorage() (api.Operator, context.CancelFunc) {
+func (cfg Server) MakeStorage() (api.Operator, context.CancelFunc, error) {
 	// 0. Если указана база данных, создаем хранилище с базой данных
 	// 1. Если путь не задан, то возвращаем хранилище в оперативке, без приблуд
 	// 2. Иначе оборачиваем файловым хранилищем, но не возвращаем пока
@@ -77,18 +77,16 @@ func (cfg Server) MakeStorage() (api.Operator, context.CancelFunc) {
 	if cfg.DatabaseDSN != "" {
 		db, err := sql.Open("pgx", cfg.DatabaseDSN)
 		if err != nil {
-			e := fmt.Errorf("не могу создать соединение с БД: %w", err)
-			panic(e)
+			return nil, nil, fmt.Errorf("не могу создать соединение с БД: %w", err)
 		}
 
 		dbs, err := storage.NewDatabase(db)
 		if err != nil {
-			log.Error().Msgf("Ошибка создания хранилища в базе данных - %v", err)
-			panic(err)
+			return nil, nil, fmt.Errorf("Ошибка создания хранилища в базе данных: %v", err)
 		}
 
 		if err := dbs.Check(context.TODO()); err != nil {
-			log.Error().Msgf("Нет соединения с БД - %v", err)
+			log.Warn().Msgf("Нет соединения с БД - %v", err)
 		}
 
 		log.Info().Msg("Создано хранилише в Базе данных")
@@ -101,7 +99,7 @@ func (cfg Server) MakeStorage() (api.Operator, context.CancelFunc) {
 			// todo
 			//
 			// Конечно, я хочу делать это defer или как-то так, можно у нас будет некий app.Close()
-		}
+		}, nil
 	}
 
 	// Если не база данных, то начинаем с начала - создаем хранилище в памяти, и оборачиваем его всякими штучками если надо
@@ -112,7 +110,7 @@ func (cfg Server) MakeStorage() (api.Operator, context.CancelFunc) {
 		log.Info().Msg("Установлено хранилище в памяти. Сохранение на диск отключено")
 		return storage.AsOperator(m), func() {
 			log.Info().Msg("Хранилище сихронной записи получило сигнал о завершении, но файловая запись в текущей конфигурации сервера не используется. Ничего не записано")
-		}
+		}, nil
 	}
 
 	// Оборачиваем файловым хранилищем, в случае, есл и
@@ -132,7 +130,7 @@ func (cfg Server) MakeStorage() (api.Operator, context.CancelFunc) {
 		log.Info().Msgf("Установлено синхронное сохранение в %v в при записи", fs.FileName)
 		return storage.AsOperator(storage.NewSyncDump(&fs)), func() {
 			log.Info().Msg("Хранилище сихронной записи получило сигнал о завершении, но дополнительно сохранение не нужно")
-		}
+		}, nil
 	}
 
 	// Запускаем интервальную запись и создаем токен отмены, при необходимости сюда можно будет добавить и группу ожидания
@@ -145,7 +143,7 @@ func (cfg Server) MakeStorage() (api.Operator, context.CancelFunc) {
 	return storage.AsOperator(s), func() {
 		// обертка сделана под группу ожидаения
 		cancel()
-	}
+	}, nil
 
 	// TODO
 	//

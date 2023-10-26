@@ -39,7 +39,11 @@ func main() {
 	fmt.Printf("Получен конфиг %+v \n", cfg)
 
 	// создаем хранилище
-	s, cancelStorage := cfg.MakeStorage()
+	s, cancelStorage, err := cfg.MakeStorage()
+	if err != nil {
+		log.Error().Msgf("Не удалось создать хранилише: %v", err)
+	}
+
 	// Запускаем сервер с поддержкой нежного завершения,
 	// занимаем текущий поток до вызова сигнатов выключения
 	Run(cfg, s) // будет app.Run()
