@@ -33,21 +33,15 @@ func main() {
 	log.Info().Msgf("Сервер запущен строкой %v", strings.Join(os.Args, " "))
 
 	cfg := config.Server{}
-	cfg.Parse(defaultConfig)
-	fmt.Printf("%+v \n", cfg)
+	err := cfg.Parse(defaultConfig)
+	if err != nil {
+		log.Error().Msgf("Ошибка парсинга конфига: %v", err)
+		os.Exit(2)
+	}
+	fmt.Printf("Получен конфиг %+v \n", cfg)
 
 	// создаем хранилище
 	s, cancelStorage := ConfigureStorage(cfg)
-
-	// Создаем объект App, который в дальнейшем включит в себя все остальное тут
-	// app, err := app.New(context.TODO(), cfg.DatabaseDSN)
-	// if err != nil {
-	// 	log.Fatal().Msgf("Ошибка во время конфигурирования сервера %v", err)
-	// 	panic(err)
-	// }
-	// if err := app.CheckConnection(context.Background()); err == nil {
-	// 	log.Info().Msg("Связь с базой данных в порядке")
-	// }
 
 	// Запускаем сервер с поддержкой нежного завершения,
 	// занимаем текущий поток до вызова сигнатов выключения

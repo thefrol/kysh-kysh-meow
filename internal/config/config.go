@@ -26,7 +26,7 @@ type Server struct {
 //   - Если другого не указано, будет использоваться defaults
 //   - То, что указано в командной строке переписывает то, что указано в defaults
 //   - То, что указано в переменной окружения, переписывает то, что было указано ранее
-func (cfg *Server) Parse(defaults Server) {
+func (cfg *Server) Parse(defaults Server) error {
 	flag.StringVar(&cfg.Addr, "a", defaults.Addr, "[адрес:порт] устанавливает адрес сервера ")
 	flag.UintVar(&cfg.StoreIntervalSeconds, "i", defaults.StoreIntervalSeconds, "[время, сек] интервал сохранения показаний. При 0 запись делается почти синхронно")
 	flag.StringVar(&cfg.FileStoragePath, "f", defaults.FileStoragePath, "[строка] путь к файлу, откуда будут читаться при запуске и куда будут сохраняться метрики полученные сервером, если файл пустой, то сохранение будет отменено")
@@ -37,7 +37,7 @@ func (cfg *Server) Parse(defaults Server) {
 	flag.Parse()
 	err := env.Parse(cfg)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	// Тут обрабатываем особый случай. Если переменная окружения установлена, но в пустое значение
@@ -46,6 +46,7 @@ func (cfg *Server) Parse(defaults Server) {
 	if v, ok := os.LookupEnv("FILE_STORAGE_PATH"); ok {
 		cfg.FileStoragePath = v
 	}
+	return nil
 }
 
 func init() {

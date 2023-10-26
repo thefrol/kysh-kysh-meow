@@ -18,7 +18,7 @@ func Test_configure(t *testing.T) {
 		env         map[string]string
 		commandLine string
 		wantCfg     Server
-		panic       bool
+		wantErr     bool
 	}{
 		{
 			name:        "без параметров строки",
@@ -110,14 +110,14 @@ func Test_configure(t *testing.T) {
 			defaults:    Server{Addr: "localhost:8081", StoreIntervalSeconds: 300, Restore: false, FileStoragePath: "/tmp/file"},
 			env:         map[string]string{"RESTORE": "true"},
 			commandLine: "serv -i -22",
-			panic:       true,
+			wantErr:     true,
 		},
 		{
 			name:        "отрицательный интервал записи в переменной окружения вызывает панику",
 			defaults:    Server{Addr: "localhost:8081", StoreIntervalSeconds: 300, Restore: false, FileStoragePath: "/tmp/file"},
 			env:         map[string]string{"RESTORE": "true", "STORE_INTERVAL": "-2"},
 			commandLine: "serv",
-			panic:       true,
+			wantErr:     true,
 		},
 	}
 	for _, tt := range tests {
@@ -145,17 +145,16 @@ func Test_configure(t *testing.T) {
 
 			// отловим панику
 			defer func() {
-				r := recover()
-				if r != nil {
-					assert.Truef(t, tt.panic, "Panicked but should not:%v", r)
+				if r := recover(); r != nil {
+					assert.Truef(t, tt.wantErr, "Panicked but should not:%v", r)
 					return
 				}
-				assert.False(t, tt.panic, "We not panicked but should")
 			}()
 
 			//проведем конфигурацию
 			actual := Server{}
-			actual.Parse(tt.defaults)
+			err := actual.Parse(tt.defaults)
+			assert.NoError(t, err)
 
 			assert.True(t, reflect.DeepEqual(tt.wantCfg, actual), "Итоговая конфигурация не совпадает с ожидаемой")
 
