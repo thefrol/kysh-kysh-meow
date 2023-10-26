@@ -94,7 +94,7 @@ func Test_configure(t *testing.T) {
 			name:        "командной строкой указать интервал записи",
 			defaults:    config{Addr: "localhost:8081", StoreIntervalSeconds: 300, Restore: false, FileStoragePath: "/tmp/file"},
 			env:         map[string]string{"RESTORE": "true"},
-			commandLine: "serv -i 299", // todo может uint поставить???
+			commandLine: "serv -i 299",
 			wantCfg:     config{Addr: "localhost:8081", StoreIntervalSeconds: 299, Restore: true, FileStoragePath: "/tmp/file"},
 		},
 		{

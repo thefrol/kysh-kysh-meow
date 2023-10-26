@@ -34,6 +34,7 @@ func HandleURLRequest(op Operation) http.HandlerFunc {
 		if err != nil { // todo вот этот код встречается в соседних обертках
 			if errors.Is(err, ErrorDeltaEmpty) || errors.Is(err, ErrorValueEmpty) {
 				HTTPErrorWithLogging(w, http.StatusBadRequest, "Ошибка входных данных: %v", err)
+				return
 			} else if errors.Is(err, ErrorNotFoundMetric) {
 				HTTPErrorWithLogging(w, http.StatusNotFound, "Не найдена метрика %v с именем %v", in.MType, in.ID)
 				return

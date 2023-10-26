@@ -20,7 +20,7 @@ var (
 	ErrorRequestRejected = errors.New("запрос не принят, статус код не 200")
 )
 
-var defaultClient = resty.New() // todo .SetJSONMarshaler(easyjson.Marshal())
+var defaultClient = resty.New()
 
 // Send отправляет метрики из указанного хранилища store на сервер host.
 // При возникновении ошибок будет стараться отправить как можно больше метрик,
