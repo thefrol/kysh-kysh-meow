@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/rs/zerolog/log"
+	"github.com/thefrol/kysh-kysh-meow/internal/config"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/api"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/router"
 	"github.com/thefrol/kysh-kysh-meow/internal/storage"
@@ -21,10 +22,18 @@ import (
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
+var defaultConfig = config.ServerConfig{
+	Addr:                 ":8080",
+	StoreIntervalSeconds: 300,
+	FileStoragePath:      "/tmp/metrics-db.json",
+	Restore:              true, // в текущей конфигурации это значение командной строкой никак не поменять, нельзя указать -r 0, флан такое не принимает todo
+}
+
 func main() {
 	log.Info().Msgf("Сервер запущен строкой %v", strings.Join(os.Args, " "))
 
-	cfg := mustConfigure(defaultConfig)
+	cfg := config.MustConfigure(defaultConfig)
+	fmt.Printf("%+v \n", cfg)
 
 	// создаем хранилище
 	s, cancelStorage := ConfigureStorage(cfg)
@@ -57,10 +66,10 @@ func main() {
 
 // Run запускает сервер с поддержкой нежного завершения. Сервер можно будет выключить через
 // SIGINT, SIGTERM, SIGQUIT
-func Run(cfg config, s api.Operator) {
+func Run(cfg config.ServerConfig, s api.Operator) {
 	// Запускаем сервер с поддержкой нежного выключения
 	// вдохноввлено примерами роутера chi
-	server := http.Server{Addr: cfg.Addr, Handler: router.MeowRouter(s, cfg.Key)}
+	server := http.Server{Addr: cfg.Addr, Handler: router.MeowRouter(s, string(cfg.Key.ValueFunc()()))}
 
 	// Server run context
 	serverCtx, serverStopCtx := context.WithCancel(context.Background())
@@ -115,7 +124,7 @@ func Run(cfg config, s api.Operator) {
 //
 // На входе получает экземпляр хранилища m, и далее оборачивает его другим классов,
 // наиболее соответсвующим задаче, исходя из cfg
-func ConfigureStorage(cfg config) (api.Operator, context.CancelFunc) {
+func ConfigureStorage(cfg config.ServerConfig) (api.Operator, context.CancelFunc) {
 	// 0. Если указана база данных, создаем хранилище с базой данных
 	// 1. Если путь не задан, то возвращаем хранилище в оперативке, без приблуд
 	// 2. Иначе оборачиваем файловым хранилищем, но не возвращаем пока
