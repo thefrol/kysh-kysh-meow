@@ -35,9 +35,3 @@ func Bytes(data []byte, level int) ([]byte, error) {
 
 	return b.Bytes(), nil
 }
-
-var ()
-
-// TODO
-//
-// все вот это вот я бы сделал отдельным пакетом compress
