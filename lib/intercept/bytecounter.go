@@ -8,6 +8,9 @@ type BytesCounter struct {
 	code int
 }
 
+// Write воплощает интерфейс http.ResponseWriter;
+// При каждом вызове, увеличиваем счетчик записанных байт,
+// при этом данные пишутся в оригинальный врайтер
 func (w *BytesCounter) Write(data []byte) (int, error) {
 	n, err := w.ResponseWriter.Write(data)
 	w.n += n

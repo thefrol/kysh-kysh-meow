@@ -34,10 +34,14 @@ func WithBuffer(w http.ResponseWriter, buf io.ReadWriter) *Buffered {
 	}
 }
 
+// Write воплощает интерфейс http.ResponseWriter, записываем
+// данные в некий буфер
 func (w *Buffered) Write(data []byte) (int, error) {
 	return w.buf.Write(data)
 }
 
+// WriteHeader воплощает интерфейс http.ResponseWriter, сохраняя
+// последний назначенный статус код в переменную
 func (w *Buffered) WriteHeader(code int) {
 	w.code = code
 }
@@ -53,6 +57,7 @@ func (w Buffered) Flush() error {
 	return err
 }
 
+// StatusCode возвращае значение последнего установленного кода ответа
 func (w Buffered) StatusCode() int {
 	return w.code
 }

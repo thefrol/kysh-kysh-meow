@@ -24,17 +24,13 @@ var acceptedContentTypes = []string{
 const CompressionLevel = gzip.BestCompression
 
 // GZIP это мидлварь для сервера, которая сжимает содержимое запроса
-// и оформляет все заголовки. Сжимает, если тело сообщения больше чем
-// minLen, и для сжатия создается буфер изначальной вместимости bufSize
+// если тело сообщения больше чем minLenж. Для сжатия первоначально
+// создается буфер изначальной вместимости bufSize
 func GZIP(minLen int, bufSize int) func(http.Handler) http.Handler {
-
-	// Тут описываемся сама мидлварь, получившая opts
-	// в качестве настроек
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// Eсли клиент поддерживает gzip, то подменяем врайтер, не забыв его закрыть, и отправляем
 			// запрос дальше по цепочке
-			fmt.Println("гзип начат")
 			if !acceptsEncoding(r, "gzip") {
 				//не обжимаем
 				next.ServeHTTP(w, r)
@@ -46,7 +42,11 @@ func GZIP(minLen int, bufSize int) func(http.Handler) http.Handler {
 			faker := intercept.WithBuffer(w, buf)
 			next.ServeHTTP(faker, r)
 
-			if buf.Len() < minLen || faker.StatusCode() >= 300 || !contentTypeZippable(w.Header().Get("Content-Type")) {
+			notZippable := buf.Len() < minLen ||
+				faker.StatusCode() >= 300 ||
+				!contentTypeZippable(w.Header().Get("Content-Type"))
+
+			if notZippable {
 				// записываем все в оригинальный врайтер, не сжимая
 				faker.Flush()
 				return
