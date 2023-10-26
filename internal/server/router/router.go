@@ -9,6 +9,11 @@ import (
 	"github.com/thefrol/kysh-kysh-meow/internal/server/middleware"
 )
 
+const (
+	CompressionTreshold  = 50
+	CompressionBufferLen = 2048
+)
+
 // MeowRouter - основной роутер сервера, он отвечает за все мидлвари
 // и все маршруты, и даже чтобы на ответы типа 404 и 400 отправлять
 // стилизованные ответы.
@@ -24,7 +29,7 @@ func MeowRouter(store api.Operator, key string) (router chi.Router) {
 		router.Use(middleware.Signing(key))
 	}
 	router.Use(middleware.UnGZIP)
-	router.Use(middleware.GZIP(50, 2048)) //todo нормальные константы вместо магических чисел
+	router.Use(middleware.GZIP(CompressionTreshold, CompressionBufferLen)) //todo нормальные константы вместо магических чисел
 
 	// Создаем маршруты для обработки URL запросов
 	router.Group(func(r chi.Router) {
