@@ -141,7 +141,7 @@ func (cfg Server) MakeStorage() (api.Operator, context.CancelFunc, error) {
 	log.Info().Msgf("Установлено сохранение с интервалом %v в %v в при записи", s.Interval, s.FileName)
 
 	return storage.AsOperator(s), func() {
-		// обертка сделана под группу ожидаения
+		log.Info().Msg("Хранилище интервальной записи получило сигнал о завершении, но дополнительно сохранение не нужно")
 		cancel()
 	}, nil
 
