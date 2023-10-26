@@ -103,6 +103,8 @@ func acceptsEncoding(r *http.Request, encoding string) bool {
 	return false
 }
 
+// contentTypeZippable проверяет подходит ли Content-Type
+// для сжатия
 func contentTypeZippable(s string) bool {
 	for _, ct := range acceptedContentTypes {
 		if strings.Contains(s, ct) {
@@ -111,3 +113,14 @@ func contentTypeZippable(s string) bool {
 	}
 	return false
 }
+
+// todo
+//
+// для части вспомогательных функций и констант, я бы
+// воспользовался internal/compress, и надо бы придумать
+// семантику вызова:
+// compress.CheckContentType? compess.Recommended?
+// compress.Gzip() compress.Unzip() ?
+// archive.Compress archive. Decompress?
+// archive.RequestEncoded?
+// как много вообще этот пакет должен знать о http???

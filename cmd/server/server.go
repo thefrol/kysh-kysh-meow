@@ -98,7 +98,8 @@ func Run(cfg config, s api.Operator) {
 		log.Error().Msgf("^0^ не могу запустить сервер: %v \n", err)
 		//todo
 		//
-		// если не биндится, то хотя бы выходить с ошибкой
+		// если не биндится, то хотя бы выходить с ошибкой,
+		// в данный момент сервер не закроета сам
 		//
 		// можно дать несколько попыток забиндиться
 	}
@@ -197,7 +198,7 @@ func ConfigureStorage(cfg config) (api.Operator, context.CancelFunc) {
 	log.Info().Msgf("Установлено сохранение с интервалом %v в %v в при записи", s.Interval, s.FileName)
 
 	return storage.AsOperator(s), func() {
-		// оберстка сделана под группу ожидаения
+		// обертка сделана под группу ожидаения
 		cancel()
 	}
 

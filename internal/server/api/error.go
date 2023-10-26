@@ -22,6 +22,10 @@ func HTTPErrorWithLogging(w http.ResponseWriter, statusCode int, format string, 
 	http.Error(w, s, statusCode)
 }
 
+// может ли так быть, что это часть Service? это какой-то сервис ошибок??
+
+// todo добавить api.BadGateway(), api.BadGatewayf()
+
 // Retry3Times повторяет операцию op ровно три раза
 // с промежутками 1,3,5 секунд.
 //
