@@ -6,7 +6,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -25,8 +24,6 @@ var defaultConfig = config.Server{
 }
 
 func main() {
-	log.Info().Msgf("Сервер запущен строкой %v", strings.Join(os.Args, " "))
-
 	cfg := config.Server{}
 	err := cfg.Parse(defaultConfig)
 	if err != nil {
@@ -35,7 +32,7 @@ func main() {
 	}
 	fmt.Printf("Получен конфиг %+v \n", cfg)
 
-	rootContext, cancel := context.WithCancel(context.Background()) // это пусть будет просто defer storage.Close
+	rootContext, cancelRootContext := context.WithCancel(context.Background()) // это пусть будет просто defer storage.Close
 
 	// создаем хранилище
 	s, err := cfg.MakeStorage(rootContext)
@@ -51,7 +48,7 @@ func main() {
 	// занимаем текущий поток до вызова сигналов выключения
 	graceful.Serve(cfg.Addr, router)
 
-	cancel()
+	cancelRootContext()
 
 	// Даем ему время
 	time.Sleep(time.Second)
