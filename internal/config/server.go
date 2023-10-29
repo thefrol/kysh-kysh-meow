@@ -64,7 +64,7 @@ func (cfg *Server) Parse(defaults Server) error {
 //
 // На входе получает экземпляр хранилища m, и далее оборачивает его другим классов,
 // наиболее соответсвующим задаче, исходя из cfg
-func (cfg Server) MakeStorage() (api.Operator, context.CancelFunc, error) {
+func (cfg Server) MakeStorage(ctx context.Context) (api.Operator, error) {
 	// 0. Если указана база данных, создаем хранилище с базой данных
 	// 1. Если путь не задан, то возвращаем хранилище в оперативке, без приблуд
 	// 2. Иначе оборачиваем файловым хранилищем, но не возвращаем пока
@@ -81,29 +81,31 @@ func (cfg Server) MakeStorage() (api.Operator, context.CancelFunc, error) {
 	if cfg.DatabaseDSN.Get() != "" {
 		db, err := sql.Open("pgx", cfg.DatabaseDSN.Get())
 		if err != nil {
-			return nil, nil, fmt.Errorf("не могу создать соединение с БД: %w", err)
+			return nil, fmt.Errorf("не могу создать соединение с БД: %w", err)
 		}
 
 		dbs, err := storage.NewDatabase(db)
 		if err != nil {
-			return nil, nil, fmt.Errorf("ошибка создания хранилища в базе данных: %v", err)
+			return nil, fmt.Errorf("ошибка создания хранилища в базе данных: %v", err)
 		}
 
 		if err := dbs.Check(context.TODO()); err != nil {
 			log.Warn().Msgf("Нет соединения с БД - %v", err)
 		}
 
-		log.Info().Msg("Создано хранилише в Базе данных")
-		return dbs, func() {
+		go func() {
+			<-ctx.Done()
+			log.Info().Msg("Закрываю бд")
 			err := db.Close()
 			if err != nil {
 				log.Error().Msgf("Не могу закрыть базу данных: %v", err)
 			}
+			log.Info().Msg("Успешно закрыл БД")
 
-			// todo
-			//
-			// Конечно, я хочу делать это defer или как-то так, можно у нас будет некий app.Close()
-		}, nil
+			// конечно, это должно быть в store.close()
+		}()
+
+		log.Info().Msg("Создано хранилише в Базе данных")
 	}
 
 	// Если не база данных, то начинаем с начала - создаем хранилище в памяти, и оборачиваем его всякими штучками если надо
@@ -112,9 +114,7 @@ func (cfg Server) MakeStorage() (api.Operator, context.CancelFunc, error) {
 	// Если путь до хранилища не пустой, то нам нужно инициаизировать обертки над хранилищем
 	if cfg.FileStoragePath == "" {
 		log.Info().Msg("Установлено хранилище в памяти. Сохранение на диск отключено")
-		return storage.AsOperator(m), func() {
-			log.Info().Msg("Хранилище сихронной записи получило сигнал о завершении, но файловая запись в текущей конфигурации сервера не используется. Ничего не записано")
-		}, nil
+		return storage.AsOperator(m), nil
 	}
 
 	// Оборачиваем файловым хранилищем, в случае, есл и
@@ -132,27 +132,16 @@ func (cfg Server) MakeStorage() (api.Operator, context.CancelFunc, error) {
 		// инициализируем сихнронную запись,
 		// при этом сохраняться в конце нам не понадобится
 		log.Info().Msgf("Установлено синхронное сохранение в %v в при записи", fs.FileName)
-		return storage.AsOperator(storage.NewSyncDump(&fs)), func() {
-			log.Info().Msg("Хранилище сихронной записи получило сигнал о завершении, но дополнительно сохранение не нужно")
-		}, nil
+		return storage.AsOperator(storage.NewSyncDump(&fs)), nil
 	}
 
-	// Запускаем интервальную запись и создаем токен отмены, при необходимости сюда можно будет добавить и группу ожидания
+	// Запускаем интервальную запись
 	s := storage.NewIntervalDump(&fs, time.Duration(cfg.StoreIntervalSeconds)*time.Second)
-	ctx, cancel := context.WithCancel(context.Background())
 	go s.StartDumping(ctx)
 
 	log.Info().Msgf("Установлено сохранение с интервалом %v в %v в при записи", s.Interval, s.FileName)
 
-	return storage.AsOperator(s), func() {
-		log.Info().Msg("Хранилище интервальной записи получило сигнал о завершении, но дополнительно сохранение не нужно")
-		cancel()
-	}, nil
-
-	// TODO
-	//
-	// Пока что судя по всему эта функция эвакуирует моё хранилище из стека, мне кажется, но не мапы
-	// Как вариант сразу создавать FileStorage, и просто не оборачивать его если надо
+	return storage.AsOperator(s), nil
 }
 
 func init() {

@@ -3,6 +3,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strings"
@@ -34,8 +35,10 @@ func main() {
 	}
 	fmt.Printf("Получен конфиг %+v \n", cfg)
 
+	rootContext, cancel := context.WithCancel(context.Background())
+
 	// создаем хранилище
-	s, cancelStorage, err := cfg.MakeStorage()
+	s, err := cfg.MakeStorage(rootContext)
 	if err != nil {
 		log.Error().Msgf("Не удалось создать хранилише: %v", err)
 		return
@@ -49,9 +52,8 @@ func main() {
 	app := app.App{}
 	app.Run(cfg.Addr, router) // будет app.Run()
 
-	// Завершаем последние дела
-	// попытаемся сохраниться в файл
-	cancelStorage()
+	// Передаем всем сообщение, что мы заканчиваем, через контекст
+	cancel()
 
 	// Даем ему время
 	time.Sleep(time.Second)
