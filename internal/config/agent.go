@@ -1,4 +1,4 @@
-package main
+package config
 
 import (
 	"flag"
@@ -11,22 +11,16 @@ import (
 	//"github.com/octago/sflags/gen/gflag" сделать свой репозиторий и залить его всем в ПР
 )
 
-type config struct {
+type Agent struct {
 	Addr            string `env:"ADDRESS" flag:"~a" desc:"(строка) адрес сервера в формате host:port"`
 	ReportInterval  uint   `env:"REPORT_INTERVAL" flag:"~r" desc:"(число, секунды) частота отправки данных на сервер"`
 	PollingInterval uint   `env:"POLLING_INTERVAL" flag:"~p" desc:"(число, секунды) частота отпроса метрик"`
 	Key             string `env:"KEY" flag:"~p" desc:"(строка) секретный ключ подписи"`
 }
 
-var defaultConfig = config{
-	Addr:            "localhost:8080",
-	ReportInterval:  10,
-	PollingInterval: 2,
-}
-
-// mustConfigure парсит настройки адреса сервера, и частоты опроса и отправки
+// MustConfigure парсит настройки адреса сервера, и частоты опроса и отправки
 // из командной строки и переменных окружения. В приоритете переменные окружения
-func mustConfigure(defaults config) (cfg config) {
+func (cfg *Agent) MustConfigure(defaults Agent) {
 	// todo
 	// сделать репозиторий sflags домашним, чтобы он мог устанавливаться от меня хотя бы
 	// github.com/octago/sflags, сейчас там ошибка в go.mod
@@ -39,14 +33,12 @@ func mustConfigure(defaults config) (cfg config) {
 
 	flag.Parse()
 
-	err := env.Parse(&cfg)
+	err := env.Parse(cfg)
 	if err != nil {
 		panic(err)
 	}
 
 	log.Info().Msgf("Запущено с настройками %+v", cfg)
-
-	return
 }
 
 func init() {

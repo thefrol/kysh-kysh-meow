@@ -7,14 +7,22 @@ import (
 
 	"github.com/rs/zerolog/log"
 	"github.com/thefrol/kysh-kysh-meow/internal/compress"
+	"github.com/thefrol/kysh-kysh-meow/internal/config"
 	"github.com/thefrol/kysh-kysh-meow/internal/report"
 	"github.com/thefrol/kysh-kysh-meow/lib/scheduler"
 )
 
 const updateRoute = "/updates"
 
+var defaultConfig = config.Agent{
+	Addr:            "localhost:8080",
+	ReportInterval:  10,
+	PollingInterval: 2,
+}
+
 func main() {
-	config := mustConfigure(defaultConfig)
+	config := config.Agent{}
+	config.MustConfigure(defaultConfig) // todo избежать пиники
 
 	// Настроим отправку
 	report.SetSigningKey(config.Key)
@@ -27,11 +35,11 @@ func main() {
 }
 
 // Endpoint формирует точку, куда агент будет посылать все запросы на основе своей текущей конфигурации
-func Endpoint(cfg config) string {
+func Endpoint(cfg config.Agent) string {
 	return fmt.Sprintf("%s%s", "http://", path.Join(cfg.Addr, updateRoute))
 }
 
-func Serve(config config) {
+func Serve(config config.Agent) {
 	// Метрики собираются во временное хранилище s,
 	// где они хранятся в сыром виде и готовы превратиться
 	// в массив metrica.Metrica
