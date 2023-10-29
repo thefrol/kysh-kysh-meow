@@ -2,9 +2,7 @@ package main
 
 import (
 	"fmt"
-	"os"
 	"path"
-	"strings"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -16,19 +14,28 @@ import (
 const updateRoute = "/updates"
 
 func main() {
-	log.Info().Msgf("Агент запущен строкой %v", strings.Join(os.Args, " "))
-
 	config := mustConfigure(defaultConfig)
-
-	// Метрики собираются во временное хранилище s,
-	// где они хранятся в сыром виде и готовы превратиться
-	// в массив metrica.Metrica
-	var s report.Stats
 
 	// Настроим отправку
 	report.SetSigningKey(config.Key)
 	report.CompressLevel = compress.BestCompression
 	report.CompressMinLength = 100
+
+	// Запускаем работу
+	Serve(config)
+
+}
+
+// Endpoint формирует точку, куда агент будет посылать все запросы на основе своей текущей конфигурации
+func Endpoint(cfg config) string {
+	return fmt.Sprintf("%s%s", "http://", path.Join(cfg.Addr, updateRoute))
+}
+
+func Serve(config config) {
+	// Метрики собираются во временное хранилище s,
+	// где они хранятся в сыром виде и готовы превратиться
+	// в массив metrica.Metrica
+	var s report.Stats
 
 	// запуск планировщика
 	c := scheduler.New()
@@ -50,10 +57,4 @@ func main() {
 
 	// Запускаем планировщик, и он занимает поток
 	c.Serve(200 * time.Millisecond)
-
-}
-
-// Endpoint формирует точку, куда агент будет посылать все запросы на основе своей текущей конфигурации
-func Endpoint(cfg config) string {
-	return fmt.Sprintf("%s%s", "http://", path.Join(cfg.Addr, updateRoute))
 }
