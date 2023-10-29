@@ -11,8 +11,8 @@ import (
 
 	"github.com/rs/zerolog/log"
 	"github.com/thefrol/kysh-kysh-meow/internal/config"
-	"github.com/thefrol/kysh-kysh-meow/internal/server/app"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/router"
+	"github.com/thefrol/kysh-kysh-meow/lib/graceful"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
@@ -35,7 +35,7 @@ func main() {
 	}
 	fmt.Printf("Получен конфиг %+v \n", cfg)
 
-	rootContext, cancel := context.WithCancel(context.Background())
+	rootContext, cancel := context.WithCancel(context.Background()) // это пусть будет просто defer storage.Close
 
 	// создаем хранилище
 	s, err := cfg.MakeStorage(rootContext)
@@ -49,10 +49,11 @@ func main() {
 
 	// Запускаем сервер с поддержкой нежного завершения,
 	// занимаем текущий поток до вызова сигнатов выключения
-	app := app.App{}
-	app.Run(cfg.Addr, router) // будет app.Run()
+	graceful.Serve(cfg.Addr, router) // будет app.Run()
 
-	// Передаем всем сообщение, что мы заканчиваем, через контекст
+	// ждем сигнала от системы, что можно вырубаться
+
+	fmt.Println("Сигнал на выключение")
 	cancel()
 
 	// Даем ему время
