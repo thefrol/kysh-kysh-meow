@@ -48,7 +48,7 @@ func main() {
 	router := router.MeowRouter(s, string(cfg.Key.ValueFunc()()))
 
 	// Запускаем сервер с поддержкой нежного завершения,
-	// занимаем текущий поток до вызова сигнатов выключения
+	// занимаем текущий поток до вызова сигналов выключения
 	graceful.Serve(cfg.Addr, router)
 
 	cancel()
