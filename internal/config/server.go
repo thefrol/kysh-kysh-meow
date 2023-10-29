@@ -16,12 +16,12 @@ import (
 )
 
 type Server struct {
-	Addr                 string `env:"ADDRESS"`
-	StoreIntervalSeconds uint   `env:"STORE_INTERVAL"`
-	FileStoragePath      string `env:"FILE_STORAGE_PATH"`
-	Restore              bool   `env:"RESTORE"`
-	DatabaseDSN          string `env:"DATABASE_DSN"`
-	Key                  Secret `env:"KEY"`
+	Addr                 string           `env:"ADDRESS"`
+	StoreIntervalSeconds uint             `env:"STORE_INTERVAL"`
+	FileStoragePath      string           `env:"FILE_STORAGE_PATH"`
+	Restore              bool             `env:"RESTORE"`
+	DatabaseDSN          ConnectionString `env:"DATABASE_DSN"`
+	Key                  Secret           `env:"KEY"`
 }
 
 // mustConfigure парсит командную строку и переменные окружения, чтобы выдать структуру с конфигурацией сервера.
@@ -32,11 +32,15 @@ type Server struct {
 //   - То, что указано в командной строке переписывает то, что указано в defaults
 //   - То, что указано в переменной окружения, переписывает то, что было указано ранее
 func (cfg *Server) Parse(defaults Server) error {
+	// устанавливаем дополнительные значения по умолчанию
+	cfg.DatabaseDSN.s = defaults.DatabaseDSN.s
+
+	// парсим командную строку
 	flag.StringVar(&cfg.Addr, "a", defaults.Addr, "[адрес:порт] устанавливает адрес сервера ")
 	flag.UintVar(&cfg.StoreIntervalSeconds, "i", defaults.StoreIntervalSeconds, "[время, сек] интервал сохранения показаний. При 0 запись делается почти синхронно")
 	flag.StringVar(&cfg.FileStoragePath, "f", defaults.FileStoragePath, "[строка] путь к файлу, откуда будут читаться при запуске и куда будут сохраняться метрики полученные сервером, если файл пустой, то сохранение будет отменено")
 	flag.BoolVar(&cfg.Restore, "r", defaults.Restore, "[флаг] если установлен, загружает из файла ранее записанные метрики")
-	flag.StringVar(&cfg.DatabaseDSN, "d", defaults.DatabaseDSN, "[строка] подключения к базе данных")
+	flag.Var(&cfg.DatabaseDSN, "d", "[строка] подключения к базе данных")
 	flag.Var(&cfg.Key, "k", "строка, секретный ключ подписи")
 
 	flag.Parse()
@@ -74,8 +78,8 @@ func (cfg Server) MakeStorage() (api.Operator, context.CancelFunc, error) {
 	// И нужно убрать отсюда все паники
 
 	// Если база данных
-	if cfg.DatabaseDSN != "" {
-		db, err := sql.Open("pgx", cfg.DatabaseDSN)
+	if cfg.DatabaseDSN.Get() != "" {
+		db, err := sql.Open("pgx", cfg.DatabaseDSN.Get())
 		if err != nil {
 			return nil, nil, fmt.Errorf("не могу создать соединение с БД: %w", err)
 		}
@@ -162,3 +166,5 @@ func init() {
 		fmt.Println("^-^")
 	}
 }
+
+// TODO может быть storage должно иметь что-то типа Close()?

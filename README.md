@@ -25,11 +25,12 @@
 
 ## Вещи которыми я горжусь
 
-### `cofig.Secret`
+### `config.Secret`, `config.ConnectionString`
 
 Эта структура для чувствительных данных, которая защищена от попадания в консоль. Если попытаться распечатать конфиг, то мы увидим
 
 SecretValue:******
+DataBaseString: host=localhost user=user ... // хотя тут был пароль
 
 ## TODO
 

@@ -8,7 +8,14 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
+
+func Test(t *testing.T) {
+	a := ConnectionString{s: "124"}
+	b := ConnectionString{s: "124"}
+	assert.True(t, reflect.DeepEqual(a, b))
+}
 
 func Test_configure(t *testing.T) {
 
@@ -106,6 +113,21 @@ func Test_configure(t *testing.T) {
 		},
 
 		{
+			name:        "командной строкой указать строку подключения к бд",
+			defaults:    Server{Restore: false, DatabaseDSN: newConnString("123")},
+			env:         map[string]string{},
+			commandLine: "serv -d qwqwqw",
+			wantCfg:     Server{DatabaseDSN: newConnString("qwqwqw"), Restore: false},
+		},
+		{
+			name:        "переменной указать строку подключения к бд",
+			defaults:    Server{Restore: false},
+			env:         map[string]string{"DATABASE_DSN": "1232"},
+			commandLine: "serv -d qwqwqw",
+			wantCfg:     Server{DatabaseDSN: newConnString("1232"), Restore: false},
+		},
+
+		{
 			name:        "отрицательный интервал записи в командной строке вызывает панику",
 			defaults:    Server{Addr: "localhost:8081", StoreIntervalSeconds: 300, Restore: false, FileStoragePath: "/tmp/file"},
 			env:         map[string]string{"RESTORE": "true"},
@@ -154,7 +176,11 @@ func Test_configure(t *testing.T) {
 			//проведем конфигурацию
 			actual := Server{}
 			err := actual.Parse(tt.defaults)
-			assert.NoError(t, err)
+			if tt.wantErr {
+				assert.Error(t, err, "Должна быть ошибка, но ее нет")
+				return
+			}
+			require.NoError(t, err)
 
 			assert.True(t, reflect.DeepEqual(tt.wantCfg, actual), "Итоговая конфигурация не совпадает с ожидаемой")
 
@@ -165,4 +191,8 @@ func Test_configure(t *testing.T) {
 
 func newSecret(s string) Secret {
 	return Secret{value: []byte(s)}
+}
+
+func newConnString(s string) ConnectionString {
+	return ConnectionString{s: s}
 }
