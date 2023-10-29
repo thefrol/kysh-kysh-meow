@@ -3,18 +3,14 @@
 package main
 
 import (
-	"context"
 	"fmt"
-	"net/http"
 	"os"
-	"os/signal"
 	"strings"
-	"syscall"
 	"time"
 
 	"github.com/rs/zerolog/log"
 	"github.com/thefrol/kysh-kysh-meow/internal/config"
-	"github.com/thefrol/kysh-kysh-meow/internal/server/api"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/app"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/router"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -42,11 +38,16 @@ func main() {
 	s, cancelStorage, err := cfg.MakeStorage()
 	if err != nil {
 		log.Error().Msgf("Не удалось создать хранилише: %v", err)
+		return
 	}
+
+	// создаем роутер
+	router := router.MeowRouter(s, string(cfg.Key.ValueFunc()()))
 
 	// Запускаем сервер с поддержкой нежного завершения,
 	// занимаем текущий поток до вызова сигнатов выключения
-	Run(cfg, s) // будет app.Run()
+	app := app.App{}
+	app.Run(cfg.Addr, router) // будет app.Run()
 
 	// Завершаем последние дела
 	// попытаемся сохраниться в файл
@@ -58,59 +59,4 @@ func main() {
 	log.Info().Msg("^.^ Сервер завершен нежно")
 	// Wait for server context to be stopped
 
-}
-
-// Run запускает сервер с поддержкой нежного завершения. Сервер можно будет выключить через
-// SIGINT, SIGTERM, SIGQUIT
-func Run(cfg config.Server, s api.Operator) {
-	// Запускаем сервер с поддержкой нежного выключения
-	// вдохноввлено примерами роутера chi
-	server := http.Server{Addr: cfg.Addr, Handler: router.MeowRouter(s, string(cfg.Key.ValueFunc()()))}
-
-	// Server run context
-	serverCtx, serverStopCtx := context.WithCancel(context.Background())
-
-	// Listen for syscall signals for process to interrupt/quit
-	sig := make(chan os.Signal, 1)
-	signal.Notify(sig, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
-	go func() {
-		<-sig
-		log.Debug().Msg("signal received")
-		// Shutdown signal with grace period of 30 seconds
-		shutdownCtx, cancel := context.WithTimeout(serverCtx, 30*time.Second)
-		defer cancel()
-
-		go func() {
-			<-shutdownCtx.Done()
-			if shutdownCtx.Err() == context.DeadlineExceeded {
-				log.Fatal().Msg("graceful shutdown timed out.. forcing exit.")
-				return
-			}
-		}()
-
-		// Trigger graceful shutdown
-		err := server.Shutdown(shutdownCtx)
-		if err != nil {
-			log.Fatal().Msg(err.Error())
-			panic(err)
-		}
-		serverStopCtx()
-		log.Info().Msg("^-^ рутина остановки сервера завершилась")
-	}()
-	log.Info().Msgf("^.^ Мяу, сервер запускается по адресу %v!", cfg.Addr)
-
-	if err := server.ListenAndServe(); err != http.ErrServerClosed {
-		log.Error().Msgf("^0^ не могу запустить сервер: %v \n", err)
-		//todo
-		//
-		// если не биндится, то хотя бы выходить с ошибкой,
-		// в данный момент сервер не закроета сам
-		//
-		// можно дать несколько попыток забиндиться
-	}
-
-	<-serverCtx.Done()
-	log.Error().Msg("Run() остановлен")
-
-	// МНе кажется в отдельную функцию надо выделить именно все, что относится к нежному завершению, + надо перевести комменты по коду на русский
 }
