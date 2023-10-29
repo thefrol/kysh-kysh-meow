@@ -106,6 +106,7 @@ func (cfg Server) MakeStorage(ctx context.Context) (api.Operator, error) {
 		}()
 
 		log.Info().Msg("Создано хранилише в Базе данных")
+		return dbs, nil
 	}
 
 	// Если не база данных, то начинаем с начала - создаем хранилище в памяти, и оборачиваем его всякими штучками если надо
