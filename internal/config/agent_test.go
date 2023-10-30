@@ -36,17 +36,17 @@ func Test_configureAgent(t *testing.T) {
 		},
 		{
 			name:        "Указать ключ через командную строку",
-			defaults:    Agent{Key: "will be rewrited"},
+			defaults:    Agent{Key: newSecret("will be rewrited")},
 			env:         nil,
 			commandLine: "agent -k abcde",
-			wantCfg:     Agent{Key: "abcde"},
+			wantCfg:     Agent{Key: newSecret("abcde")},
 		},
 		{
 			name:        "Указать ключ через переменные окружения",
-			defaults:    Agent{Key: "will be rewrited"},
+			defaults:    Agent{Key: newSecret("will be rewrited")},
 			env:         map[string]string{"KEY": "qwerty"},
 			commandLine: "agent -k abcde",
-			wantCfg:     Agent{Key: "qwerty"},
+			wantCfg:     Agent{Key: newSecret("qwerty")},
 		},
 		{
 			name:        "Указать интервалы через командную строку",
