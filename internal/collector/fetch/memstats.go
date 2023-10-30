@@ -15,7 +15,6 @@ import (
 	"runtime"
 
 	"github.com/thefrol/kysh-kysh-meow/internal/collector/internal/pollcount"
-	"github.com/thefrol/kysh-kysh-meow/internal/collector/internal/randomvalue"
 	"github.com/thefrol/kysh-kysh-meow/internal/metrica"
 )
 
@@ -25,9 +24,7 @@ func MemStats() Batcher {
 	runtime.ReadMemStats(&m)
 
 	s := MemBatch{
-		memStats:    &m,
-		randomValue: randomvalue.Get(),
-		pollCount:   pollcount.Get(),
+		memStats: &m,
 	}
 
 	// Добавить ко счетчику опросов
@@ -43,9 +40,7 @@ func MemStats() Batcher {
 // просто потому что не каждый опрос памяти будет отправлен. Не охота
 // тратить на это время и оперативную память.
 type MemBatch struct {
-	memStats    *runtime.MemStats
-	randomValue metrica.Metrica
-	pollCount   metrica.Metrica
+	memStats *runtime.MemStats
 }
 
 // Преобразует хранящиеся значения в транспортную структуру metrica.Metrica
@@ -77,12 +72,5 @@ func (st MemBatch) ToTransport() (m []metrica.Metrica) {
 	m = append(m, metrica.Gauge(st.memStats.StackSys).Metrica("StackSys"))
 	m = append(m, metrica.Gauge(st.memStats.Sys).Metrica("Sys"))
 	m = append(m, metrica.Gauge(st.memStats.TotalAlloc).Metrica("TotalAlloc"))
-
-	// случайное значение
-	m = append(m, st.randomValue)
-
-	// счетчик
-	m = append(m, st.pollCount)
-
 	return
 }
