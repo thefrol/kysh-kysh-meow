@@ -14,7 +14,7 @@ import (
 // тратить на это время и оперативную память.
 type Stats struct {
 	memStats    *runtime.MemStats
-	randomValue metrica.Gauge
+	randomValue metrica.Metrica
 	pollCount   metrica.Metrica
 }
 
@@ -49,7 +49,7 @@ func (st Stats) ToTransport() (m []metrica.Metrica) {
 	m = append(m, metrica.Gauge(st.memStats.TotalAlloc).Metrica("TotalAlloc"))
 
 	// случайное значение
-	m = append(m, st.randomValue.Metrica(randomValueName))
+	m = append(m, st.randomValue)
 
 	// счетчик
 	m = append(m, st.pollCount)

@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/thefrol/kysh-kysh-meow/internal/collector/internal/randomvalue"
 )
 
 // Список сохраняемых метрик из пакета runtime
@@ -59,7 +60,7 @@ func Test_fetchMemStats(t *testing.T) {
 				assert.Equal(t, tt.memValuesCount, len(st.ToTransport()))
 			}
 			for _, v := range tt.fieldsFound {
-				assert.Truef(t, findMetric(st, "gauge", randomValueName) || findMetric(st, "counter", randomValueName), "Not found metric %v", v)
+				assert.Truef(t, findMetric(st, "gauge", randomvalue.IDRandomValue) || findMetric(st, "counter", randomvalue.IDRandomValue), "Not found metric %v", v)
 			}
 
 		})
@@ -77,7 +78,7 @@ func Test_fetchAdditionalStats(t *testing.T) {
 		{
 			name:        "all metrics in place",
 			wantErr:     false,
-			fieldsFound: []string{randomValueName},
+			fieldsFound: []string{randomvalue.IDRandomValue},
 		},
 	}
 	for _, tt := range tests {
@@ -85,7 +86,7 @@ func Test_fetchAdditionalStats(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			st := MemStats()
 			for _, v := range tt.fieldsFound {
-				assert.Truef(t, findMetric(st, "gauge", randomValueName), "Not found metric %v", v)
+				assert.Truef(t, findMetric(st, "gauge", randomvalue.IDRandomValue), "Not found metric %v", v)
 			}
 
 		})
