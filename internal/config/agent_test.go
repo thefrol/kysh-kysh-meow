@@ -18,7 +18,7 @@ func Test_configureAgent(t *testing.T) {
 		env         map[string]string
 		commandLine string
 		wantCfg     Agent
-		panic       bool
+		wantErr     bool
 	}{
 		{
 			name:        "без параметров строки",
@@ -74,14 +74,14 @@ func Test_configureAgent(t *testing.T) {
 			defaults:    Agent{Addr: "localhost:8081", ReportInterval: 2, PollingInterval: 1},
 			env:         map[string]string{"ADDRESS": "localhost:8088"},
 			commandLine: "agent -r -1",
-			panic:       true,
+			wantErr:     true,
 		},
 		{
 			name:        "Отрицательное значение интервала вызывает панику в командной строке 2",
 			defaults:    Agent{Addr: "localhost:8081", ReportInterval: 2, PollingInterval: 1},
 			env:         map[string]string{"ADDRESS": "localhost:8088"},
 			commandLine: "agent -p -1",
-			panic:       true,
+			wantErr:     true,
 		},
 
 		{
@@ -89,14 +89,14 @@ func Test_configureAgent(t *testing.T) {
 			defaults:    Agent{Addr: "localhost:8081", ReportInterval: 2, PollingInterval: 1},
 			env:         map[string]string{"ADDRESS": "localhost:8088", "REPORT_INTERVAL": "-1"},
 			commandLine: "agent",
-			panic:       true,
+			wantErr:     true,
 		},
 		{
 			name:        "Отрицательное значение интервала вызывает панику в переменной окружения 3",
 			defaults:    Agent{Addr: "localhost:8081", ReportInterval: 2, PollingInterval: 1},
 			env:         map[string]string{"ADDRESS": "localhost:8088", "POLLING_INTERVAL": "-1"},
 			commandLine: "agent",
-			panic:       true,
+			wantErr:     true,
 		},
 	}
 	for _, tt := range tests {
@@ -125,15 +125,19 @@ func Test_configureAgent(t *testing.T) {
 			defer func() {
 				r := recover()
 				if r != nil {
-					assert.True(t, tt.panic, "Panicked but should not")
+					assert.True(t, tt.wantErr, "Panicked but should not")
 					return
 				}
-				assert.False(t, tt.panic, "We not panicked but should")
 			}()
 
 			cfg := Agent{}
-			cfg.Parse(tt.defaults)
-			//проведем конфигурацию
+
+			err := cfg.Parse(tt.defaults)
+			if tt.wantErr {
+				assert.Error(t, err)
+				return
+			}
+
 			assert.True(t, reflect.DeepEqual(tt.wantCfg, cfg), "Итоговая конфигурация не совпадает с ожидаемой")
 		})
 	}
