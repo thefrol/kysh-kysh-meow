@@ -41,6 +41,8 @@ func FetchAndReport(config config.Agent, updateRoute string) {
 
 	// сборщик мемстатс выделен в отдельный планировщик
 	inMs := generator(context.TODO(), fetch.MemStats, time.Second*time.Duration(config.PollingInterval))
+	_ = generator(context.TODO(), fetch.PollCount, time.Second*time.Duration(config.PollingInterval))
+	_ = generator(context.TODO(), fetch.RandomValue, time.Second*time.Duration(config.PollingInterval))
 
 	// запуск планировщика
 	c := scheduler.New()
