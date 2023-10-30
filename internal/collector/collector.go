@@ -39,10 +39,12 @@ func FetchAndReport(config config.Agent, updateRoute string) {
 
 	// Сделать классную такую мермаид диаграмму со всеми каналами, кто куда как собирает
 
-	// сборщик мемстатс выделен в отдельный планировщик
-	inMs := generator(context.TODO(), fetch.MemStats, time.Second*time.Duration(config.PollingInterval))
-	_ = generator(context.TODO(), fetch.PollCount, time.Second*time.Duration(config.PollingInterval))
-	_ = generator(context.TODO(), fetch.RandomValue, time.Second*time.Duration(config.PollingInterval))
+	// создать каналы сбора метрик
+	interval := time.Second * time.Duration(config.PollingInterval)
+	ctx := context.TODO()
+	inMs := generator(ctx, fetch.MemStats, interval)
+	_ = generator(ctx, fetch.PollCount, interval)
+	_ = generator(ctx, fetch.RandomValue, interval)
 
 	// запуск планировщика
 	c := scheduler.New()
