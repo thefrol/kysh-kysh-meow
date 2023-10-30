@@ -132,7 +132,7 @@ func Test_configureAgent(t *testing.T) {
 			}()
 
 			cfg := Agent{}
-			cfg.MustConfigure(tt.defaults)
+			cfg.Parse(tt.defaults)
 			//проведем конфигурацию
 			assert.True(t, reflect.DeepEqual(tt.wantCfg, cfg), "Итоговая конфигурация не совпадает с ожидаемой")
 		})

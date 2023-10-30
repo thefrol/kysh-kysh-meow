@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"path"
 	"time"
 
@@ -21,8 +22,12 @@ var defaultConfig = config.Agent{
 }
 
 func main() {
+	// Парсим командную строку и переменные окружения
 	config := config.Agent{}
-	config.MustConfigure(defaultConfig) // todo избежать пиники
+	if err := config.Parse(defaultConfig); err != nil {
+		log.Error().Msgf("Ошибка парсинга конфига: %v", err)
+		os.Exit(2)
+	}
 
 	// Настроим отправку
 	report.SetSigningKey(config.Key)

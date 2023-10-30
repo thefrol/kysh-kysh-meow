@@ -18,9 +18,9 @@ type Agent struct {
 	Key             string `env:"KEY" flag:"~p" desc:"(строка) секретный ключ подписи"`
 }
 
-// MustConfigure парсит настройки адреса сервера, и частоты опроса и отправки
+// Parse парсит настройки адреса сервера, и частоты опроса и отправки
 // из командной строки и переменных окружения. В приоритете переменные окружения
-func (cfg *Agent) MustConfigure(defaults Agent) {
+func (cfg *Agent) Parse(defaults Agent) error {
 	// todo
 	// сделать репозиторий sflags домашним, чтобы он мог устанавливаться от меня хотя бы
 	// github.com/octago/sflags, сейчас там ошибка в go.mod
@@ -35,10 +35,11 @@ func (cfg *Agent) MustConfigure(defaults Agent) {
 
 	err := env.Parse(cfg)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	log.Info().Msgf("Запущено с настройками %+v", cfg)
+	return nil
 }
 
 func init() {
