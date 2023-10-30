@@ -33,7 +33,7 @@ func main() {
 	// возможно все, вплоть до UpdateRoute должно уехать в конфиг, даже
 	// если такие переменные и не связаны с командной строкой. Зато красиво
 	// в одной месте можно оформить установку всех основных параметров
-	report.SetSigningKey(config.Key)
+	report.SetSigningKey(string(config.Key.ValueFunc()()))
 	report.CompressLevel = compress.BestCompression
 	report.CompressMinLength = 100
 
