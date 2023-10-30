@@ -3,6 +3,7 @@ package main
 import (
 	"testing"
 
+	"github.com/thefrol/kysh-kysh-meow/internal/collector"
 	"github.com/thefrol/kysh-kysh-meow/internal/config"
 )
 
@@ -26,7 +27,7 @@ func TestEndpoint(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := Endpoint(tt.cfg); got != tt.want {
+			if got := collector.Endpoint(tt.cfg.Addr, updateRoute); got != tt.want {
 				t.Errorf("Endpoint() = %v, want %v", got, tt.want)
 			}
 		})
