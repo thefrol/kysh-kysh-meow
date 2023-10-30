@@ -47,6 +47,9 @@ func FetchAndReport(config config.Agent, updateRoute string) {
 	inRv := generator(ctx, fetch.RandomValue, interval)
 	inPs := generator(ctx, fetch.GoPS, interval)
 
+	// объединить каналы в один
+	inMix := FanIn(ctx, inMs, inPc, inPs, inRv)
+
 	// запуск планировщика
 	c := scheduler.New()
 
@@ -58,13 +61,7 @@ func FetchAndReport(config config.Agent, updateRoute string) {
 	readLoop:
 		for {
 			select {
-			case m := <-inMs:
-				batch = append(batch, m)
-			case m := <-inPc:
-				batch = append(batch, m)
-			case m := <-inRv:
-				batch = append(batch, m)
-			case m := <-inPs:
+			case m := <-inMix:
 				batch = append(batch, m)
 			default:
 				break readLoop
