@@ -43,8 +43,8 @@ func FetchAndReport(config config.Agent, updateRoute string) {
 	interval := time.Second * time.Duration(config.PollingInterval)
 	ctx := context.TODO()
 	inMs := generator(ctx, fetch.MemStats, interval)
-	_ = generator(ctx, fetch.PollCount, interval)
-	_ = generator(ctx, fetch.RandomValue, interval)
+	inPc := generator(ctx, fetch.PollCount, interval)
+	inRv := generator(ctx, fetch.RandomValue, interval)
 
 	// запуск планировщика
 	c := scheduler.New()
@@ -58,6 +58,10 @@ func FetchAndReport(config config.Agent, updateRoute string) {
 		for {
 			select {
 			case m := <-inMs:
+				batch = append(batch, m)
+			case m := <-inPc:
+				batch = append(batch, m)
+			case m := <-inRv:
 				batch = append(batch, m)
 			default:
 				break readLoop
