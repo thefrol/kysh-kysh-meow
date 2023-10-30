@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/rs/zerolog/log"
+	"github.com/thefrol/kysh-kysh-meow/internal/collector/fetch"
 	"github.com/thefrol/kysh-kysh-meow/internal/collector/report"
 	"github.com/thefrol/kysh-kysh-meow/internal/compress"
 	"github.com/thefrol/kysh-kysh-meow/internal/config"
@@ -48,7 +49,7 @@ func Serve(config config.Agent) {
 	// Метрики собираются во временное хранилище s,
 	// где они хранятся в сыром виде и готовы превратиться
 	// в массив metrica.Metrica
-	var s report.Stats
+	var s fetch.Stats
 
 	// запуск планировщика
 	c := scheduler.New()
@@ -56,7 +57,7 @@ func Serve(config config.Agent) {
 	c.AddJob(time.Duration(config.PollingInterval)*time.Second, func() {
 		//Обновляем данные в хранилище, тут же увеличиваем счетчик
 		log.Debug().Msg("Считывание метрик")
-		s = report.Fetch()
+		s = fetch.MemStats()
 	})
 	// отправляем данные раз в repostInterval
 	c.AddJob(time.Duration(config.ReportInterval)*time.Second, func() {

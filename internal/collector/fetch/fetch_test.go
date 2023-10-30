@@ -1,4 +1,4 @@
-package report
+package fetch
 
 import (
 	"testing"
@@ -54,7 +54,7 @@ func Test_fetchMemStats(t *testing.T) {
 	for _, tt := range tests {
 
 		t.Run(tt.name, func(t *testing.T) {
-			st := Fetch()
+			st := MemStats()
 			if tt.memValuesCount >= 0 {
 				assert.Equal(t, tt.memValuesCount, len(st.ToTransport()))
 			}
@@ -83,7 +83,7 @@ func Test_fetchAdditionalStats(t *testing.T) {
 	for _, tt := range tests {
 
 		t.Run(tt.name, func(t *testing.T) {
-			st := Fetch()
+			st := MemStats()
 			for _, v := range tt.fieldsFound {
 				assert.Truef(t, findMetric(st, "gauge", randomValueName), "Not found metric %v", v)
 			}

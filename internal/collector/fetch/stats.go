@@ -1,4 +1,4 @@
-package report
+package fetch
 
 import (
 	"runtime"
@@ -6,6 +6,12 @@ import (
 	"github.com/thefrol/kysh-kysh-meow/internal/metrica"
 )
 
+// Stats в терминологии DDD представляет структуру данных, которую можно будет преобразовить
+// в энтити metrica.Metrica.
+//
+// это такой сырой, полуоформленный формат данных. Я не разбираю его сразу,
+// просто потому что не каждый опрос памяти будет отправлен. Не охота
+// тратить на это время и оперативную память.
 type Stats struct {
 	memStats    *runtime.MemStats
 	randomValue metrica.Gauge
