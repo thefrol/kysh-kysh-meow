@@ -37,6 +37,8 @@ func FetchAndReport(config config.Agent, updateRoute string) {
 	// а воркеры их собирают в пачки и отправляют
 	// а может пачки для них кто-то другой подготавливает даже
 
+	// Сделать классную такую мермаид диаграмму со всеми каналами, кто куда как собирает
+
 	// сборщик мемстатс выделен в отдельный планировщик
 	inMs := generator(context.TODO(), fetch.MemStats, time.Second*time.Duration(config.PollingInterval))
 
