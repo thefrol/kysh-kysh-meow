@@ -49,7 +49,7 @@ func Serve(config config.Agent) {
 	// Метрики собираются во временное хранилище s,
 	// где они хранятся в сыром виде и готовы превратиться
 	// в массив metrica.Metrica
-	var s fetch.Stats
+	var s fetch.Batcher
 
 	// запуск планировщика
 	c := scheduler.New()

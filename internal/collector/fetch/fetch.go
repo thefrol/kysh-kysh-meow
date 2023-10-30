@@ -19,7 +19,7 @@ import (
 )
 
 // MemStats собирает метрики мамяти и сохраняет их во временное хранилище
-func MemStats() Stats {
+func MemStats() Batcher {
 	m := runtime.MemStats{}
 	runtime.ReadMemStats(&m)
 

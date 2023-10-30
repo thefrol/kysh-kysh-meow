@@ -93,7 +93,7 @@ func Test_fetchAdditionalStats(t *testing.T) {
 	}
 }
 
-func findMetric(st Stats, mtype string, name string) bool {
+func findMetric(st Batcher, mtype string, name string) bool {
 	for _, v := range st.ToTransport() {
 		if v.ID == name && v.MType == mtype {
 			return true
