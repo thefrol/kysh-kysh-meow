@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	generatorChannelSize = 150
+	generatorChannelSize = 300
 )
 
 func FetchAndReport(config config.Agent, updateRoute string) {
@@ -45,6 +45,7 @@ func FetchAndReport(config config.Agent, updateRoute string) {
 	inMs := generator(ctx, fetch.MemStats, interval)
 	inPc := generator(ctx, fetch.PollCount, interval)
 	inRv := generator(ctx, fetch.RandomValue, interval)
+	inPs := generator(ctx, fetch.GoPS, interval)
 
 	// запуск планировщика
 	c := scheduler.New()
@@ -62,6 +63,8 @@ func FetchAndReport(config config.Agent, updateRoute string) {
 			case m := <-inPc:
 				batch = append(batch, m)
 			case m := <-inRv:
+				batch = append(batch, m)
+			case m := <-inPs:
 				batch = append(batch, m)
 			default:
 				break readLoop
