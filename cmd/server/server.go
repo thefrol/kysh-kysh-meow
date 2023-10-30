@@ -4,7 +4,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"time"
 
@@ -24,13 +23,12 @@ var defaultConfig = config.Server{
 }
 
 func main() {
+	// Парсим командную строку и переменные окружения
 	cfg := config.Server{}
-	err := cfg.Parse(defaultConfig)
-	if err != nil {
+	if err := cfg.Parse(defaultConfig); err != nil {
 		log.Error().Msgf("Ошибка парсинга конфига: %v", err)
 		os.Exit(2)
 	}
-	fmt.Printf("Получен конфиг %+v \n", cfg)
 
 	rootContext, cancelRootContext := context.WithCancel(context.Background()) // это пусть будет просто defer storage.Close
 

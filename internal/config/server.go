@@ -24,7 +24,7 @@ type Server struct {
 	Key                  Secret           `env:"KEY"`
 }
 
-// mustConfigure парсит командную строку и переменные окружения, чтобы выдать структуру с конфигурацией сервера.
+// Parse парсит командную строку и переменные окружения, чтобы выдать структуру с конфигурацией сервера.
 // В приоритете переменные окружения. Принимает на вход структуру defaults со значениями по умолчанию.
 //
 // Приоритет такой:
@@ -55,6 +55,8 @@ func (cfg *Server) Parse(defaults Server) error {
 	if v, ok := os.LookupEnv("FILE_STORAGE_PATH"); ok {
 		cfg.FileStoragePath = v
 	}
+
+	log.Info().Msgf("Запущено с настройками %+v", cfg)
 	return nil
 }
 
