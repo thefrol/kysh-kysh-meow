@@ -5,8 +5,8 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/thefrol/kysh-kysh-meow/internal/collector/internal/pollcount"
 	"github.com/thefrol/kysh-kysh-meow/internal/metrica"
-	"github.com/thefrol/kysh-kysh-meow/internal/report/internal/pollcount"
 )
 
 const (

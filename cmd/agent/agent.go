@@ -7,9 +7,9 @@ import (
 	"time"
 
 	"github.com/rs/zerolog/log"
+	"github.com/thefrol/kysh-kysh-meow/internal/collector/report"
 	"github.com/thefrol/kysh-kysh-meow/internal/compress"
 	"github.com/thefrol/kysh-kysh-meow/internal/config"
-	"github.com/thefrol/kysh-kysh-meow/internal/report"
 	"github.com/thefrol/kysh-kysh-meow/lib/scheduler"
 )
 
