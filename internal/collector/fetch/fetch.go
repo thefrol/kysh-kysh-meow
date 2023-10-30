@@ -23,8 +23,6 @@ import (
 const (
 	// название рамндомной метрики среди всех данных, что мы собираем
 	randomValueName = "RandomValue"
-	// Счетчик поличества опросов
-	metricPollCount = "PollCount"
 )
 
 // MemStats собирает метрики мамяти и сохраняет их во временное хранилище
@@ -35,7 +33,7 @@ func MemStats() Stats {
 	s := Stats{
 		memStats:    &m,
 		randomValue: randomGauge(),
-		pollCount:   metrica.Counter(pollcount.Get()),
+		pollCount:   pollcount.Get(),
 	}
 
 	// Добавить ко счетчику опросов

@@ -15,7 +15,7 @@ import (
 type Stats struct {
 	memStats    *runtime.MemStats
 	randomValue metrica.Gauge
-	pollCount   metrica.Counter
+	pollCount   metrica.Metrica
 }
 
 // Преобразует хранящиеся значения в транспортную структуру metrica.Metrica
@@ -52,7 +52,7 @@ func (st Stats) ToTransport() (m []metrica.Metrica) {
 	m = append(m, st.randomValue.Metrica(randomValueName))
 
 	// счетчик
-	m = append(m, st.pollCount.Metrica(metricPollCount))
+	m = append(m, st.pollCount)
 
 	return
 }
