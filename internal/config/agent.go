@@ -41,8 +41,8 @@ func (cfg *Agent) Parse(defaults Agent) error {
 	}
 
 	// Валидация
-	if cfg.RateLimit == 0 {
-		return fmt.Errorf("Ошибка при конфигурировании, количество исходящих соединения не может быть меньше 1")
+	if cfg.RateLimit < 1 {
+		return fmt.Errorf("заданное количество исходящих соединения не может быть меньше 1")
 	}
 
 	log.Info().Msgf("Запущено с настройками %+v", cfg)
