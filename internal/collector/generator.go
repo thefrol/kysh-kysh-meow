@@ -22,7 +22,10 @@ func generator(ctx context.Context, fetch FetchFunc, timeout time.Duration) <-ch
 				// собираем метрики
 				// не хорошо будет тут зависнуть, конечно. Нужно чтобы
 				// отправщики последними останавливались
-				log.Debug().Msg("Собираются метрики") // сюда бы имя добавить какое)
+				log.Debug().Msg("Опрашиваются метрики") // сюда бы имя добавить какое)
+
+				// я вдруг подумал, что логгирование
+				// ещё неплохо документирует сам код
 
 				ms := fetch().ToTransport()
 				for _, m := range ms {
@@ -30,6 +33,7 @@ func generator(ctx context.Context, fetch FetchFunc, timeout time.Duration) <-ch
 				}
 			case <-ctx.Done():
 				close(chGen) // кто создал тот и закрывает
+				tick.Stop()
 				return
 			}
 
