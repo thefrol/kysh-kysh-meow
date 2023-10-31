@@ -1,25 +1,50 @@
+// Этот пакет отвечает за получение метрик из других пакетов операционной
+// системы и трансформацию их с понятный для нашего сервиса формат Metrica
+//
+// Значение большинства метрик забираеются из пакета runtime.ReadMemStats() и ещё дополнительно пополняются двумя параметрами,
+// один из которых счетчик PollCount - там хранится число раз, сколько мы опросили память. После отправки на сервер данных, это
+// значение сбрасывается
+//
+// Основые функции:
+//
+// Memstats() - собирает основые параметры использования памяти и сохраняет
+// в промеждуточное хранилише типа Stats, а так же увеличивает счетчик PollCount
 package fetch
 
 import (
 	"runtime"
 
+	"github.com/thefrol/kysh-kysh-meow/internal/collector/internal/pollcount"
 	"github.com/thefrol/kysh-kysh-meow/internal/metrica"
 )
 
-// Stats в терминологии DDD представляет структуру данных, которую можно будет преобразовить
+// MemStats собирает метрики мамяти и сохраняет их во временное хранилище
+func MemStats() Batcher {
+	m := runtime.MemStats{}
+	runtime.ReadMemStats(&m)
+
+	s := MemBatch{
+		memStats: &m,
+	}
+
+	// Добавить ко счетчику опросов
+	pollcount.Increment()
+
+	return s
+}
+
+// MemBatch в терминологии DDD представляет структуру данных, которую можно будет преобразовить
 // в энтити metrica.Metrica.
 //
 // это такой сырой, полуоформленный формат данных. Я не разбираю его сразу,
 // просто потому что не каждый опрос памяти будет отправлен. Не охота
 // тратить на это время и оперативную память.
-type Stats struct {
-	memStats    *runtime.MemStats
-	randomValue metrica.Metrica
-	pollCount   metrica.Metrica
+type MemBatch struct {
+	memStats *runtime.MemStats
 }
 
 // Преобразует хранящиеся значения в транспортную структуру metrica.Metrica
-func (st Stats) ToTransport() (m []metrica.Metrica) {
+func (st MemBatch) ToTransport() (m []metrica.Metrica) {
 	m = append(m, metrica.Gauge(st.memStats.Alloc).Metrica("Alloc"))
 	m = append(m, metrica.Gauge(st.memStats.BuckHashSys).Metrica("BuckHashSys"))
 	m = append(m, metrica.Gauge(st.memStats.Frees).Metrica("Frees"))
@@ -47,12 +72,5 @@ func (st Stats) ToTransport() (m []metrica.Metrica) {
 	m = append(m, metrica.Gauge(st.memStats.StackSys).Metrica("StackSys"))
 	m = append(m, metrica.Gauge(st.memStats.Sys).Metrica("Sys"))
 	m = append(m, metrica.Gauge(st.memStats.TotalAlloc).Metrica("TotalAlloc"))
-
-	// случайное значение
-	m = append(m, st.randomValue)
-
-	// счетчик
-	m = append(m, st.pollCount)
-
 	return
 }

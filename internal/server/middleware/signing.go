@@ -11,6 +11,8 @@ import (
 	"github.com/thefrol/kysh-kysh-meow/lib/intercept"
 )
 
+const SignBufferSize = 1500
+
 func Signing(key string) func(http.Handler) http.Handler {
 	keyBytes := []byte(key)
 	return func(next http.Handler) http.Handler {
@@ -48,7 +50,11 @@ func Signing(key string) func(http.Handler) http.Handler {
 			}
 			defer body.Close()
 
-			data := make([]byte, 500)
+			data := make([]byte, SignBufferSize)
+			// bug если буфер меньше чем сообщение,
+			// то типа не прочитается и подпись не сможет валидироваться
+			// но большое буфер тоже не охота делать
+			// TODO!!!
 			n, err := body.Read(data)
 			if err != nil {
 				api.HTTPErrorWithLogging(w, http.StatusInternalServerError, "cant read body")
