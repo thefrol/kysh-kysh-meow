@@ -60,7 +60,7 @@ func FetchAndReport(ctx context.Context, config config.Agent, updateRoute string
 	wg := sync.WaitGroup{}
 	for i := 0; i < workerCount; i++ {
 		wg.Add(1)
-		worker(inCh, url, sema)
+		go worker(inCh, url, sema, &wg)
 	}
 	// надо конечно подумать над такими вещами, что если метрики не отправились? бросить их обратно в начало или в какую-то
 	// Дополнительную очередь?
