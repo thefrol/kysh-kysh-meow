@@ -28,7 +28,9 @@ func worker(inCh <-chan metrica.Metrica, url string, sema Semaphore) {
 	for v := range inCh {
 		batch = append(batch, v)
 		if len(batch) >= MaxBatch {
+			sema.Acquire()
 			sendBatch(batch, url)
+			sema.Release()
 			batch = batch[:0]
 		}
 		// можно улучшить через default
