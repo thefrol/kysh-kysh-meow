@@ -49,13 +49,14 @@ func FetchAndReport(config config.Agent, updateRoute string) {
 	// объединить каналы в один
 	inMix := FanIn(ctx, inMs, inPc, inPs, inRv)
 
-	// создаем отправщика
+	// собирать данные с перерывами
 	reportInterval := time.Second * time.Duration(config.ReportInterval)
+	inCh := WithTimeouts(inMix, reportInterval)
+
+	// отправим данные
 	workerCount := 3
 	url := Endpoint(config.Addr, updateRoute)
-
-	inCh := WithTimeouts(inMix, reportInterval)
-	sema := NewSemaphore(2)
+	sema := NewSemaphore(int(config.RateLimit))
 	for i := 0; i < workerCount; i++ {
 		worker(inCh, url, sema)
 	}
