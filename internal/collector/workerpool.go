@@ -21,7 +21,7 @@ const MaxBatch = 40
 // это на случай создания и закрытия множества каналов под каждую отправку
 
 func worker(inCh <-chan metrica.Metrica, url string, sema Semaphore) {
-	var batch []metrica.Metrica = make([]metrica.Metrica, 0, MaxBatch)
+	batch := make([]metrica.Metrica, 0, MaxBatch)
 	defer sendBatch(batch, url) // это конечно нужно тестировать какой именно батч он отправит ахах
 	// мне нужно все то, что осталось после закрытия канала входного
 
