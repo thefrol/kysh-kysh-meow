@@ -1,28 +1,36 @@
 package collector
 
 import (
-	"context"
+	"github.com/thefrol/kysh-kysh-meow/internal/metrica"
 )
 
-const MaxBatch = 400
+const MaxBatch = 40
 
-func pool(ctx context.Context, count int, worker func()) {
+// worker считываем метрики и отправляет на сервер
+//
+// Подразумевается, что inCh это не какое-то постоянное соединение.
+// То есть его создает тикер раз во сколько-то секунд
+// func worker(inCh <-chan metrica.Metrica, url string) {
+// 	batch := make([]metrica.Metrica, 0, MaxBatch)
+// 	for v := range inCh {
+// 		batch = append(batch, v)
+// 	}
+// 	sendBatch(batch, url)
+// }
+//
+// это на случай создания и закрытия множества каналов под каждую отправку
 
-	for i := 0; i < count; i++ {
-		wg.Add(1)
+func worker(inCh <-chan metrica.Metrica, url string) {
+	var batch []metrica.Metrica = make([]metrica.Metrica, 0, MaxBatch)
+	defer sendBatch(batch, url) // это конечно нужно тестировать какой именно батч он отправит ахах
+	// мне нужно все то, что осталось после закрытия канала входного
 
-		go func() {
-		loop:
-			for {
-				select {
-				case <-ctx.Done():
-					break loop
-				default:
-					worker()
-				}
-			}
-			wg.Done()
-		}()
-
+	for v := range inCh {
+		batch = append(batch, v)
+		if len(batch) == MaxBatch {
+			sendBatch(batch, url)
+		}
+		// можно улучшить через default
 	}
+
 }
