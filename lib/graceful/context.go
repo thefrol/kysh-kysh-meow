@@ -28,9 +28,11 @@ func WithSignal(ctx context.Context) context.Context {
 // истечения ctx, программа не завершилась, то это будет вызван
 // sys.Exit(2)
 func SetForcedShutdown(ctx context.Context, timeout time.Duration) {
-	terminationCtx, cancel := context.WithDeadline(context.TODO(), time.Now().Add(timeout)) // интересно, если попробовать обеснуть уже истекший контекст?
 	go func() {
+		<-ctx.Done()
+		terminationCtx, cancel := context.WithDeadline(context.TODO(), time.Now().Add(timeout)) // интересно, если попробовать обеснуть уже истекший контекст?
 		defer cancel()
+
 		<-terminationCtx.Done()
 		os.Exit(2)
 	}()
