@@ -55,8 +55,9 @@ func FetchAndReport(config config.Agent, updateRoute string) {
 	url := Endpoint(config.Addr, updateRoute)
 
 	inCh := WithTimeouts(inMix, reportInterval)
+	sema := NewSemaphore(2)
 	for i := 0; i < workerCount; i++ {
-		worker(inCh, url)
+		worker(inCh, url, sema)
 	}
 	// надо конечно подумать над такими вещами, что если метрики не отправились? бросить их обратно в начало или в какую-то
 	// Дополнительную очередь?
