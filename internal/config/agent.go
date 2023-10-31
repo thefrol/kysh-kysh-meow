@@ -15,6 +15,7 @@ type Agent struct {
 	Addr            string `env:"ADDRESS" flag:"~a" desc:"(строка) адрес сервера в формате host:port"`
 	ReportInterval  uint   `env:"REPORT_INTERVAL" flag:"~r" desc:"(число, секунды) частота отправки данных на сервер"`
 	PollingInterval uint   `env:"POLLING_INTERVAL" flag:"~p" desc:"(число, секунды) частота отпроса метрик"`
+	RateLimit       uint   `env:"RATE_LIMIT"`
 	Key             Secret `env:"KEY" flag:"~p" desc:"(строка) секретный ключ подписи"`
 }
 
@@ -30,12 +31,18 @@ func (cfg *Agent) Parse(defaults Agent) error {
 	flag.UintVar(&cfg.ReportInterval, "r", defaults.ReportInterval, "число, частота отправки данных на сервер")
 	flag.StringVar(&cfg.Addr, "a", defaults.Addr, "строка, адрес сервера в формате host:port")
 	flag.Var(&cfg.Key, "k", "строка, секретный ключ подписи")
+	flag.UintVar(&cfg.RateLimit, "l", defaults.RateLimit, "число, максимальное количество исходящих запросов")
 
 	flag.Parse()
 
 	err := env.Parse(cfg)
 	if err != nil {
 		return err
+	}
+
+	// Валидация
+	if cfg.RateLimit == 0 {
+		return fmt.Errorf("Ошибка при конфигурировании, количество исходящих соединения не может быть меньше 1")
 	}
 
 	log.Info().Msgf("Запущено с настройками %+v", cfg)
