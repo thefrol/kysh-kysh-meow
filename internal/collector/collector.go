@@ -50,7 +50,7 @@ func FetchAndReport(ctx context.Context, config config.Agent, updateRoute string
 
 	// собирать данные с перерывами
 	reportInterval := time.Second * time.Duration(config.ReportInterval)
-	inCh := WithTimeouts(inMix, reportInterval)
+	inCh := WithTimeouts(ctx, inMix, reportInterval)
 
 	// отправим данные
 	workerCount := 3
