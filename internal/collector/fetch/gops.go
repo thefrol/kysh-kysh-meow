@@ -15,7 +15,6 @@ const CPUpollInterval = 10 * time.Millisecond // время опроса про�
 func GoPS() Batcher {
 	m, err := mem.VirtualMemory()
 	if err != nil {
-		// можем только вывести в журнал ошибку Mentor
 		log.Error().Err(err).Msg("Ошибка чтения gopsutil.mem")
 		return EmptyBatch{}
 	}
@@ -23,7 +22,6 @@ func GoPS() Batcher {
 	perCPU := true
 	cpu, err := cpu.Percent(CPUpollInterval, perCPU) // todo я не уверен, что он тут выдает
 	if err != nil {
-		// можем только вывести в журнал ошибку Mentor
 		log.Error().Err(err).Msg("Ошибка чтения gopsutil.cpu")
 		return EmptyBatch{}
 	}
