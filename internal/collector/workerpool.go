@@ -24,7 +24,9 @@ const MaxBatch = 40
 func worker(inCh <-chan metrica.Metrica, url string, sema Semaphore) {
 	batch := make([]metrica.Metrica, 0, MaxBatch)
 	defer func() {
+		sema.Acquire()
 		sendBatch(batch, url)
+		sema.Release()
 		log.Info().Msg("Последний батч отправлен")
 		// в данном случае мы не можем использовать неанонимную функцию
 		// Ну можем... но тогда надо передавать ссылку на слайс, а не слайс
