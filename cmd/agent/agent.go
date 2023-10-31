@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"os"
 
 	"github.com/rs/zerolog/log"
@@ -8,6 +9,7 @@ import (
 	"github.com/thefrol/kysh-kysh-meow/internal/collector/report"
 	"github.com/thefrol/kysh-kysh-meow/internal/compress"
 	"github.com/thefrol/kysh-kysh-meow/internal/config"
+	"github.com/thefrol/kysh-kysh-meow/lib/graceful"
 )
 
 const updateRoute = "/updates"
@@ -38,6 +40,9 @@ func main() {
 	report.CompressLevel = compress.BestCompression
 	report.CompressMinLength = 100
 
+	//Создадим контекст, который будет завершен по сигналу ОС
+	ctx := graceful.WithSignal(context.Background())
+
 	// Запускаем работу
-	collector.FetchAndReport(config, updateRoute)
+	collector.FetchAndReport(ctx, config, updateRoute)
 }

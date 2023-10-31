@@ -17,7 +17,7 @@ const (
 	generatorChannelSize = 300
 )
 
-func FetchAndReport(config config.Agent, updateRoute string) {
+func FetchAndReport(ctx context.Context, config config.Agent, updateRoute string) {
 
 	// КОРОЧЕ
 	//
@@ -40,7 +40,6 @@ func FetchAndReport(config config.Agent, updateRoute string) {
 
 	// создать каналы сбора метрик
 	interval := time.Second * time.Duration(config.PollingInterval)
-	ctx := context.TODO() // это можно будет удалить нам не нужен контекст
 	inMs := generator(ctx, fetch.MemStats, interval)
 	inPc := generator(ctx, fetch.PollCount, interval)
 	inRv := generator(ctx, fetch.RandomValue, interval)
