@@ -1,6 +1,7 @@
 package collector
 
 import (
+	"github.com/rs/zerolog/log"
 	"github.com/thefrol/kysh-kysh-meow/internal/metrica"
 )
 
@@ -22,8 +23,16 @@ const MaxBatch = 40
 
 func worker(inCh <-chan metrica.Metrica, url string, sema Semaphore) {
 	batch := make([]metrica.Metrica, 0, MaxBatch)
-	defer sendBatch(batch, url) // это конечно нужно тестировать какой именно батч он отправит ахах
-	// мне нужно все то, что осталось после закрытия канала входного
+	defer func() {
+		sendBatch(batch, url)
+		log.Info().Msg("Последний батч отправлен")
+		// в данном случае мы не можем использовать неанонимную функцию
+		// Ну можем... но тогда надо передавать ссылку на слайс, а не слайс
+		//
+		// если написать defer sendBatch(batch,url)
+		// то go запомнит именно тот слайс, который мы передавали ранее
+		// в момент создания(пустой), а нам нужен тот, что в момент завершения
+	}()
 
 	for v := range inCh {
 		batch = append(batch, v)
@@ -34,6 +43,6 @@ func worker(inCh <-chan metrica.Metrica, url string, sema Semaphore) {
 			batch = batch[:0]
 		}
 		// можно улучшить через default
-	}
 
+	}
 }
