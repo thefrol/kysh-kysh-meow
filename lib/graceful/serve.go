@@ -2,6 +2,7 @@ package graceful
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
@@ -42,6 +43,22 @@ func RequestStop() chan os.Signal {
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 	return sig
+}
+
+// WithSignal возвращает контекст, который будет остановлен
+// по запросу операционной системы, для таких сигналов как
+// syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT
+func WithSignal(ctx context.Context) context.Context {
+	stoppable, cancel := context.WithCancel(ctx)
+	sig := RequestStop()
+
+	go func() {
+		<-sig
+		cancel()
+		fmt.Println("горутина, созданная WithSignal(), остановлена")
+	}()
+
+	return stoppable
 }
 
 func ShutdownGracefullyContext(ctx context.Context, serv *http.Server) {
