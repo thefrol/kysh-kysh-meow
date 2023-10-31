@@ -9,15 +9,15 @@ import (
 
 func FanIn(ctx context.Context, chs ...<-chan metrica.Metrica) chan metrica.Metrica {
 	chMix := make(chan metrica.Metrica, len(chs)*generatorChannelSize)
-	fanWG := sync.WaitGroup{} // исплючительно внутренняя группа ожидания
+	wg := sync.WaitGroup{} // исплючительно внутренняя группа ожидания
 
 	// cоздаем воркера под каждый канал
 	for _, ch := range chs {
 
-		fanWG.Add(1)
+		wg.Add(1)
 
 		go func(ch <-chan metrica.Metrica) {
-			defer fanWG.Done()
+			defer wg.Done()
 
 			for v := range ch {
 				select {
@@ -31,12 +31,9 @@ func FanIn(ctx context.Context, chs ...<-chan metrica.Metrica) chan metrica.Metr
 	}
 
 	// горутина будет ожидать закрытия канала
-	wg.Add(1)
 	go func() {
-		fanWG.Wait()
+		wg.Wait()
 		close(chMix)
-		wg.Done() // todo потом эти все ожидания можно будет убрать, потому что по сути нам надо
-		// дождаться только остановки воркеров
 	}()
 
 	return chMix

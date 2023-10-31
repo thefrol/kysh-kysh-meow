@@ -1,6 +1,8 @@
 package collector
 
 import (
+	"sync"
+
 	"github.com/rs/zerolog/log"
 	"github.com/thefrol/kysh-kysh-meow/internal/metrica"
 )
@@ -21,8 +23,11 @@ const MaxBatch = 40
 //
 // это на случай создания и закрытия множества каналов под каждую отправку
 
-func worker(inCh <-chan metrica.Metrica, url string, sema Semaphore) {
+func worker(inCh <-chan metrica.Metrica, url string, sema Semaphore, wg *sync.WaitGroup) {
 	batch := make([]metrica.Metrica, 0, MaxBatch)
+	defer wg.Done() // должен запуститься последним
+	// важно сделать именно тут, чтобы это сработало уже после отправки последнего батча
+
 	defer func() {
 		sema.Acquire()
 		sendBatch(batch, url)
@@ -47,4 +52,5 @@ func worker(inCh <-chan metrica.Metrica, url string, sema Semaphore) {
 		// можно улучшить через default
 
 	}
+
 }
