@@ -11,10 +11,10 @@ func FanIn(ctx context.Context, chs ...<-chan metrica.Metrica) chan metrica.Metr
 
 	// cоздаем воркера под каждый канал
 	for _, ch := range chs {
+		defer wg.Done()
 		wg.Add(1)
 
 		go func(ch <-chan metrica.Metrica) {
-			defer wg.Done()
 
 			for v := range ch {
 				select {
@@ -24,12 +24,13 @@ func FanIn(ctx context.Context, chs ...<-chan metrica.Metrica) chan metrica.Metr
 					return
 				}
 			}
+
 		}(ch)
 	}
 
 	// горутина будет ожидать закрытия канала
 	go func() {
-		wg.Done()
+		wg.Wait()
 		close(chMix)
 	}()
 
