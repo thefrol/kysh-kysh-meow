@@ -26,9 +26,10 @@ func FanIn(ctx context.Context, chs ...<-chan metrica.Metrica) chan metrica.Metr
 		}(ch)
 	}
 
-	// todo
-	//
-	// место под горутину остановки
+	go func() {
+		wg.Done()
+		close(chMix)
+	}()
 
 	return chMix
 }
