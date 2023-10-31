@@ -38,6 +38,7 @@ func generator(ctx context.Context, fetch FetchFunc, timeout time.Duration) <-ch
 			case <-ctx.Done():
 				close(chGen) // кто создал тот и закрывает
 				wg.Done()
+				return
 			}
 
 		}
