@@ -9,23 +9,25 @@ import (
 func FanIn(ctx context.Context, chs ...<-chan metrica.Metrica) chan metrica.Metrica {
 	chMix := make(chan metrica.Metrica, len(chs)*generatorChannelSize)
 
+	// cоздаем воркера под каждый канал
 	for _, ch := range chs {
 		wg.Add(1)
+
 		go func(ch <-chan metrica.Metrica) {
-		loop:
-			for {
+			defer wg.Done()
+
+			for v := range ch {
 				select {
-				case v := <-ch:
-					chMix <- v
+				case chMix <- v:
+
 				case <-ctx.Done():
-					break loop
+					return
 				}
-				// надо придумывать как мне теперь о очереди всем каналы закрывать лол
 			}
-			wg.Done()
 		}(ch)
 	}
 
+	// горутина будет ожидать закрытия канала
 	go func() {
 		wg.Done()
 		close(chMix)
