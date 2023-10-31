@@ -16,6 +16,7 @@ var defaultConfig = config.Agent{
 	Addr:            "localhost:8080",
 	ReportInterval:  10,
 	PollingInterval: 2,
+	RateLimit:       2,
 }
 
 func main() {
