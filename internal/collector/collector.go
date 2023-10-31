@@ -11,7 +11,6 @@ import (
 	"github.com/thefrol/kysh-kysh-meow/internal/collector/report"
 	"github.com/thefrol/kysh-kysh-meow/internal/config"
 	"github.com/thefrol/kysh-kysh-meow/internal/metrica"
-	"github.com/thefrol/kysh-kysh-meow/lib/scheduler"
 )
 
 const (
@@ -51,34 +50,36 @@ func FetchAndReport(config config.Agent, updateRoute string) {
 	inMix := FanIn(ctx, inMs, inPc, inPs, inRv)
 
 	// запуск планировщика
-	c := scheduler.New()
-
-	// отправляем данные раз в repostInterval
-	c.AddJob(time.Duration(config.ReportInterval)*time.Second, func() {
-		//отправляем на сервер метрики из хранилища s
+	reportInterval := time.Second * time.Duration(config.ReportInterval)
+	pool(ctx, 2, func() {
 		batch := []metrica.Metrica{}
 		log.Debug().Msg("Читаю метрики из канала")
+
+		tick := time.NewTicker(reportInterval)
+
 	readLoop:
 		for {
 			select {
 			case m := <-inMix:
 				batch = append(batch, m)
-			default:
-				break readLoop
+				if len(batch) >= MaxBatch {
+					break readLoop
+				}
+			case <-tick.C:
+				// отправляем
+
+				// todo по хорошему именно вот эту штуку бы в горутине обрабатывать, пусть именно она в пуле висит
+				// а мы раз в десять секунд собираем в батчи и передаем дальше.
+				// типа добавим ещё один элемент конвеера
+				log.Debug().Int("batch_len", len(batch)).Msg("Отправляю метрики")
+				err := report.Send(batch, Endpoint(config.Addr, updateRoute))
+				if err != nil {
+					log.Error().Msgf("Попытка отправить метрики завершилась с  ошибками: %v", err)
+					return
+				}
 			}
 		}
-		// отправляем
-		log.Debug().Int("batch_len", len(batch)).Msg("Отправляю метрики")
-		err := report.Send(batch, Endpoint(config.Addr, updateRoute))
-		if err != nil {
-			log.Error().Msgf("Попытка отправить метрики завершилась с  ошибками: %v", err)
-			return
-		}
-
 	})
-
-	// Запускаем планировщик, и он занимает поток
-	c.Serve(200 * time.Millisecond)
 
 	wg.Wait()
 }
