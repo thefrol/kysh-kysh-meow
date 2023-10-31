@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"path"
+	"sync"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -17,7 +18,7 @@ const (
 	generatorChannelSize = 300
 )
 
-func FetchAndReport(config config.Agent, updateRoute string) {
+func FetchAndReport(ctx context.Context, config config.Agent, updateRoute string) {
 
 	// КОРОЧЕ
 	//
@@ -40,7 +41,6 @@ func FetchAndReport(config config.Agent, updateRoute string) {
 
 	// создать каналы сбора метрик
 	interval := time.Second * time.Duration(config.PollingInterval)
-	ctx := context.TODO() // это можно будет удалить нам не нужен контекст
 	inMs := generator(ctx, fetch.MemStats, interval)
 	inPc := generator(ctx, fetch.PollCount, interval)
 	inRv := generator(ctx, fetch.RandomValue, interval)
@@ -51,14 +51,16 @@ func FetchAndReport(config config.Agent, updateRoute string) {
 
 	// собирать данные с перерывами
 	reportInterval := time.Second * time.Duration(config.ReportInterval)
-	inCh := WithTimeouts(inMix, reportInterval)
+	inCh := WithTimeouts(ctx, inMix, reportInterval)
 
 	// отправим данные
 	workerCount := 3
 	url := Endpoint(config.Addr, updateRoute)
 	sema := NewSemaphore(int(config.RateLimit))
+	wg := sync.WaitGroup{}
 	for i := 0; i < workerCount; i++ {
-		worker(inCh, url, sema)
+		wg.Add(1)
+		go worker(inCh, url, sema, &wg)
 	}
 	// надо конечно подумать над такими вещами, что если метрики не отправились? бросить их обратно в начало или в какую-то
 	// Дополнительную очередь?

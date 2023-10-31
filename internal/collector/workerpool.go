@@ -1,6 +1,9 @@
 package collector
 
 import (
+	"sync"
+
+	"github.com/rs/zerolog/log"
 	"github.com/thefrol/kysh-kysh-meow/internal/metrica"
 )
 
@@ -20,10 +23,23 @@ const MaxBatch = 40
 //
 // это на случай создания и закрытия множества каналов под каждую отправку
 
-func worker(inCh <-chan metrica.Metrica, url string, sema Semaphore) {
+func worker(inCh <-chan metrica.Metrica, url string, sema Semaphore, wg *sync.WaitGroup) {
 	batch := make([]metrica.Metrica, 0, MaxBatch)
-	defer sendBatch(batch, url) // это конечно нужно тестировать какой именно батч он отправит ахах
-	// мне нужно все то, что осталось после закрытия канала входного
+	defer wg.Done() // должен запуститься последним
+	// важно сделать именно тут, чтобы это сработало уже после отправки последнего батча
+
+	defer func() {
+		sema.Acquire()
+		sendBatch(batch, url)
+		sema.Release()
+		log.Info().Msg("Последний батч отправлен")
+		// в данном случае мы не можем использовать неанонимную функцию
+		// Ну можем... но тогда надо передавать ссылку на слайс, а не слайс
+		//
+		// если написать defer sendBatch(batch,url)
+		// то go запомнит именно тот слайс, который мы передавали ранее
+		// в момент создания(пустой), а нам нужен тот, что в момент завершения
+	}()
 
 	for v := range inCh {
 		batch = append(batch, v)
@@ -34,6 +50,7 @@ func worker(inCh <-chan metrica.Metrica, url string, sema Semaphore) {
 			batch = batch[:0]
 		}
 		// можно улучшить через default
+
 	}
 
 }

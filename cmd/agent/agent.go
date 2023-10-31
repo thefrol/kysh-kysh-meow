@@ -1,16 +1,21 @@
 package main
 
 import (
+	"context"
 	"os"
+	"runtime"
+	"time"
 
 	"github.com/rs/zerolog/log"
 	"github.com/thefrol/kysh-kysh-meow/internal/collector"
 	"github.com/thefrol/kysh-kysh-meow/internal/collector/report"
 	"github.com/thefrol/kysh-kysh-meow/internal/compress"
 	"github.com/thefrol/kysh-kysh-meow/internal/config"
+	"github.com/thefrol/kysh-kysh-meow/lib/graceful"
 )
 
 const updateRoute = "/updates"
+const GracefulShutdownPeriod = 30 * time.Second
 
 var defaultConfig = config.Agent{
 	Addr:            "localhost:8080",
@@ -38,6 +43,24 @@ func main() {
 	report.CompressLevel = compress.BestCompression
 	report.CompressMinLength = 100
 
+	//Создадим контекст, который будет завершен по сигналу ОС
+	ctx := graceful.WithSignal(context.Background())
+	graceful.SetForcedShutdown(ctx, GracefulShutdownPeriod)
+
 	// Запускаем работу
-	collector.FetchAndReport(config, updateRoute)
+	collector.FetchAndReport(ctx, config, updateRoute)
+
+	// Все завершилось, выведем последнюю статистику
+	log.Info().Int("goroutines active", runtime.NumGoroutine()).Msgf("Работа завершена нежно")
+
+	// todo на данный момент в конце работают две горутины, вторая из пакета
+	// graceful стопроц. А какая третья? таймер какой-то не закрытый в генераторах?
 }
+
+// todo
+//
+// было бы прикольно ещё придумать способ, как бы сделать так, чтобы
+// report.Send не занимал семафоры, пока идёт ожидание отправки,
+// например, туда можно было бы передавать этот семафор как раз.
+// Но тогда семаформы и всякие примитивы понадобится выделить
+// в отдельный пакет

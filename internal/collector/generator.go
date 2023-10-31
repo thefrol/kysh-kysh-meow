@@ -2,7 +2,6 @@ package collector
 
 import (
 	"context"
-	"sync"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -12,24 +11,21 @@ import (
 
 type FetchFunc func() fetch.Batcher
 
-var wg = sync.WaitGroup{}
-
 func generator(ctx context.Context, fetch FetchFunc, timeout time.Duration) <-chan metrica.Metrica {
 	chGen := make(chan metrica.Metrica, generatorChannelSize)
-
-	wg.Add(1)
-
 	tick := time.NewTicker(timeout)
 
 	go func() {
-
 		for {
 			select {
 			case <-tick.C:
 				// собираем метрики
 				// не хорошо будет тут зависнуть, конечно. Нужно чтобы
 				// отправщики последними останавливались
-				log.Debug().Msg("Собираются метрики") // сюда бы имя добавить какое)
+				log.Debug().Msg("Опрашиваются метрики") // сюда бы имя добавить какое)
+
+				// я вдруг подумал, что логгирование
+				// ещё неплохо документирует сам код
 
 				ms := fetch().ToTransport()
 				for _, m := range ms {
@@ -37,7 +33,8 @@ func generator(ctx context.Context, fetch FetchFunc, timeout time.Duration) <-ch
 				}
 			case <-ctx.Done():
 				close(chGen) // кто создал тот и закрывает
-				wg.Done()
+				tick.Stop()
+				return
 			}
 
 		}
