@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"os"
+	"time"
 
 	"github.com/rs/zerolog/log"
 	"github.com/thefrol/kysh-kysh-meow/internal/collector"
@@ -13,6 +14,7 @@ import (
 )
 
 const updateRoute = "/updates"
+const GracefulShutdownPeriod = 30 * time.Second
 
 var defaultConfig = config.Agent{
 	Addr:            "localhost:8080",
@@ -42,6 +44,7 @@ func main() {
 
 	//Создадим контекст, который будет завершен по сигналу ОС
 	ctx := graceful.WithSignal(context.Background())
+	graceful.SetForcedShutdown(ctx, GracefulShutdownPeriod)
 
 	// Запускаем работу
 	collector.FetchAndReport(ctx, config, updateRoute)
