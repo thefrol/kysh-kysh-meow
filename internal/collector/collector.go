@@ -40,7 +40,7 @@ func FetchAndReport(config config.Agent, updateRoute string) {
 
 	// создать каналы сбора метрик
 	interval := time.Second * time.Duration(config.PollingInterval)
-	ctx := context.TODO()
+	ctx := context.TODO() // это можно будет удалить нам не нужен контекст
 	inMs := generator(ctx, fetch.MemStats, interval)
 	inPc := generator(ctx, fetch.PollCount, interval)
 	inRv := generator(ctx, fetch.RandomValue, interval)
@@ -49,37 +49,22 @@ func FetchAndReport(config config.Agent, updateRoute string) {
 	// объединить каналы в один
 	inMix := FanIn(ctx, inMs, inPc, inPs, inRv)
 
-	// запуск планировщика
+	// создаем отправщика
 	reportInterval := time.Second * time.Duration(config.ReportInterval)
-	pool(ctx, 2, func() {
-		batch := []metrica.Metrica{}
-		log.Debug().Msg("Читаю метрики из канала")
+	workerCount := 3
+	url := Endpoint(config.Addr, updateRoute)
 
-		tick := time.NewTicker(reportInterval)
+	inCh := WithTimeouts(inMix, reportInterval)
+	for i := 0; i < workerCount; i++ {
+		worker(inCh, url)
+	}
+	// надо конечно подумать над такими вещами, что если метрики не отправились? бросить их обратно в начало или в какую-то
+	// Дополнительную очередь?
+	// типа у нас ещё очеред в начало одна, мертвых сообщений они опять на входе
 
-	readLoop:
-		for {
-			select {
-			case m := <-inMix:
-				batch = append(batch, m)
-				if len(batch) >= MaxBatch {
-					break readLoop
-				}
-			case <-tick.C:
-				// отправляем
-
-				// todo по хорошему именно вот эту штуку бы в горутине обрабатывать, пусть именно она в пуле висит
-				// а мы раз в десять секунд собираем в батчи и передаем дальше.
-				// типа добавим ещё один элемент конвеера
-				log.Debug().Int("batch_len", len(batch)).Msg("Отправляю метрики")
-				err := report.Send(batch, Endpoint(config.Addr, updateRoute))
-				if err != nil {
-					log.Error().Msgf("Попытка отправить метрики завершилась с  ошибками: %v", err)
-					return
-				}
-			}
-		}
-	})
+	// что делать если батч ещё не собран до конца, чтобы отправлять
+	// тут сильно поможет решение с созданием каналов
+	// в таком случа мы можем собирать какой угодно большой батч
 
 	wg.Wait()
 
@@ -105,4 +90,25 @@ func FetchAndReport(config config.Agent, updateRoute string) {
 // Endpoint формирует точку, куда агент будет посылать все запросы на основе своей текущей конфигурации
 func Endpoint(addr, route string) string {
 	return fmt.Sprintf("%s%s", "http://", path.Join(addr, route))
+}
+
+// sendBatch отправляет батч на сервер url
+func sendBatch(batch []metrica.Metrica, url string) {
+	// отправляем
+
+	// todo
+	//
+	// проверить что батч не пустой
+
+	log.Debug().Int("batch_len", len(batch)).Msg("Отправляю метрики")
+	err := report.Send(batch, url)
+	if err != nil {
+		log.Error().Msgf("Попытка отправить метрики завершилась с  ошибками: %v", err)
+		return
+	}
+
+	// todo по хорошему именно вот эту штуку бы в горутине обрабатывать, пусть именно она в пуле висит
+	// а мы раз в десять секунд собираем в батчи и передаем дальше.
+	// типа добавим ещё один элемент конвеера
+
 }
