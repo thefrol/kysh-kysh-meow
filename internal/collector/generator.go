@@ -11,6 +11,9 @@ import (
 
 type FetchFunc func() fetch.Batcher
 
+// generator это источник данных. Раз в timeout секунд он опрашивает источник fetch,
+// формирует данные и отправляет в исходящий канал. Возвращает исходящий канал
+// когда истечет контекст ctx, канал будет закрыт.
 func generator(ctx context.Context, fetch FetchFunc, timeout time.Duration) <-chan metrica.Metrica {
 	chGen := make(chan metrica.Metrica, generatorChannelSize)
 	tick := time.NewTicker(timeout)
@@ -20,8 +23,7 @@ func generator(ctx context.Context, fetch FetchFunc, timeout time.Duration) <-ch
 			select {
 			case <-tick.C:
 				// собираем метрики
-				// не хорошо будет тут зависнуть, конечно. Нужно чтобы
-				// отправщики последними останавливались
+
 				log.Debug().Msg("Опрашиваются метрики") // сюда бы имя добавить какое)
 
 				// я вдруг подумал, что логгирование
@@ -29,10 +31,11 @@ func generator(ctx context.Context, fetch FetchFunc, timeout time.Duration) <-ch
 
 				ms := fetch().ToTransport()
 				for _, m := range ms {
+					// todo. а что будет если канал вдруг переполнен?
 					chGen <- m
 				}
 			case <-ctx.Done():
-				close(chGen) // кто создал тот и закрывает
+				close(chGen)
 				tick.Stop()
 				return
 			}

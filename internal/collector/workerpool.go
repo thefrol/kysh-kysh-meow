@@ -23,6 +23,12 @@ const MaxBatch = 40
 //
 // это на случай создания и закрытия множества каналов под каждую отправку
 
+// worker отправляет данные на сервер, ограничивая количество отправок семафором
+// sema. Данные собираются из канала inCh и отправляются на сервер url, когда
+// пачка становится размера MaxBatch.
+//
+// В идеале ещё бы отправлять по таймеру(todo), чтобы надолго не зависало, если
+// данные во входном канале закончились.
 func worker(inCh <-chan metrica.Metrica, url string, sema Semaphore, wg *sync.WaitGroup) {
 	batch := make([]metrica.Metrica, 0, MaxBatch)
 	defer wg.Done() // должен запуститься последним
@@ -52,5 +58,14 @@ func worker(inCh <-chan metrica.Metrica, url string, sema Semaphore, wg *sync.Wa
 		// можно улучшить через default
 
 	}
-
 }
+
+// todo
+//
+// Для семантической красоты можно было бы сделать
+// sema.Do(func (){
+// 		sendBatch(batch)
+// }
+// код, который будет пропущен при срабатывании
+//
+// или сделать функцию типа semaSend(), или concurrentSend()
