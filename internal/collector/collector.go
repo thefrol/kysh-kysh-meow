@@ -38,7 +38,7 @@ func FetchAndReport(ctx context.Context, config config.Agent, updateRoute string
 	inPs := generator(ctx, fetch.GoPS, interval)
 
 	// объединить каналы в один
-	inMix := FanIn(ctx, inMs, inPc, inPs, inRv)
+	inMix := FanIn(inMs, inPc, inPs, inRv)
 
 	// собирать данные с перерывами
 	reportInterval := time.Second * time.Duration(config.ReportInterval)

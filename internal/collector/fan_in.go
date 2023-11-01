@@ -1,7 +1,6 @@
 package collector
 
 import (
-	"context"
 	"sync"
 
 	"github.com/thefrol/kysh-kysh-meow/internal/metrica"
@@ -9,7 +8,7 @@ import (
 
 // FanIn возвращает канал, в который будут сливаться данные из указанных
 // каналов chs. Когда все входные каналы будут закрыты, то и выходной тоже закроется.
-func FanIn(ctx context.Context, chs ...<-chan metrica.Metrica) chan metrica.Metrica {
+func FanIn(chs ...<-chan metrica.Metrica) chan metrica.Metrica {
 	chMix := make(chan metrica.Metrica, len(chs)*generatorChannelSize)
 	wg := sync.WaitGroup{}
 
@@ -22,12 +21,7 @@ func FanIn(ctx context.Context, chs ...<-chan metrica.Metrica) chan metrica.Metr
 			defer wg.Done()
 
 			for v := range ch {
-				select {
-				case chMix <- v:
-
-				case <-ctx.Done():
-					return
-				}
+				chMix <- v // что будет если case a<-channel, в каких случаях пропускает?
 			}
 		}(ch)
 	}
