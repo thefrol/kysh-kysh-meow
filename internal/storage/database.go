@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"sync"
 
 	"github.com/rs/zerolog/log"
 	"github.com/thefrol/kysh-kysh-meow/internal/metrica"
@@ -135,37 +136,44 @@ func (d *Database) List(ctx context.Context) (counterNames []string, gaugeNames 
 	return metrics["counter"], metrics["gauge"], nil
 }
 
+// Этот мьютекс добавлен потому что транзакции друг друга
+// блокируют, довольно жесткий костыль. От него надо избалсяться
+// как можно скорее
+var mu = sync.Mutex{}
+
 // Update implements api.Operator.
 func (d *Database) Update(ctx context.Context, req ...metrica.Metrica) (resp []metrica.Metrica, err error) {
+	mu.Lock()
+	defer mu.Unlock()
+
 	tx, err := d.db.Begin()
 	if err != nil {
 		return nil, err
 	}
 	defer tx.Rollback()
 
-	for _, r := range req {
-		switch r.MType {
-		case "counter":
-			if r.Delta == nil {
-				return nil, api.ErrorDeltaEmpty
-			}
+	// кажется нужен сквошинг метрик, иначе они друг друууууугу мешают
+	counters, gauges := squash(req...)
 
-			_, err := tx.ExecContext(ctx, queryUpsertCounter, r.ID, r.Delta)
-			if err != nil {
-				return nil, err
-			}
+	for k, v := range counters {
 
-		case "gauge":
-			if r.Value == nil {
-				return nil, api.ErrorValueEmpty
-			}
+		// if v == nil {
+		// 	return nil, api.ErrorDeltaEmpty
+		// }
 
-			_, err := tx.ExecContext(ctx, queryUpsertGauge, r.ID, r.Value)
-			if err != nil {
-				return nil, err
-			}
-		default:
-			return nil, api.ErrorUnknownMetricType
+		_, err := tx.ExecContext(ctx, queryUpsertCounter, k, v)
+		if err != nil {
+			return nil, err
+		}
+	}
+	for k, v := range gauges {
+		// if r.Value == nil {
+		// 	return nil, api.ErrorValueEmpty
+		// }
+
+		_, err := tx.ExecContext(ctx, queryUpsertGauge, k, v)
+		if err != nil {
+			return nil, err
 		}
 	}
 
@@ -179,6 +187,24 @@ func (d *Database) Update(ctx context.Context, req ...metrica.Metrica) (resp []m
 }
 
 var _ api.Operator = (*Database)(nil)
+
+func squash(ms ...metrica.Metrica) (counters map[string]int64, gauges map[string]float64) {
+	counters = make(map[string]int64)
+	gauges = make(map[string]float64)
+
+	for _, m := range ms {
+		switch m.MType {
+		case "gauge":
+			gauges[m.ID] = *m.Value
+		case "counter":
+			counters[m.ID] += *m.Delta
+		default:
+			log.Warn().Msg("Unknown metric type")
+		}
+	}
+
+	return counters, gauges
+}
 
 // TODO
 //
