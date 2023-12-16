@@ -60,7 +60,7 @@ func Test_fetchMemStats(t *testing.T) {
 				assert.Equal(t, tt.memValuesCount, len(st.ToTransport()))
 			}
 			for _, v := range tt.fieldsFound {
-				assert.Truef(t, findMetric(st, "gauge", randomvalue.IDRandomValue) || findMetric(st, "counter", randomvalue.IDRandomValue), "Not found metric %v", v)
+				assert.Truef(t, findMetric(st, "gauge", v) || findMetric(st, "counter", v), "Not found metric %v", v)
 			}
 
 		})
@@ -84,9 +84,9 @@ func Test_fetchAdditionalStats(t *testing.T) {
 	for _, tt := range tests {
 
 		t.Run(tt.name, func(t *testing.T) {
-			st := MemStats()
+			st := RandomValue()
 			for _, v := range tt.fieldsFound {
-				assert.Truef(t, findMetric(st, "gauge", randomvalue.IDRandomValue), "Not found metric %v", v)
+				assert.Truef(t, findMetric(st, "gauge", v), "Not found metric %v", v)
 			}
 
 		})
