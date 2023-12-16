@@ -64,7 +64,7 @@ func HandleJSONRequest(handler func(context.Context, ...metrica.Metrica) (out []
 				HTTPErrorWithLogging(w, http.StatusNotFound, "В хранилище не найдена метрика %v", in.ID)
 				return
 			}
-			HTTPErrorWithLogging(w, http.StatusBadRequest, "Ошибка в работе хендлера метрике %+v: %v", in, err) // todo, а как бы сделать так, чтобы %v подсвечивался
+			HTTPErrorWithLogging(w, http.StatusBadRequest, "json: Ошибка в работе хендлера метрике %+v: %v", in, err) // todo, а как бы сделать так, чтобы %v подсвечивался
 			return
 		}
 
