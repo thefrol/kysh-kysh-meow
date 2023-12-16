@@ -51,7 +51,9 @@ func FetchAndReport(ctx context.Context, config config.Agent, updateRoute string
 	wg := sync.WaitGroup{}
 	for i := 0; i < workerCount; i++ {
 		wg.Add(1)
-		go worker(inCh, url, sema, &wg)
+		go worker(inCh, url, sema, &wg) // todo тут правда дофига всякого, надо как-то семафор убрать хотя бы
+		// но для этого надо как-то более прозрачно сделать сервисы
+		// сервис отправки с семафором, который сюда передается, например
 	}
 
 	// todo
