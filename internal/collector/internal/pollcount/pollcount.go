@@ -7,6 +7,7 @@ import (
 	"github.com/thefrol/kysh-kysh-meow/internal/metrica"
 )
 
+// todo нужен atomic
 var pollCount int64
 
 const IDPollCount = "PollCount"
