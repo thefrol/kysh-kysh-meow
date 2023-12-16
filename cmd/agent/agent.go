@@ -14,8 +14,11 @@ import (
 	"github.com/thefrol/kysh-kysh-meow/lib/graceful"
 )
 
-const updateRoute = "/updates"
-const GracefulShutdownPeriod = 30 * time.Second
+const (
+	updateRoute            = "/updates"
+	GracefulShutdownPeriod = 30 * time.Second
+	CompressMinLength      = 100 // порог байтов после которого начинаем сжимать ответ
+)
 
 var defaultConfig = config.Agent{
 	Addr:            "localhost:8080",
@@ -41,7 +44,7 @@ func main() {
 	// в одной месте можно оформить установку всех основных параметров
 	report.SetSigningKey(string(config.Key.ValueFunc()()))
 	report.CompressLevel = compress.BestCompression
-	report.CompressMinLength = 100
+	report.CompressMinLength = CompressMinLength
 
 	//Создадим контекст, который будет завершен по сигналу ОС
 	ctx := graceful.WithSignal(context.Background())
