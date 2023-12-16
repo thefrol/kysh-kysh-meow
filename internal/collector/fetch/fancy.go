@@ -7,7 +7,7 @@ import (
 )
 
 func PollCount() Batcher {
-	pollcount.Drop() // сбрасываем каждый как раз прочитали, ну что-то тут происходит короче
+	defer pollcount.Drop() // сбрасываем каждый как раз прочитали, ну что-то тут происходит короче
 	return Single(pollcount.Get())
 }
 
