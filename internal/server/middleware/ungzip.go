@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/rs/zerolog/log"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/api"
 )
 
 // UnGZIP распаковывает запросы, закодированные при помощи GZIP, и пропускает все
@@ -13,21 +13,22 @@ import (
 // содержал подстроку gzip
 func UnGZIP(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// пропускаем, поскольку мы не обрабатываем такие сжималки
 		if !encoded(r, "gzip") {
 			next.ServeHTTP(w, r)
 			return
 		}
 
-		// в случае если перед нами gzip, заменяем исходное тело запроса на обертку с gzip
+		// в случае если перед нами закодироанное тело,
+		// передаем исходное тело декомпрессору, а
+		// а выход декомпрессора вкладываем в тело запроса
 		gz, err := gzip.NewReader(r.Body)
 		if err != nil {
-			log.Error().Str("location", "middleware/gzip").Strs("Content-Encoding", r.Header.Values("Content-Encoding")).Err(err).Msg("Cant unzip a request body")
-			http.Error(w, "cant unzip", http.StatusBadRequest)
-			//todo try recover and send data as is
+			api.HTTPErrorWithLogging(w, http.StatusBadRequest, "Не могу декомпрессировать тело запроса %v", err)
 			return
 		}
+		defer gz.Close()
 		defer r.Body.Close()
+
 		r.Body = gz //todo: make a pool of zgips and return only buffer, not gzipeers
 
 		next.ServeHTTP(w, r)
@@ -42,7 +43,7 @@ func UnGZIP(next http.Handler) http.Handler {
 func encoded(r *http.Request, encoder string) bool {
 	// По стандартным договоренностям, если запрос сжат или закодирован, то кодировщики
 	// указываются в последовательности их применения, а значит нам нужно читать последний
-	// заголовок Content-Encoded, и если он gzip, то расшифровать
+	// заголовок Content-Encoding, и если он gzip, то расшифровать
 
 	hh := r.Header.Values("Content-Encoding")
 	// Если вообще нет таких заголовков, то возвращаем false

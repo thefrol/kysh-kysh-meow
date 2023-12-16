@@ -60,3 +60,20 @@ func Test_Callbacks(t *testing.T) {
 		assert.Equal(t, 3, counter, "Коллбеки должны были запуститься три раза")
 	})
 }
+
+func Test_CountOfRuns(t *testing.T) {
+	t.Run("четыре запуска, четыре прохода по сновной функции", func(t *testing.T) {
+
+		counter := 0
+		callee := func() error {
+			counter++
+			return retry.Retriable(errors.New("test error"))
+		}
+
+		retry.This(callee,
+			retry.Attempts(3),
+			retry.DelaySeconds(1, 1, 1))
+
+		assert.Equal(t, 4, counter, "Коллбеки должны были запуститься три раза")
+	})
+}

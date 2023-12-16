@@ -18,12 +18,13 @@ import (
 // format, params - типичные параметры, как в функции Printf
 func HTTPErrorWithLogging(w http.ResponseWriter, statusCode int, format string, params ...interface{}) {
 	s := fmt.Sprintf(format, params...)
-	log.Error().Str("location", "json update handler").Msg(s)
+	log.Error().Msg(s)
 	http.Error(w, s, statusCode)
-	// TODO
-	//
-	// Возможно это пока единственный повод держать кастомный логгер, чтобы в нем была функция типа withHttpError(w)
 }
+
+// может ли так быть, что это часть Service? это какой-то сервис ошибок??
+
+// todo добавить api.BadGateway(), api.BadGatewayf()
 
 // Retry3Times повторяет операцию op ровно три раза
 // с промежутками 1,3,5 секунд.

@@ -1,22 +1,26 @@
 package main
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/thefrol/kysh-kysh-meow/internal/config"
+)
 
 func TestEndpoint(t *testing.T) {
 
 	tests := []struct {
 		name string
-		cfg  config
+		cfg  config.Agent
 		want string
 	}{
 		{
 			name: "positive",
-			cfg:  config{Addr: "localhost"},
+			cfg:  config.Agent{Addr: "localhost"},
 			want: "http://localhost/updates",
 		},
 		{
 			name: "positive 2",
-			cfg:  config{Addr: ":8080"},
+			cfg:  config.Agent{Addr: ":8080"},
 			want: "http://:8080/updates",
 		},
 	}
