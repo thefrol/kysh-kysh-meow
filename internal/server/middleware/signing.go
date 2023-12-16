@@ -29,6 +29,15 @@ func Signing(key string) func(http.Handler) http.Handler {
 			}
 
 			if r.GetBody == nil {
+
+				// todo
+				//
+				// Влад рекомендкует вот такую темку
+				//
+				//	body, err := io.ReadAll(r.Body)
+				//  buf := bytes.NewBuffer(body)
+				//  r.Body = io.NopCloser(bytes.NewBuffer(body))
+
 				buf := bytes.NewBuffer(make([]byte, 0, 500))
 				_, err := io.Copy(buf, r.Body)
 				if err != nil {
