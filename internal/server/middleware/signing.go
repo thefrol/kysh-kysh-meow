@@ -11,11 +11,12 @@ import (
 	"github.com/thefrol/kysh-kysh-meow/lib/intercept"
 )
 
+const SignBufferSize = 1500
+
 func Signing(key string) func(http.Handler) http.Handler {
 	keyBytes := []byte(key)
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.Header().Set("Content-Type", "application/json") // todo костылек убери лол
 
 			receivedSign := r.Header.Get(sign.SignHeaderName)
 			if receivedSign == "" {
@@ -28,6 +29,15 @@ func Signing(key string) func(http.Handler) http.Handler {
 			}
 
 			if r.GetBody == nil {
+
+				// todo
+				//
+				// Влад рекомендкует вот такую темку
+				//
+				//	body, err := io.ReadAll(r.Body)
+				//  buf := bytes.NewBuffer(body)
+				//  r.Body = io.NopCloser(bytes.NewBuffer(body))
+
 				buf := bytes.NewBuffer(make([]byte, 0, 500))
 				_, err := io.Copy(buf, r.Body)
 				if err != nil {
@@ -48,7 +58,11 @@ func Signing(key string) func(http.Handler) http.Handler {
 			}
 			defer body.Close()
 
-			data := make([]byte, 500)
+			data := make([]byte, SignBufferSize)
+			// bug если буфер меньше чем сообщение,
+			// то типа не прочитается и подпись не сможет валидироваться
+			// но большое буфер тоже не охота делать
+			// TODO!!!
 			n, err := body.Read(data)
 			if err != nil {
 				api.HTTPErrorWithLogging(w, http.StatusInternalServerError, "cant read body")

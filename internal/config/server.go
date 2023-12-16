@@ -67,6 +67,8 @@ func (cfg *Server) Parse(defaults Server) error {
 // На входе получает экземпляр хранилища m, и далее оборачивает его другим классов,
 // наиболее соответсвующим задаче, исходя из cfg
 func (cfg Server) MakeStorage(ctx context.Context) (api.Operator, error) {
+	// todo эта функция должна переехать в пакет storage
+
 	// 0. Если указана база данных, создаем хранилище с базой данных
 	// 1. Если путь не задан, то возвращаем хранилище в оперативке, без приблуд
 	// 2. Иначе оборачиваем файловым хранилищем, но не возвращаем пока
@@ -95,17 +97,8 @@ func (cfg Server) MakeStorage(ctx context.Context) (api.Operator, error) {
 			log.Warn().Msgf("Нет соединения с БД - %v", err)
 		}
 
-		go func() {
-			<-ctx.Done()
-			log.Info().Msg("Закрываю бд")
-			err := db.Close()
-			if err != nil {
-				log.Error().Msgf("Не могу закрыть базу данных: %v", err)
-			}
-			log.Info().Msg("Успешно закрыл БД")
-
-			// конечно, это должно быть в store.close()
-		}()
+		// соединения с базой данных закроются по завершении работы
+		// не обязательно явно это делать
 
 		log.Info().Msg("Создано хранилише в Базе данных")
 		return dbs, nil

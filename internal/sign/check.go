@@ -12,7 +12,7 @@ var ErrorSignsNotEqual = errors.New("подписи не совпали")
 
 // Check проверяет подпись
 func Check(data []byte, key []byte, sign string) error {
-	h := hmac.New(Hasher, key)
+	h := hmac.New(hasher, key)
 	_, err := h.Write(data)
 	if err != nil {
 		return fmt.Errorf("не могу записать хеш")

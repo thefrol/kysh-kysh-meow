@@ -3,7 +3,13 @@
 // значение счетчика
 package pollcount
 
+import (
+	"github.com/thefrol/kysh-kysh-meow/internal/metrica"
+)
+
 var pollCount int64
+
+const IDPollCount = "PollCount"
 
 // Drop сбрасывает значение счетчика опросов памяти
 func Drop() {
@@ -14,6 +20,11 @@ func Increment() {
 	pollCount += 1
 }
 
-func Get() int64 {
-	return pollCount
+func Get() metrica.Metrica {
+	val := pollCount
+	return metrica.Metrica{
+		MType: metrica.CounterName,
+		ID:    IDPollCount,
+		Delta: &val,
+	}
 }

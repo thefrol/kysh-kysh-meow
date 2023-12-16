@@ -1,9 +1,10 @@
-package report
+package fetch
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/thefrol/kysh-kysh-meow/internal/collector/internal/randomvalue"
 )
 
 // Список сохраняемых метрик из пакета runtime
@@ -54,12 +55,12 @@ func Test_fetchMemStats(t *testing.T) {
 	for _, tt := range tests {
 
 		t.Run(tt.name, func(t *testing.T) {
-			st := Fetch()
+			st := MemStats()
 			if tt.memValuesCount >= 0 {
 				assert.Equal(t, tt.memValuesCount, len(st.ToTransport()))
 			}
 			for _, v := range tt.fieldsFound {
-				assert.Truef(t, findMetric(st, "gauge", randomValueName) || findMetric(st, "counter", randomValueName), "Not found metric %v", v)
+				assert.Truef(t, findMetric(st, "gauge", v) || findMetric(st, "counter", v), "Not found metric %v", v)
 			}
 
 		})
@@ -77,22 +78,22 @@ func Test_fetchAdditionalStats(t *testing.T) {
 		{
 			name:        "all metrics in place",
 			wantErr:     false,
-			fieldsFound: []string{randomValueName},
+			fieldsFound: []string{randomvalue.IDRandomValue},
 		},
 	}
 	for _, tt := range tests {
 
 		t.Run(tt.name, func(t *testing.T) {
-			st := Fetch()
+			st := RandomValue()
 			for _, v := range tt.fieldsFound {
-				assert.Truef(t, findMetric(st, "gauge", randomValueName), "Not found metric %v", v)
+				assert.Truef(t, findMetric(st, "gauge", v), "Not found metric %v", v)
 			}
 
 		})
 	}
 }
 
-func findMetric(st Stats, mtype string, name string) bool {
+func findMetric(st Batcher, mtype string, name string) bool {
 	for _, v := range st.ToTransport() {
 		if v.ID == name && v.MType == mtype {
 			return true
