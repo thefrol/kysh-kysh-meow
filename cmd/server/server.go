@@ -15,10 +15,6 @@ import (
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
-const (
-	storageCreationTimeout = time.Second * 1
-)
-
 var defaultConfig = config.Server{
 	Addr:                 ":8080",
 	StoreIntervalSeconds: 300,
@@ -37,8 +33,8 @@ func main() {
 	// storageContext это контекст бд, он нужен чтобы
 	// остановить горутины, который пишут в файл, а
 	// так же закрыть соединение с бд при остановку сервера
-	storageContext, stopStorage := context.WithTimeout(
-		context.Background(), storageCreationTimeout)
+	storageContext, stopStorage := context.WithCancel(
+		context.Background())
 
 	// создаем хранилище
 	s, err := cfg.MakeStorage(storageContext)
