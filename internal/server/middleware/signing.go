@@ -17,7 +17,6 @@ func Signing(key string) func(http.Handler) http.Handler {
 	keyBytes := []byte(key)
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.Header().Set("Content-Type", "application/json") // todo костылек убери лол
 
 			receivedSign := r.Header.Get(sign.SignHeaderName)
 			if receivedSign == "" {
