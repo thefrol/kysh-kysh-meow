@@ -1,14 +1,13 @@
 package sign_test
 
 import (
-	"crypto/sha256"
-	"encoding/base64"
 	"hash"
 	"testing"
 
 	"github.com/thefrol/kysh-kysh-meow/internal/sign"
 )
 
+// проверка подписи для стандартных хешера и енкодера
 func TestBytes(t *testing.T) {
 	type args struct {
 		data []byte
@@ -24,8 +23,6 @@ func TestBytes(t *testing.T) {
 	}{
 		{
 			name:    "",
-			hasher:  sha256.New,
-			encoder: base64.StdEncoding.EncodeToString,
 			args:    args{data: []byte("Выпей ещё чайку"), key: []byte("с этими булочками")},
 			want:    "7RWbJONK8sV0rF6W4gJGIa2+Erh9szjEVuzFbDXtddk=",
 			wantErr: false,
@@ -34,9 +31,6 @@ func TestBytes(t *testing.T) {
 	for _, tt := range tests {
 
 		t.Run(tt.name, func(t *testing.T) {
-			//зададим сначала энкодер и хешер
-			sign.Hasher = tt.hasher
-			sign.Encoder = tt.encoder
 
 			got, err := sign.Bytes(tt.args.data, tt.args.key)
 			if (err != nil) != tt.wantErr {

@@ -4,24 +4,23 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/base64"
-	"hash"
 )
 
-// Hasher задает используемую функцию хеширования, создается каждый
-// раз новая под каждый запрос
-var Hasher func() hash.Hash = sha256.New
-
-// Encoder будет переводить хеш в строку, по умолчанию исползуется base64
-var Encoder func([]byte) string = base64.StdEncoding.EncodeToString
+// подписывать будем алгоритмом SHA256,
+// а кодировать байты при помощи base64
+var (
+	hasher  = sha256.New
+	encoder = base64.StdEncoding.EncodeToString
+)
 
 func Bytes(data []byte, key []byte) (string, error) {
-	h := hmac.New(Hasher, key)
+	h := hmac.New(hasher, key)
 	_, err := h.Write(data)
 	if err != nil {
 		return "", err
 	}
 
-	return Encoder(h.Sum(nil)), nil
+	return encoder(h.Sum(nil)), nil
 }
 
 // TODO
