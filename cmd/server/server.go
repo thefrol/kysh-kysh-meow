@@ -15,6 +15,10 @@ import (
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
+const (
+	storageCreationTimeout = time.Second * 1
+)
+
 var defaultConfig = config.Server{
 	Addr:                 ":8080",
 	StoreIntervalSeconds: 300,
@@ -30,10 +34,14 @@ func main() {
 		os.Exit(2)
 	}
 
-	rootContext, cancelRootContext := context.WithCancel(context.Background()) // это пусть будет просто defer storage.Close
+	// storageContext это контекст бд, он нужен чтобы
+	// остановить горутины, который пишут в файл, а
+	// так же закрыть соединение с бд при остановку сервера
+	storageContext, stopStorage := context.WithTimeout(
+		context.Background(), storageCreationTimeout)
 
 	// создаем хранилище
-	s, err := cfg.MakeStorage(rootContext)
+	s, err := cfg.MakeStorage(storageContext)
 	if err != nil {
 		log.Error().Msgf("Не удалось создать хранилише: %v", err)
 		return
@@ -46,7 +54,9 @@ func main() {
 	// занимаем текущий поток до вызова сигналов выключения
 	graceful.Serve(cfg.Addr, router)
 
-	cancelRootContext()
+	// Останавливаем хранилище, интервальную запись в файл и все остальное
+	// или соединения с БД
+	stopStorage()
 
 	// Даем ему время
 	time.Sleep(time.Second)
