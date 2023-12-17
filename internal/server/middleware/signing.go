@@ -13,80 +13,74 @@ import (
 
 const SignBufferSize = 1500
 
+// Signing это мидлварь, которая проверяет подписи полученных
+// запросов, используя пакет sign и ключ шифрования key
 func Signing(key string) func(http.Handler) http.Handler {
 	keyBytes := []byte(key)
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
+			// получаем подпись из заголовков
 			receivedSign := r.Header.Get(sign.SignHeaderName)
+
+			// так получилось, в тестах, если запрос
+			// передал пустой ключ подписи, то мы
+			// не проверяем подпись, даже если у сервера
+			// такой ключ указан
 			if receivedSign == "" {
-				//api.HTTPErrorWithLogging(w, http.StatusBadRequest, "Нет подписи")
-				//w.WriteHeader(http.StatusBadRequest)
-				//w.Write([]byte("no sign"))
-				//log.Info().Msg("Нет подписи")
 				next.ServeHTTP(w, r)
 				return
 			}
 
-			if r.GetBody == nil {
-
-				// todo
-				//
-				// Влад рекомендкует вот такую темку
-				//
-				//	body, err := io.ReadAll(r.Body)
-				//  buf := bytes.NewBuffer(body)
-				//  r.Body = io.NopCloser(bytes.NewBuffer(body))
-
-				buf := bytes.NewBuffer(make([]byte, 0, 500))
-				_, err := io.Copy(buf, r.Body)
-				if err != nil {
-					api.HTTPErrorWithLogging(w, http.StatusInternalServerError, "Cant replace request boby, signing failed")
-					return
-				}
-				r.Body.Close()
-
-				r.GetBody = func() (io.ReadCloser, error) {
-					return io.NopCloser(bytes.NewReader(buf.Bytes())), nil
-				}
-				r.Body, _ = r.GetBody()
-			}
-			body, err := r.GetBody()
+			// подменим тело запроса
+			// то есть прочитаем все из тела запроса
+			// потом запишем это все обратно
+			body, err := io.ReadAll(r.Body)
 			if err != nil {
-				api.HTTPErrorWithLogging(w, http.StatusInternalServerError, "Cant get request boby, signing check failed")
-				return
-			}
-			defer body.Close()
-
-			data := make([]byte, SignBufferSize)
-			// bug если буфер меньше чем сообщение,
-			// то типа не прочитается и подпись не сможет валидироваться
-			// но большое буфер тоже не охота делать
-			// TODO!!!
-			n, err := body.Read(data)
-			if err != nil {
-				api.HTTPErrorWithLogging(w, http.StatusInternalServerError, "cant read body")
+				api.HTTPErrorWithLogging(w, http.StatusInternalServerError, "Не удалось прочитать тело запроса")
 				return
 			}
 
-			if err := sign.Check(data[:n], keyBytes, receivedSign); err != nil {
+			// закрываем тело исходного запроса
+			err = r.Body.Close()
+			if err != nil {
+				log.Error().Msg("Не могу закрыть тело сообщения в подписывающей мидвари")
+				return
+			}
+
+			// и подменяем тело исходного запроса
+			r.Body = io.NopCloser(bytes.NewBuffer(body))
+
+			// проверим подпись запроса
+			if err := sign.Check(body, keyBytes, receivedSign); err != nil {
 				api.HTTPErrorWithLogging(w, http.StatusNotFound, "Подпись не прошла проверку")
 				return
 			}
 
-			// теперь займемся ответом:
-			buf := bytes.NewBuffer(data[:0])
+			//
+			//
+			// Теперь эта часть подписываем ответ
+			//
+			//
+
+			// Перехватим все, что последующие обработчики запишут
+			// в ответ
+			data := make([]byte, 0, SignBufferSize)
+			buf := bytes.NewBuffer(data)
 			faker := intercept.WithBuffer(w, buf)
 
+			// запускаем дальше по цепочке обработчики
 			next.ServeHTTP(faker, r)
 
-			// теперь запишем все, что мы забуферизировали
-
+			// в buf хранится буферизированный ответ,
+			// теперь мы посчитаем подпись для него
 			s, err := sign.Bytes(buf.Bytes(), keyBytes)
 			if err != nil {
 				api.HTTPErrorWithLogging(w, http.StatusInternalServerError, "не удается подписать ответ: %v", err)
 				return
 			}
+
+			// Теперь запишем в заголовки ответа подпись
 			w.Header().Set(sign.SignHeaderName, s)
 			log.Info().Str("sign", s).Msg("Запрос подписан")
 
