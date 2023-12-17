@@ -42,7 +42,7 @@ func TestSigning(t *testing.T) {
 	route := "/path"
 
 	s := chi.NewRouter()
-	s.Use(Signing(key))
+	s.Use(CheckSignature(key))
 	s.Get(route, Handler)
 
 	// создадим запрос
@@ -85,7 +85,7 @@ func Test_Signing_BadSign(t *testing.T) {
 	route := "/path"
 
 	s := chi.NewRouter()
-	s.Use(Signing(key))
+	s.Use(CheckSignature(key), SignResponse(key))
 	s.Get(route, Handler)
 
 	// создадим запрос

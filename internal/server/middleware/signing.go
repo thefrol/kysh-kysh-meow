@@ -20,9 +20,10 @@ import (
 // ответ сервера
 const MinBufferSize = 15
 
-// Signing это мидлварь, которая проверяет подписи полученных
-// запросов, используя пакет sign и ключ шифрования key
-func Signing(key string) func(http.Handler) http.Handler {
+// CheckSignature это мидлварь, которая проверяет подписи полученных
+// запросов, используя пакет sign и ключ шифрования key. Подпись
+// мы получаем из заголовка sign.SigningHeaderName
+func CheckSignature(key string) func(http.Handler) http.Handler {
 	keyBytes := []byte(key)
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -64,11 +65,18 @@ func Signing(key string) func(http.Handler) http.Handler {
 				return
 			}
 
-			//
-			//
-			// Теперь эта часть подписываем ответ
-			//
-			//
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
+// SignResponse подписывает ответы сервера ключом,
+// получившуюся подпись будет положена в заголовок
+// sign.SignHeaderName
+func SignResponse(key string) func(http.Handler) http.Handler {
+	keyBytes := []byte(key)
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 			// Перехватим все, что последующие обработчики запишут
 			// в ответ. И это все будет лежать в buf
