@@ -11,7 +11,14 @@ import (
 	"github.com/thefrol/kysh-kysh-meow/lib/intercept"
 )
 
-const SignBufferSize = 1500
+// Это размер буфера, который будет использован
+// для перехвата тела ответа. Чтобы лишний раз не
+// гонять память, можно указать какой-то размер буфера
+// который не надо будет аллоцировать.
+//
+// В идеале сюда должен полностью поместиться стандартный
+// ответ сервера
+const MinBufferSize = 15
 
 // Signing это мидлварь, которая проверяет подписи полученных
 // запросов, используя пакет sign и ключ шифрования key
@@ -64,12 +71,12 @@ func Signing(key string) func(http.Handler) http.Handler {
 			//
 
 			// Перехватим все, что последующие обработчики запишут
-			// в ответ
-			data := make([]byte, 0, SignBufferSize)
-			buf := bytes.NewBuffer(data)
+			// в ответ. И это все будет лежать в buf
+			buf := bytes.NewBuffer(make([]byte, 0, MinBufferSize))
 			faker := intercept.WithBuffer(w, buf)
 
 			// запускаем дальше по цепочке обработчики
+			// результат их работы будет записан в faker
 			next.ServeHTTP(faker, r)
 
 			// в buf хранится буферизированный ответ,
