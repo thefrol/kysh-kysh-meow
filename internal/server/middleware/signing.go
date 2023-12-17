@@ -60,7 +60,7 @@ func Signing(key string) func(http.Handler) http.Handler {
 
 			// проверим подпись запроса
 			if err := sign.Check(body, keyBytes, receivedSign); err != nil {
-				api.HTTPErrorWithLogging(w, http.StatusNotFound, "Подпись не прошла проверку")
+				api.HTTPErrorWithLogging(w, http.StatusBadRequest, "Подпись не прошла проверку")
 				return
 			}
 
