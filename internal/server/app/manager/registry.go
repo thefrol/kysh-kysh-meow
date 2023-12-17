@@ -9,7 +9,7 @@ type CounterRepository interface {
 
 type GaugeRepository interface {
 	Get(ctx context.Context, id string) (float64, error)
-	Update(ctx context.Context, id string, delta float64) (float64, error)
+	Update(ctx context.Context, id string, value float64) (float64, error)
 }
 
 // Registry это реестр метрик,
