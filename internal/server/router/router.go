@@ -26,10 +26,12 @@ func MeowRouter(store api.Operator, key string) (router chi.Router) {
 	// настраиваем мидлвари, логгер, распаковщик и запаковщик
 	router.Use(middleware.MeowLogging())
 	if key != "" {
-		router.Use(middleware.Signing(key))
+		router.Use(
+			middleware.CheckSignature(key),
+			middleware.SignResponse(key))
 	}
 	router.Use(middleware.UnGZIP)
-	router.Use(middleware.GZIP(CompressionTreshold, CompressionBufferLen)) //todo нормальные константы вместо магических чисел
+	router.Use(middleware.GZIP(CompressionTreshold, CompressionBufferLen))
 
 	// Создаем маршруты для обработки URL запросов
 	router.Group(func(r chi.Router) {
@@ -84,9 +86,3 @@ func MeowRouter(store api.Operator, key string) (router chi.Router) {
 
 	return router
 }
-
-// Кажется в голове начинает зреть понимание бизнес логики.
-// Типа вне зависисмости это gRPC ли, или это HTTP, или даже если
-// это в микрофон кто-то сказал - мы берем метрику и возвращаем.
-// Или изменяем метрику, и записываем в хранилище. По сути это
-// и есть логика нашей программы

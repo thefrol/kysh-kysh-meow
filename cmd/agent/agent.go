@@ -8,8 +8,8 @@ import (
 
 	"github.com/rs/zerolog/log"
 	"github.com/thefrol/kysh-kysh-meow/internal/collector"
-	"github.com/thefrol/kysh-kysh-meow/internal/collector/compress"
 	"github.com/thefrol/kysh-kysh-meow/internal/collector/report"
+	"github.com/thefrol/kysh-kysh-meow/internal/collector/report/compress"
 	"github.com/thefrol/kysh-kysh-meow/internal/config"
 	"github.com/thefrol/kysh-kysh-meow/lib/graceful"
 )
