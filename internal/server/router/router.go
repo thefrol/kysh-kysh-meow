@@ -5,6 +5,9 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/api"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/app/manager"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/queryhandlers"
+	"github.com/thefrol/kysh-kysh-meow/internal/storage"
 
 	"github.com/thefrol/kysh-kysh-meow/internal/server/middleware"
 )
@@ -23,6 +26,16 @@ func MeowRouter(store api.Operator, key string) (router chi.Router) {
 
 	router = chi.NewRouter()
 
+	// создадим уровень приложения
+	m := manager.Registry{
+		Counters: &storage.CounterAdapter{Op: store},
+		Gauges:   &storage.GaugeAdapter{Op: store},
+	}
+
+	query := queryhandlers.API{
+		Registry: m,
+	}
+
 	// настраиваем мидлвари, логгер, распаковщик и запаковщик
 	router.Use(middleware.MeowLogging())
 	if key != "" {
@@ -37,6 +50,7 @@ func MeowRouter(store api.Operator, key string) (router chi.Router) {
 	router.Group(func(r chi.Router) {
 		// в какой-то момент, когда починят тесты, тут можно будет снять комменты
 		//r.With(chimiddleware.AllowContentType("text/plain")) todo
+		r.Get("/value/counter/{id}", query.GetCounter)
 		r.Get("/value/{type}/{name}", api.HandleURLRequest(api.Retry3Times(store.Get)))
 		r.Post("/update/{type}/{name}/{value}", api.HandleURLRequest(api.Retry3Times(store.Update)))
 	})
