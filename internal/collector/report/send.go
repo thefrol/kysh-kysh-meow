@@ -8,7 +8,7 @@ import (
 
 	"github.com/go-resty/resty/v2"
 	"github.com/rs/zerolog/log"
-	"github.com/thefrol/kysh-kysh-meow/internal/collector/compress"
+	"github.com/thefrol/kysh-kysh-meow/internal/collector/report/compress"
 	"github.com/thefrol/kysh-kysh-meow/internal/metrica"
 	"github.com/thefrol/kysh-kysh-meow/internal/sign"
 	"github.com/thefrol/kysh-kysh-meow/lib/retry"
