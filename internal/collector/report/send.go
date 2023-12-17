@@ -9,7 +9,6 @@ import (
 	"github.com/go-resty/resty/v2"
 	"github.com/rs/zerolog/log"
 	"github.com/thefrol/kysh-kysh-meow/internal/collector/compress"
-	"github.com/thefrol/kysh-kysh-meow/internal/collector/internal/pollcount"
 	"github.com/thefrol/kysh-kysh-meow/internal/metrica"
 	"github.com/thefrol/kysh-kysh-meow/internal/sign"
 	"github.com/thefrol/kysh-kysh-meow/lib/retry"
@@ -20,7 +19,8 @@ var (
 	ErrorRequestRejected = errors.New("запрос не принят, статус код не 200")
 )
 
-var defaultClient = resty.New()
+// это клиент, которым будет пользоваться наш пакет для отправки
+var сlient = resty.New()
 
 // Send отправляет метрики из указанного хранилища store на сервер host.
 // При возникновении ошибок будет стараться отправить как можно больше метрик,
@@ -37,7 +37,7 @@ func Send(metricas []metrica.Metrica, url string) error {
 		4. Попробовать отправить preparedRequest, если не получится, то ничего страшного
 		5. Если получилось, обнуляем pollCounter
 	*/
-	preparedRequest := defaultClient.R()
+	preparedRequest := сlient.R()
 	preparedRequest.Header.Set("Content-Type", "application/json")
 
 	var b []byte // тут будет тело, которое в итоге запишем в сообщение
