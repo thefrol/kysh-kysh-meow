@@ -113,9 +113,6 @@ func Send(metricas []metrica.Metrica, url string) error {
 		return fmt.Errorf("%w: сервер вернул %v: %v", ErrorRequestRejected, resp.StatusCode(), string(resp.Body()))
 	}
 
-	// Если сервер принял, то сбрасываем счетчик
-	pollcount.Drop()
-
 	return nil
 }
 
