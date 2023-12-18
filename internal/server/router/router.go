@@ -6,6 +6,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/api"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/app/manager"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/app/scan"
 	handler "github.com/thefrol/kysh-kysh-meow/internal/server/handlers"
 	"github.com/thefrol/kysh-kysh-meow/internal/storage"
 
@@ -102,6 +103,14 @@ func MeowRouter(store api.Operator, key string) (router chi.Router) {
 	router.Group(func(r chi.Router) {
 		router.Get("/ping", api.PingStore(store))
 		router.Get("/", api.DisplayHTML(store))
+
+		html := handler.ForHTML{
+			Labels: scan.Labels{
+				Counters: &storage.CounterAdapter{Op: store},
+				Gauges:   &storage.GaugeAdapter{Op: store},
+			},
+		}
+		router.Get("/all", html.Dashboard)
 	})
 
 	// Тут добавляем стилизованные под кошки-мышки ответы сервера при 404 и 400,
