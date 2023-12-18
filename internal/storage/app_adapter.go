@@ -8,16 +8,38 @@ import (
 	"github.com/thefrol/kysh-kysh-meow/internal/metrica"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/api"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/app/manager"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/app/scan"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/domain"
 )
 
 var (
 	_ manager.CounterRepository = (*CounterAdapter)(nil)
+	_ scan.CounterLister        = (*CounterAdapter)(nil)
 	_ manager.GaugeRepository   = (*GaugeAdapter)(nil)
+	_ scan.GaugeLister          = (*GaugeAdapter)(nil)
 )
 
 type CounterAdapter struct {
 	Op api.Operator
+}
+
+// All implements scan.CounterLister.
+func (adapter *CounterAdapter) All(ctx context.Context) (map[string]int64, error) {
+	res := make(map[string]int64)
+
+	counters, _, err := adapter.Op.List(ctx)
+	if err != nil {
+		return nil, err
+	}
+	for _, l := range counters {
+		v, err := adapter.Get(ctx, l)
+		if err != nil {
+			return nil, err
+		}
+		res[l] = v
+	}
+
+	return res, nil
 }
 
 // Get implements manager.CounterRepository.
@@ -81,6 +103,25 @@ func (adapter *CounterAdapter) Increment(ctx context.Context, id string, delta i
 
 type GaugeAdapter struct {
 	Op api.Operator
+}
+
+// All implements scan.GaugeLister.
+func (adapter *GaugeAdapter) All(ctx context.Context) (map[string]float64, error) {
+	res := make(map[string]float64)
+
+	_, gauges, err := adapter.Op.List(ctx)
+	if err != nil {
+		return nil, err
+	}
+	for _, l := range gauges {
+		v, err := adapter.Get(ctx, l)
+		if err != nil {
+			return nil, err
+		}
+		res[l] = v
+	}
+
+	return res, nil
 }
 
 // Get implements manager.GaugeRepository.
