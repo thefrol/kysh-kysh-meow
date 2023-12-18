@@ -84,11 +84,15 @@ func MeowRouter(store api.Operator, key string) (router chi.Router) {
 		//
 		// r.With(chimiddleware.AllowContentType("application/json"))
 
+		jsonHandler := handler.ForJSON{
+			Registry: m,
+		}
+
 		// как не дублировать маршруты я пока варианта не нашел:
 		// если в конце поставить слеш, то без слеша не работает
 		// а вроде даже в тестах и так и так иногда бывает
-		r.Post("/value", api.HandleJSONRequest(api.Retry3Times(store.Get)))
-		r.Post("/value/", api.HandleJSONRequest(api.Retry3Times(store.Get)))
+		r.Post("/value", jsonHandler.Get)
+		r.Post("/value/", jsonHandler.Get)
 		r.Post("/update", api.HandleJSONRequest(api.Retry3Times(store.Update)))
 		r.Post("/update/", api.HandleJSONRequest(api.Retry3Times(store.Update)))
 		r.Post("/updates", api.HandleJSONBatch(api.Retry3Times(store.Update)))
