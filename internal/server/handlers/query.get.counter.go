@@ -1,4 +1,4 @@
-package queryhandlers
+package handlers
 
 import (
 	"errors"
@@ -10,7 +10,7 @@ import (
 	"github.com/thefrol/kysh-kysh-meow/internal/server/domain"
 )
 
-func (a *API) GetCounter(w http.ResponseWriter, r *http.Request) {
+func (a *ForQuery) GetCounter(w http.ResponseWriter, r *http.Request) {
 	var (
 		id = chi.URLParam(r, "id")
 	)

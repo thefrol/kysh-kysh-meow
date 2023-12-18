@@ -6,7 +6,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/api"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/app/manager"
-	"github.com/thefrol/kysh-kysh-meow/internal/server/queryhandlers"
+	handler "github.com/thefrol/kysh-kysh-meow/internal/server/handlers"
 	"github.com/thefrol/kysh-kysh-meow/internal/storage"
 
 	"github.com/thefrol/kysh-kysh-meow/internal/server/middleware"
@@ -46,10 +46,9 @@ func MeowRouter(store api.Operator, key string) (router chi.Router) {
 	// параметры из маршрута для установки значений метрик, за эти маршруты
 	// отвечает структура query
 	router.Group(func(r chi.Router) {
-		// для маршрутов этого вида мы используем хендлеры
-		// из этой структурки. По итогу получится, что все это хранится в
-		// куче. Не оч прикольно, но да ладно)
-		query := queryhandlers.API{
+		// хендлеры сгрупированы в эту структурку, тут все что надо
+		// для этих самых простых хендлеров
+		query := handler.ForQuery{
 			Registry: m,
 		}
 

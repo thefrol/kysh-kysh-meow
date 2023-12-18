@@ -1,4 +1,4 @@
-package queryhandlers
+package handlers
 
 import (
 	"errors"
@@ -12,7 +12,7 @@ import (
 
 // GetGauge это хендлер, который возвращает метрику типа gauge,
 // с идентификатором id
-func (a *API) GetGauge(w http.ResponseWriter, r *http.Request) {
+func (a *ForQuery) GetGauge(w http.ResponseWriter, r *http.Request) {
 
 	// достанем из query идентификатор имя нашей метрики
 	var (
