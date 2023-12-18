@@ -51,7 +51,10 @@ func MeowRouter(store api.Operator, key string) (router chi.Router) {
 		// в какой-то момент, когда починят тесты, тут можно будет снять комменты
 		//r.With(chimiddleware.AllowContentType("text/plain")) todo
 		r.Get("/value/counter/{id}", query.GetCounter)
+		r.Get("/value/gauge/{id}", query.GetGauge)
 		r.Post("/update/counter/{id}/{delta}", query.IncrementCounter)
+		r.Post("/update/gauge/{id}/{value}", query.UpdateGauge)
+
 		r.Get("/value/{type}/{name}", api.HandleURLRequest(api.Retry3Times(store.Get)))
 		r.Post("/update/{type}/{name}/{value}", api.HandleURLRequest(api.Retry3Times(store.Update)))
 	})
