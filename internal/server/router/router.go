@@ -77,8 +77,16 @@ func MeowRouter(store api.Operator, key string) (router chi.Router) {
 
 	// Создаем маршруты для обработки JSON запросов
 	router.Group(func(r chi.Router) {
-		//r.With(chimiddleware.AllowContentType("application/json"))
+		// Опять эта история со взбесившимяя тестами, когда их
+		// починят можно будет раскомментировать код
+		//
+		// todo
+		//
+		// r.With(chimiddleware.AllowContentType("application/json"))
 
+		// как не дублировать маршруты я пока варианта не нашел:
+		// если в конце поставить слеш, то без слеша не работает
+		// а вроде даже в тестах и так и так иногда бывает
 		r.Post("/value", api.HandleJSONRequest(api.Retry3Times(store.Get)))
 		r.Post("/value/", api.HandleJSONRequest(api.Retry3Times(store.Get)))
 		r.Post("/update", api.HandleJSONRequest(api.Retry3Times(store.Update)))
@@ -86,31 +94,23 @@ func MeowRouter(store api.Operator, key string) (router chi.Router) {
 		r.Post("/updates", api.HandleJSONBatch(api.Retry3Times(store.Update)))
 		r.Post("/updates/", api.HandleJSONBatch(api.Retry3Times(store.Update)))
 
-		// TODO
-		//
-		// подозрительно похоже на абстракную фабрику
-		// update := api.HandleJSONRequest(store.Update)
-		// get := api.HandleJSONRequest(store.Get)
-		//
-		//
-		// как не дублировать маршруты я пока варианта не нашел:
-		// если в конце поставить слеш, то без слеша не работает
-		// а вроде даже в тестах и так и так иногда бывает
 	})
+
+	// У нас так же есть небольшой дэшборд, который находится по корневому
+	// маршруту. Там мы выводим список всех известных нам метрик.
+	labels := scan.Labels{
+		Counters: &storage.CounterAdapter{Op: store},
+		Gauges:   &storage.GaugeAdapter{Op: store},
+	}
+	html := handler.ForHTML{
+		Labels: labels,
+	}
+	router.Get("/", html.Dashboard)
 
 	// Создаем маршруты, показывающие статус сервера. Страница со всемми метриками,
 	// и пинг БД
 	router.Group(func(r chi.Router) {
 		router.Get("/ping", api.PingStore(store))
-		router.Get("/", api.DisplayHTML(store))
-
-		html := handler.ForHTML{
-			Labels: scan.Labels{
-				Counters: &storage.CounterAdapter{Op: store},
-				Gauges:   &storage.GaugeAdapter{Op: store},
-			},
-		}
-		router.Get("/all", html.Dashboard)
 	})
 
 	// Тут добавляем стилизованные под кошки-мышки ответы сервера при 404 и 400,
