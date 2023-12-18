@@ -21,48 +21,21 @@ func (h *ForJSON) Get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// todo validate
-	// and domain.MEtrica или прям тут
-
-	switch m.MType {
-	case "counter":
-		v, err := h.Registry.Counter(r.Context(), m.ID)
-		if err != nil {
-			if errors.Is(err, domain.ErrorMetricNotFound) {
-				api.HTTPErrorWithLogging(w,
-					http.StatusNotFound,
-					"Не удалось найти счетчик %v: %v", m.ID, err)
-				return
-			}
+	v, err := h.Manager.GetMetrica(r.Context(), m)
+	if err != nil {
+		if errors.Is(err, domain.ErrorMetricNotFound) {
 			api.HTTPErrorWithLogging(w,
-				http.StatusInternalServerError,
-				"Не могу получить значение cчетчика %v: %v", m.ID, err)
+				http.StatusNotFound,
+				"Не удалось найти метрику %v типа %v: %v", m.ID, m.MType, err)
 			return
 		}
-		m.Delta = &v
-	case "gauge":
-		v, err := h.Registry.Gauge(r.Context(), m.ID)
-		if err != nil {
-			if errors.Is(err, domain.ErrorMetricNotFound) {
-				api.HTTPErrorWithLogging(w,
-					http.StatusNotFound,
-					"Не удалось найти гауж %v: %v", m.ID, err)
-				return
-			}
-			api.HTTPErrorWithLogging(w,
-				http.StatusInternalServerError,
-				"Не могу получить значение гаужа %v: %v", m.ID, err)
-			return
-		}
-		m.Value = &v
-	default:
 		api.HTTPErrorWithLogging(w,
 			http.StatusBadRequest,
-			"Неизвестный тип метрики %v, запрос с именем %v", m.MType, m.ID)
+			"Получена неправильная метрика %v.%v: %v", m.MType, m.ID, err)
 		return
 	}
 
-	_, _, err = easyjson.MarshalToHTTPResponseWriter(m, w)
+	_, _, err = easyjson.MarshalToHTTPResponseWriter(v, w)
 	if err != nil {
 		api.HTTPErrorWithLogging(w,
 			http.StatusInternalServerError,

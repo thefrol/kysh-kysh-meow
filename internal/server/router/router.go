@@ -6,6 +6,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/api"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/app/manager"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/app/metricas"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/app/scan"
 	handler "github.com/thefrol/kysh-kysh-meow/internal/server/handlers"
 	"github.com/thefrol/kysh-kysh-meow/internal/storage"
@@ -84,8 +85,15 @@ func MeowRouter(store api.Operator, key string) (router chi.Router) {
 		//
 		// r.With(chimiddleware.AllowContentType("application/json"))
 
-		jsonHandler := handler.ForJSON{
+		// это юзкейс который работает над
+		// базовыми операциями с метриками
+		manager := metricas.Manager{
 			Registry: m,
+		}
+
+		// и создаем хендлеры
+		jsonHandler := handler.ForJSON{
+			Manager: manager,
 		}
 
 		// как не дублировать маршруты я пока варианта не нашел:

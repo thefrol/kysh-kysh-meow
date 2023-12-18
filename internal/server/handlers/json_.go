@@ -1,11 +1,9 @@
 package handlers
 
-import (
-	"github.com/thefrol/kysh-kysh-meow/internal/server/app/manager"
-)
+import "github.com/thefrol/kysh-kysh-meow/internal/server/app/metricas"
 
 // ForJSON объединяет хендлеры, которые работают
 // с джейсонами
 type ForJSON struct {
-	Registry manager.Registry
+	Manager metricas.Manager
 }
