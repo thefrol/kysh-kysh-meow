@@ -32,10 +32,6 @@ func MeowRouter(store api.Operator, key string) (router chi.Router) {
 		Gauges:   &storage.GaugeAdapter{Op: store},
 	}
 
-	query := queryhandlers.API{
-		Registry: m,
-	}
-
 	// настраиваем мидлвари, логгер, распаковщик и запаковщик
 	router.Use(middleware.MeowLogging())
 	if key != "" {
@@ -46,17 +42,37 @@ func MeowRouter(store api.Operator, key string) (router chi.Router) {
 	router.Use(middleware.UnGZIP)
 	router.Use(middleware.GZIP(CompressionTreshold, CompressionBufferLen))
 
-	// Создаем маршруты для обработки URL запросов
+	// Первая часть маршрутов - из первых спринтов. Тут используются
+	// параметры из маршрута для установки значений метрик, за эти маршруты
+	// отвечает структура query
 	router.Group(func(r chi.Router) {
-		// в какой-то момент, когда починят тесты, тут можно будет снять комменты
-		//r.With(chimiddleware.AllowContentType("text/plain")) todo
+		// для маршрутов этого вида мы используем хендлеры
+		// из этой структурки. По итогу получится, что все это хранится в
+		// куче. Не оч прикольно, но да ладно)
+		query := queryhandlers.API{
+			Registry: m,
+		}
+
+		// на данный момент тесты неправильно работают с контент-тайпом,
+		// например они не присылают правильный контент-тайп в некоторых случаях,
+		// а если так-то пока мы не можем ставить эту проверку
+		// но когда тесты починят, это стоит сделать //todo
+		//
+		// r.With(chimiddleware.AllowContentType("text/plain"))
+
+		// Настроим хендлеры получения метрик. Мы добавляем ещё один
+		// маршрут для метрик с невалидным типом, при обращении к этому
+		// маршруту, мы всегда возвращаем 400 Bad Request
 		r.Get("/value/counter/{id}", query.GetCounter)
 		r.Get("/value/gauge/{id}", query.GetGauge)
+		r.Get("/value/{unknown}/{id}", BadRequest)
+
+		// Настроим хендлеры изменения метрик. Аналогино
+		// поступаем с невалидным маршрутом, который
+		// всегда вернет 400 Bad Request
 		r.Post("/update/counter/{id}/{delta}", query.IncrementCounter)
 		r.Post("/update/gauge/{id}/{value}", query.UpdateGauge)
-
-		r.Get("/value/{type}/{name}", api.HandleURLRequest(api.Retry3Times(store.Get)))
-		r.Post("/update/{type}/{name}/{value}", api.HandleURLRequest(api.Retry3Times(store.Update)))
+		r.Post("/update/{unknown}/{id}/{value}", BadRequest)
 	})
 
 	// Создаем маршруты для обработки JSON запросов
@@ -103,4 +119,11 @@ func MeowRouter(store api.Operator, key string) (router chi.Router) {
 	})
 
 	return router
+}
+
+// BadRequest это специальный хендлер, который возвращает ошибку 400 Bad Request
+func BadRequest(w http.ResponseWriter, r *http.Request) {
+	api.HTTPErrorWithLogging(w,
+		http.StatusBadRequest,
+		"0-0 ошибка в запросе")
 }
