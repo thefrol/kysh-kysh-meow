@@ -16,7 +16,7 @@ func (h *ForJSON) Update(w http.ResponseWriter, r *http.Request) {
 	err := easyjson.UnmarshalFromReader(r.Body, &m)
 	if err != nil {
 		api.HTTPErrorWithLogging(w,
-			http.StatusInternalServerError,
+			http.StatusBadRequest,
 			"Не могу размаршалить в json тело запроса: %v", err)
 		return
 	}
