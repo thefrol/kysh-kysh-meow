@@ -101,8 +101,8 @@ func MeowRouter(store api.Operator, key string) (router chi.Router) {
 		// а вроде даже в тестах и так и так иногда бывает
 		r.Post("/value", jsonHandler.Get)
 		r.Post("/value/", jsonHandler.Get)
-		r.Post("/update", api.HandleJSONRequest(api.Retry3Times(store.Update)))
-		r.Post("/update/", api.HandleJSONRequest(api.Retry3Times(store.Update)))
+		r.Post("/update", jsonHandler.Update)
+		r.Post("/update/", jsonHandler.Update)
 		r.Post("/updates", api.HandleJSONBatch(api.Retry3Times(store.Update)))
 		r.Post("/updates/", api.HandleJSONBatch(api.Retry3Times(store.Update)))
 
