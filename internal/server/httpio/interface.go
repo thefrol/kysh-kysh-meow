@@ -1,5 +1,7 @@
 package httpio
 
+// todo deprecated, delete all
+
 import (
 	"context"
 	"errors"
@@ -38,21 +40,3 @@ type Operator interface {
 
 	List(ctx context.Context) (counterNames []string, gaugeNames []string, err error)
 }
-
-// mentor
-//
-// Где должны храниться ошибки?
-
-// TODO
-//
-// Внезапно пришла забавная идея.
-//
-// Если Operation это тип, то мы могли бы сделать к нему методов, которые и были бы этими хендлерами
-// func (op Operation) HandleJSON
-//
-// И тогда бы наши вызовы выглядели вот так
-//
-// router.Post("/value", get.HadleWithJSON)
-// router.Post("/update", update.HandleWithJSON)
-//
-// пока выглядит не очень идиоматично, канеш)
