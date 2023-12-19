@@ -4,12 +4,12 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/thefrol/kysh-kysh-meow/internal/server/api"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/app/dbping"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/app/manager"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/app/metricas"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/app/scan"
 	handler "github.com/thefrol/kysh-kysh-meow/internal/server/handlers"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/httpio"
 	"github.com/thefrol/kysh-kysh-meow/internal/storage"
 
 	"github.com/thefrol/kysh-kysh-meow/internal/server/middleware"
@@ -25,7 +25,7 @@ const (
 // стилизованные ответы.
 //
 // на входе получает store - объект хранилища, операции над которым он будет проворачивать
-func MeowRouter(store api.Operator, pinger dbping.Pinger, key string) (router chi.Router) {
+func MeowRouter(store httpio.Operator, pinger dbping.Pinger, key string) (router chi.Router) {
 
 	router = chi.NewRouter()
 
@@ -150,7 +150,7 @@ func MeowRouter(store api.Operator, pinger dbping.Pinger, key string) (router ch
 
 // BadRequest это специальный хендлер, который возвращает ошибку 400 Bad Request
 func BadRequest(w http.ResponseWriter, r *http.Request) {
-	api.HTTPErrorWithLogging(w,
+	httpio.HTTPErrorWithLogging(w,
 		http.StatusBadRequest,
 		"0-0 ошибка в запросе")
 }

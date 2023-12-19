@@ -1,4 +1,4 @@
-package api
+package httpio
 
 import "net/http"
 

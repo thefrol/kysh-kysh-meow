@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/thefrol/kysh-kysh-meow/internal/server/api"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/httpio"
 )
 
 // UnGZIP распаковывает запросы, закодированные при помощи GZIP, и пропускает все
@@ -23,7 +23,7 @@ func UnGZIP(next http.Handler) http.Handler {
 		// а выход декомпрессора вкладываем в тело запроса
 		gz, err := gzip.NewReader(r.Body)
 		if err != nil {
-			api.HTTPErrorWithLogging(w, http.StatusBadRequest, "Не могу декомпрессировать тело запроса %v", err)
+			httpio.HTTPErrorWithLogging(w, http.StatusBadRequest, "Не могу декомпрессировать тело запроса %v", err)
 			return
 		}
 		defer gz.Close()

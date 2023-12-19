@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/thefrol/kysh-kysh-meow/internal/metrica"
-	"github.com/thefrol/kysh-kysh-meow/internal/server/api"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/httpio"
 )
 
 // OperatorAdapter оборачивает классы на старом апи хранилища oldAPI,
@@ -22,7 +22,7 @@ func AsOperator(s legacyStorager) *OperatorAdapter {
 func (a OperatorAdapter) Counter(ctx context.Context, name string) (value int64, err error) {
 	c, found := a.legacyStore.Counter(name)
 	if !found {
-		return 0, api.ErrorNotFoundMetric
+		return 0, httpio.ErrorNotFoundMetric
 	}
 	return int64(c), nil
 }
@@ -31,7 +31,7 @@ func (a OperatorAdapter) Counter(ctx context.Context, name string) (value int64,
 func (a OperatorAdapter) Gauge(ctx context.Context, name string) (value float64, err error) {
 	g, found := a.legacyStore.Gauge(name)
 	if !found {
-		return 0, api.ErrorNotFoundMetric
+		return 0, httpio.ErrorNotFoundMetric
 	}
 	return float64(g), nil
 }
@@ -57,7 +57,7 @@ func (a *OperatorAdapter) List(ctx context.Context) (counterNames []string, gaug
 
 func (a *OperatorAdapter) getOne(ctx context.Context, r metrica.Metrica) (resp metrica.Metrica, err error) {
 	if r.ID == "" {
-		return resp, api.ErrorUpdateCheckFailed // todo правильная ошибка?
+		return resp, httpio.ErrorUpdateCheckFailed // todo правильная ошибка?
 	}
 	switch r.MType {
 	case "counter":
@@ -67,7 +67,7 @@ func (a *OperatorAdapter) getOne(ctx context.Context, r metrica.Metrica) (resp m
 		g, err := a.Gauge(ctx, r.ID)
 		return metrica.Metrica{MType: r.MType, ID: r.ID, Value: &g}, err
 	default:
-		return resp, api.ErrorUnknownMetricType
+		return resp, httpio.ErrorUnknownMetricType
 	}
 }
 
@@ -76,18 +76,18 @@ func (a *OperatorAdapter) updateOne(ctx context.Context, in metrica.Metrica) (re
 	switch in.MType {
 	case "counter":
 		if in.Delta == nil {
-			return empty, api.ErrorDeltaEmpty
+			return empty, httpio.ErrorDeltaEmpty
 		}
 		c, err := a.IncrementCounter(ctx, in.ID, *in.Delta)
 		return metrica.Metrica{MType: in.MType, ID: in.ID, Delta: &c}, err // это получается отправится в хип
 	case "gauge":
 		if in.Value == nil {
-			return empty, api.ErrorValueEmpty
+			return empty, httpio.ErrorValueEmpty
 		}
 		g, err := a.UpdateGauge(ctx, in.ID, *in.Value)
 		return metrica.Metrica{MType: in.MType, ID: in.ID, Value: &g}, err
 	default:
-		return empty, api.ErrorUnknownMetricType
+		return empty, httpio.ErrorUnknownMetricType
 	}
 }
 
@@ -131,7 +131,7 @@ func (a *OperatorAdapter) Update(ctx context.Context, req ...datastruct) (resp [
 // Check implements Operator. Это функция, которая проверяет связь с базой данных. Возвращает ошибку если
 // связь отсутствует
 func (a *OperatorAdapter) Check(ctx context.Context) error {
-	return api.ErrorNoDatabase
+	return httpio.ErrorNoDatabase
 
 	// TODO
 	//
@@ -142,6 +142,6 @@ func (a *OperatorAdapter) Check(ctx context.Context) error {
 	// Кажется, что это меньшее из зол.
 }
 
-var _ api.Operator = (*OperatorAdapter)(nil)
+var _ httpio.Operator = (*OperatorAdapter)(nil)
 
 var empty = metrica.Metrica{}

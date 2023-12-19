@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/thefrol/kysh-kysh-meow/internal/server/api"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/httpio"
 )
 
 type ForPing struct {
@@ -14,7 +14,7 @@ type ForPing struct {
 func (p ForPing) Ping(w http.ResponseWriter, r *http.Request) {
 	err := p.Pinger(r.Context())
 	if err != nil {
-		api.HTTPErrorWithLogging(w,
+		httpio.HTTPErrorWithLogging(w,
 			http.StatusInternalServerError,
 			"Не удалось достучаться до базы данных: %v", err)
 	}

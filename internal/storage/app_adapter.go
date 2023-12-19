@@ -6,10 +6,10 @@ import (
 	"fmt"
 
 	"github.com/thefrol/kysh-kysh-meow/internal/metrica"
-	"github.com/thefrol/kysh-kysh-meow/internal/server/api"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/app/manager"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/app/scan"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/domain"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/httpio"
 )
 
 var (
@@ -20,7 +20,7 @@ var (
 )
 
 type CounterAdapter struct {
-	Op api.Operator
+	Op httpio.Operator
 }
 
 // All implements scan.CounterLister.
@@ -53,7 +53,7 @@ func (adapter *CounterAdapter) Get(ctx context.Context, id string) (int64, error
 	// получаем метрику из оператора
 	v, err := adapter.Op.Get(ctx, d)
 	if err != nil {
-		if errors.Is(err, api.ErrorNotFoundMetric) {
+		if errors.Is(err, httpio.ErrorNotFoundMetric) {
 			return 0, fmt.Errorf("in CounterAdapter: %w: %v", domain.ErrorMetricNotFound, err)
 		}
 		return 0, err
@@ -83,7 +83,7 @@ func (adapter *CounterAdapter) Increment(ctx context.Context, id string, delta i
 	// получаем метрику из оператора
 	v, err := adapter.Op.Update(ctx, d)
 	if err != nil {
-		if errors.Is(err, api.ErrorNotFoundMetric) {
+		if errors.Is(err, httpio.ErrorNotFoundMetric) {
 			return 0, fmt.Errorf("in CounterAdapter: %w: %v", domain.ErrorMetricNotFound, err)
 		}
 		return 0, err
@@ -102,7 +102,7 @@ func (adapter *CounterAdapter) Increment(ctx context.Context, id string, delta i
 }
 
 type GaugeAdapter struct {
-	Op api.Operator
+	Op httpio.Operator
 }
 
 // All implements scan.GaugeLister.
@@ -135,7 +135,7 @@ func (adapter *GaugeAdapter) Get(ctx context.Context, id string) (float64, error
 	// получаем метрику из оператора
 	v, err := adapter.Op.Get(ctx, d)
 	if err != nil {
-		if errors.Is(err, api.ErrorNotFoundMetric) {
+		if errors.Is(err, httpio.ErrorNotFoundMetric) {
 			return 0, fmt.Errorf("in GaugeAdapter: %w: %v", domain.ErrorMetricNotFound, err)
 		}
 		return 0, err
@@ -165,7 +165,7 @@ func (adapter *GaugeAdapter) Update(ctx context.Context, id string, value float6
 	// получаем метрику из оператора
 	v, err := adapter.Op.Update(ctx, d)
 	if err != nil {
-		if errors.Is(err, api.ErrorNotFoundMetric) {
+		if errors.Is(err, httpio.ErrorNotFoundMetric) {
 			return 0, fmt.Errorf("in GaugeAdapter: %w: %v", domain.ErrorMetricNotFound, err)
 		}
 		return 0, err

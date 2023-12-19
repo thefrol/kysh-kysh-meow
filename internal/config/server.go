@@ -11,7 +11,7 @@ import (
 	"github.com/caarlos0/env/v6"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	"github.com/thefrol/kysh-kysh-meow/internal/server/api"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/httpio"
 	"github.com/thefrol/kysh-kysh-meow/internal/storage"
 )
 
@@ -66,7 +66,7 @@ func (cfg *Server) Parse(defaults Server) error {
 //
 // На входе получает экземпляр хранилища m, и далее оборачивает его другим классов,
 // наиболее соответсвующим задаче, исходя из cfg
-func (cfg Server) MakeStorage(ctx context.Context) (api.Operator, error) {
+func (cfg Server) MakeStorage(ctx context.Context) (httpio.Operator, error) {
 	// todo эта функция должна переехать в пакет storage
 
 	// 0. Если указана база данных, создаем хранилище с базой данных

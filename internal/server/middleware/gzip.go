@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/rs/zerolog/log"
-	"github.com/thefrol/kysh-kysh-meow/internal/server/api"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/httpio"
 	"github.com/thefrol/kysh-kysh-meow/lib/intercept"
 )
 
@@ -65,14 +65,14 @@ func GZIP(minLen int, bufSize int) func(http.Handler) http.Handler {
 
 			gz, err := gzip.NewWriterLevel(w, CompressionLevel)
 			if err != nil {
-				api.HTTPErrorWithLogging(w, http.StatusInternalServerError, "GZIP writer init failed %v", err)
+				httpio.HTTPErrorWithLogging(w, http.StatusInternalServerError, "GZIP writer init failed %v", err)
 				return
 			}
 
 			n, err := io.Copy(gz, buf)
 			fmt.Println(n)
 			if err != nil {
-				api.HTTPErrorWithLogging(w, http.StatusInternalServerError, "Compressing %v", err) // todo нужны хелперы вроду api.InternalError
+				httpio.HTTPErrorWithLogging(w, http.StatusInternalServerError, "Compressing %v", err) // todo нужны хелперы вроду api.InternalError
 				return
 			}
 
@@ -83,7 +83,7 @@ func GZIP(minLen int, bufSize int) func(http.Handler) http.Handler {
 
 			err = gz.Close()
 			if err != nil {
-				api.HTTPErrorWithLogging(w, http.StatusInternalServerError, "Не могу записать в зиппер: %v", err)
+				httpio.HTTPErrorWithLogging(w, http.StatusInternalServerError, "Не могу записать в зиппер: %v", err)
 			}
 
 		})

@@ -6,8 +6,8 @@ import (
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/thefrol/kysh-kysh-meow/internal/server/api"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/domain"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/httpio"
 )
 
 // GetGauge это хендлер, который возвращает метрику типа gauge,
@@ -25,14 +25,14 @@ func (a *ForQuery) GetGauge(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		// если метрика не найдена, то мы пишем в ответ статус 404
 		if errors.Is(err, domain.ErrorMetricNotFound) {
-			api.HTTPErrorWithLogging(w,
+			httpio.HTTPErrorWithLogging(w,
 				http.StatusNotFound,
 				"handler: GetGauge() не найдена метрика %v: %v", id, err)
 			return
 		}
 
 		// в остальных случаях подразумеваем 400 - плохой запрос
-		api.HTTPErrorWithLogging(w,
+		httpio.HTTPErrorWithLogging(w,
 			http.StatusBadRequest,
 			"handler: GetGauge() ошибка для метрики %v: %v", id, err)
 		return
@@ -40,6 +40,6 @@ func (a *ForQuery) GetGauge(w http.ResponseWriter, r *http.Request) {
 
 	// если метрика получена, то ставим контент тайп
 	// и пишем прям в тело ответа значение
-	api.SetContentType(w, api.TypeTextPlain)
+	httpio.SetContentType(w, httpio.TypeTextPlain)
 	w.Write([]byte(strconv.FormatFloat(v, 'g', -1, 64))) // todo эта функция могла бы быть частью domain или моделей, чего-то такого более общего
 }
