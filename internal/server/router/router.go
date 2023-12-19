@@ -4,7 +4,13 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/thefrol/kysh-kysh-meow/internal/server/api"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/app/dbping"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/app/manager"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/app/metricas"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/app/scan"
+	handler "github.com/thefrol/kysh-kysh-meow/internal/server/handlers"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/httpio"
+	"github.com/thefrol/kysh-kysh-meow/internal/storage"
 
 	"github.com/thefrol/kysh-kysh-meow/internal/server/middleware"
 )
@@ -19,9 +25,15 @@ const (
 // стилизованные ответы.
 //
 // на входе получает store - объект хранилища, операции над которым он будет проворачивать
-func MeowRouter(store api.Operator, key string) (router chi.Router) {
+func MeowRouter(store httpio.Operator, pinger dbping.Pinger, key string) (router chi.Router) {
 
 	router = chi.NewRouter()
+
+	// создадим уровень приложения
+	m := manager.Registry{
+		Counters: &storage.CounterAdapter{Op: store},
+		Gauges:   &storage.GaugeAdapter{Op: store},
+	}
 
 	// настраиваем мидлвари, логгер, распаковщик и запаковщик
 	router.Use(middleware.MeowLogging())
@@ -33,43 +45,92 @@ func MeowRouter(store api.Operator, key string) (router chi.Router) {
 	router.Use(middleware.UnGZIP)
 	router.Use(middleware.GZIP(CompressionTreshold, CompressionBufferLen))
 
-	// Создаем маршруты для обработки URL запросов
+	// Первая часть маршрутов - из первых спринтов. Тут используются
+	// параметры из маршрута для установки значений метрик, за эти маршруты
+	// отвечает структура query
 	router.Group(func(r chi.Router) {
-		// в какой-то момент, когда починят тесты, тут можно будет снять комменты
-		//r.With(chimiddleware.AllowContentType("text/plain")) todo
-		r.Get("/value/{type}/{name}", api.HandleURLRequest(api.Retry3Times(store.Get)))
-		r.Post("/update/{type}/{name}/{value}", api.HandleURLRequest(api.Retry3Times(store.Update)))
+		// хендлеры сгрупированы в эту структурку, тут все что надо
+		// для этих самых простых хендлеров
+		query := handler.ForQuery{
+			Registry: m,
+		}
+
+		// на данный момент тесты неправильно работают с контент-тайпом,
+		// например они не присылают правильный контент-тайп в некоторых случаях,
+		// а если так-то пока мы не можем ставить эту проверку
+		// но когда тесты починят, это стоит сделать //todo
+		//
+		// r.With(chimiddleware.AllowContentType("text/plain"))
+
+		// Настроим хендлеры получения метрик. Мы добавляем ещё один
+		// маршрут для метрик с невалидным типом, при обращении к этому
+		// маршруту, мы всегда возвращаем 400 Bad Request
+		r.Get("/value/counter/{id}", query.GetCounter)
+		r.Get("/value/gauge/{id}", query.GetGauge)
+		r.Get("/value/{unknown}/{id}", BadRequest)
+
+		// Настроим хендлеры изменения метрик. Аналогино
+		// поступаем с невалидным маршрутом, который
+		// всегда вернет 400 Bad Request
+		r.Post("/update/counter/{id}/{delta}", query.IncrementCounter)
+		r.Post("/update/gauge/{id}/{value}", query.UpdateGauge)
+		r.Post("/update/{unknown}/{id}/{value}", BadRequest)
 	})
 
 	// Создаем маршруты для обработки JSON запросов
 	router.Group(func(r chi.Router) {
-		//r.With(chimiddleware.AllowContentType("application/json"))
+		// Опять эта история со взбесившимяя тестами, когда их
+		// починят можно будет раскомментировать код
+		//
+		// todo
+		//
+		// r.With(chimiddleware.AllowContentType("application/json"))
 
-		r.Post("/value", api.HandleJSONRequest(api.Retry3Times(store.Get)))
-		r.Post("/value/", api.HandleJSONRequest(api.Retry3Times(store.Get)))
-		r.Post("/update", api.HandleJSONRequest(api.Retry3Times(store.Update)))
-		r.Post("/update/", api.HandleJSONRequest(api.Retry3Times(store.Update)))
-		r.Post("/updates", api.HandleJSONBatch(api.Retry3Times(store.Update)))
-		r.Post("/updates/", api.HandleJSONBatch(api.Retry3Times(store.Update)))
+		// это юзкейс который работает над
+		// базовыми операциями с метриками
+		manager := metricas.Manager{
+			Registry: m,
+		}
 
-		// TODO
-		//
-		// подозрительно похоже на абстракную фабрику
-		// update := api.HandleJSONRequest(store.Update)
-		// get := api.HandleJSONRequest(store.Get)
-		//
-		//
+		// и создаем хендлеры
+		jsonHandler := handler.ForJSON{
+			Manager: manager,
+		}
+
+		batchHandler := handler.ForBatch{
+			Manager: manager,
+		}
+
 		// как не дублировать маршруты я пока варианта не нашел:
 		// если в конце поставить слеш, то без слеша не работает
 		// а вроде даже в тестах и так и так иногда бывает
+		r.Post("/value", jsonHandler.Get)
+		r.Post("/value/", jsonHandler.Get)
+		r.Post("/update", jsonHandler.Update)
+		r.Post("/update/", jsonHandler.Update)
+
+		r.Post("/updates", batchHandler.Update)
+		r.Post("/updates/", batchHandler.Update)
+
 	})
 
-	// Создаем маршруты, показывающие статус сервера. Страница со всемми метриками,
-	// и пинг БД
-	router.Group(func(r chi.Router) {
-		router.Get("/ping", api.PingStore(store))
-		router.Get("/", api.DisplayHTML(store))
-	})
+	// У нас так же есть небольшой дэшборд, который находится по корневому
+	// маршруту. Там мы выводим список всех известных нам метрик.
+	labels := scan.Labels{
+		Counters: &storage.CounterAdapter{Op: store},
+		Gauges:   &storage.GaugeAdapter{Op: store},
+	}
+	html := handler.ForHTML{
+		Labels: labels,
+	}
+	router.Get("/", html.Dashboard)
+
+	// И пингуем базу данных
+	db := handler.ForPing{
+		Pinger: pinger.Ping,
+	}
+
+	router.Get("/ping", db.Ping)
 
 	// Тут добавляем стилизованные под кошки-мышки ответы сервера при 404 и 400,
 	// Кроме того, мы подменяем MethodNotAllowed на NotFound
@@ -85,4 +146,11 @@ func MeowRouter(store api.Operator, key string) (router chi.Router) {
 	})
 
 	return router
+}
+
+// BadRequest это специальный хендлер, который возвращает ошибку 400 Bad Request
+func BadRequest(w http.ResponseWriter, r *http.Request) {
+	httpio.HTTPErrorWithLogging(w,
+		http.StatusBadRequest,
+		"0-0 ошибка в запросе")
 }

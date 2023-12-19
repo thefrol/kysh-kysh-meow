@@ -8,7 +8,7 @@ import (
 
 	"github.com/rs/zerolog/log"
 	"github.com/thefrol/kysh-kysh-meow/internal/metrica"
-	"github.com/thefrol/kysh-kysh-meow/internal/server/api"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/httpio"
 	"github.com/thefrol/kysh-kysh-meow/lib/retry"
 	"github.com/thefrol/kysh-kysh-meow/lib/retry/fails"
 )
@@ -84,7 +84,7 @@ func (d *Database) Get(ctx context.Context, req ...metrica.Metrica) (resp []metr
 			err := rw.Scan(&result.ID, result.Delta)
 			if err != nil {
 				if errors.Is(err, sql.ErrNoRows) {
-					return nil, api.ErrorNotFoundMetric // todo, вот тут можно упаковку ошибки сделать впринципе
+					return nil, httpio.ErrorNotFoundMetric // todo, вот тут можно упаковку ошибки сделать впринципе
 				}
 				return nil, err
 			}
@@ -96,13 +96,13 @@ func (d *Database) Get(ctx context.Context, req ...metrica.Metrica) (resp []metr
 			err := rw.Scan(&result.ID, result.Value)
 			if err != nil {
 				if errors.Is(err, sql.ErrNoRows) {
-					return nil, api.ErrorNotFoundMetric // todo упаковать ошибку???
+					return nil, httpio.ErrorNotFoundMetric // todo упаковать ошибку???
 				}
 				return nil, err
 			}
 			resp = append(resp, result)
 		default:
-			return nil, api.ErrorUnknownMetricType
+			return nil, httpio.ErrorUnknownMetricType
 		}
 	}
 
@@ -186,7 +186,7 @@ func (d *Database) Update(ctx context.Context, req ...metrica.Metrica) (resp []m
 	return d.Get(ctx, req...)
 }
 
-var _ api.Operator = (*Database)(nil)
+var _ httpio.Operator = (*Database)(nil)
 
 func squash(ms ...metrica.Metrica) (counters map[string]int64, gauges map[string]float64) {
 	counters = make(map[string]int64)

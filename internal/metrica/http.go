@@ -1,6 +1,8 @@
 package metrica
 
 // Metrica это универсальный тип для передачи по HTTP
+//
+//easyjson:json
 type Metrica struct {
 	ID    string   `json:"id"`              // имя метрики
 	MType string   `json:"type"`            // параметр, принимающий значение gauge или counter
@@ -11,6 +13,9 @@ type Metrica struct {
 	//
 	// Мне было бы приятно назвать эту структуру transport
 }
+
+//easyjson:json
+type Metricas []Metrica
 
 // Metricer используется, чтобы передать метрики по сети. Все метрики должны поддерживать этот интерфейс
 type Metrer interface {
