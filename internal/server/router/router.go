@@ -96,6 +96,10 @@ func MeowRouter(store api.Operator, key string) (router chi.Router) {
 			Manager: manager,
 		}
 
+		batchHandler := handler.ForBatch{
+			Manager: manager,
+		}
+
 		// как не дублировать маршруты я пока варианта не нашел:
 		// если в конце поставить слеш, то без слеша не работает
 		// а вроде даже в тестах и так и так иногда бывает
@@ -103,8 +107,9 @@ func MeowRouter(store api.Operator, key string) (router chi.Router) {
 		r.Post("/value/", jsonHandler.Get)
 		r.Post("/update", jsonHandler.Update)
 		r.Post("/update/", jsonHandler.Update)
-		r.Post("/updates", api.HandleJSONBatch(api.Retry3Times(store.Update)))
-		r.Post("/updates/", api.HandleJSONBatch(api.Retry3Times(store.Update)))
+
+		r.Post("/updates", batchHandler.Update)
+		r.Post("/updates/", batchHandler.Update)
 
 	})
 
