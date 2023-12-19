@@ -55,6 +55,7 @@ func TestSigning(t *testing.T) {
 
 	// обрабатываем ответ
 	res := w.Result()
+	defer res.Body.Close()
 
 	assert.Equal(t, statusCode, res.StatusCode)
 	assert.Equal(t, responseSign, res.Header.Get(sign.SignHeaderName))
@@ -98,6 +99,7 @@ func Test_Signing_BadSign(t *testing.T) {
 
 	// обрабатываем ответ
 	res := w.Result()
+	defer res.Body.Close()
 
 	assert.Equal(t, statusCode, res.StatusCode)
 }
