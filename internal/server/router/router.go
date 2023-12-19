@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/api"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/app/dbping"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/app/manager"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/app/metricas"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/app/scan"
@@ -24,7 +25,7 @@ const (
 // стилизованные ответы.
 //
 // на входе получает store - объект хранилища, операции над которым он будет проворачивать
-func MeowRouter(store api.Operator, key string) (router chi.Router) {
+func MeowRouter(store api.Operator, pinger dbping.Pinger, key string) (router chi.Router) {
 
 	router = chi.NewRouter()
 
@@ -124,11 +125,12 @@ func MeowRouter(store api.Operator, key string) (router chi.Router) {
 	}
 	router.Get("/", html.Dashboard)
 
-	// Создаем маршруты, показывающие статус сервера. Страница со всемми метриками,
-	// и пинг БД
-	router.Group(func(r chi.Router) {
-		router.Get("/ping", api.PingStore(store))
-	})
+	// И пингуем базу данных
+	db := handler.ForPing{
+		Pinger: pinger.Ping,
+	}
+
+	router.Get("/ping", db.Ping)
 
 	// Тут добавляем стилизованные под кошки-мышки ответы сервера при 404 и 400,
 	// Кроме того, мы подменяем MethodNotAllowed на NotFound

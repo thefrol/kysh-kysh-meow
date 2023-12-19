@@ -4,11 +4,13 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"os"
 	"time"
 
 	"github.com/rs/zerolog/log"
 	"github.com/thefrol/kysh-kysh-meow/internal/config"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/app/dbping"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/router"
 	"github.com/thefrol/kysh-kysh-meow/lib/graceful"
 
@@ -43,8 +45,21 @@ func main() {
 		return
 	}
 
+	// создаем пингер
+	//
+	// у него будет свое соединение!
+	db, err := sql.Open("pgx", cfg.DatabaseDSN.Get())
+	if err != nil {
+		log.Error().Msgf("не могу создать соединение с БД: %v", err)
+		os.Exit(1)
+	}
+
+	pinger := dbping.Pinger{
+		Connection: db,
+	}
+
 	// создаем роутер
-	router := router.MeowRouter(s, string(cfg.Key.ValueFunc()()))
+	router := router.MeowRouter(s, pinger, string(cfg.Key.ValueFunc()()))
 
 	// Запускаем сервер с поддержкой нежного завершения,
 	// занимаем текущий поток до вызова сигналов выключения
