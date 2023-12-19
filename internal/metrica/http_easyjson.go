@@ -17,7 +17,73 @@ var (
 	_ easyjson.Marshaler
 )
 
-func easyjson6252c418DecodeGithubComThefrolKyshKyshMeowInternalMetrica(in *jlexer.Lexer, out *Metrica) {
+func easyjson6252c418DecodeGithubComThefrolKyshKyshMeowInternalMetrica(in *jlexer.Lexer, out *Metricas) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		in.Skip()
+		*out = nil
+	} else {
+		in.Delim('[')
+		if *out == nil {
+			if !in.IsDelim(']') {
+				*out = make(Metricas, 0, 1)
+			} else {
+				*out = Metricas{}
+			}
+		} else {
+			*out = (*out)[:0]
+		}
+		for !in.IsDelim(']') {
+			var v1 Metrica
+			(v1).UnmarshalEasyJSON(in)
+			*out = append(*out, v1)
+			in.WantComma()
+		}
+		in.Delim(']')
+	}
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjson6252c418EncodeGithubComThefrolKyshKyshMeowInternalMetrica(out *jwriter.Writer, in Metricas) {
+	if in == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
+		out.RawString("null")
+	} else {
+		out.RawByte('[')
+		for v2, v3 := range in {
+			if v2 > 0 {
+				out.RawByte(',')
+			}
+			(v3).MarshalEasyJSON(out)
+		}
+		out.RawByte(']')
+	}
+}
+
+// MarshalJSON supports json.Marshaler interface
+func (v Metricas) MarshalJSON() ([]byte, error) {
+	w := jwriter.Writer{}
+	easyjson6252c418EncodeGithubComThefrolKyshKyshMeowInternalMetrica(&w, v)
+	return w.Buffer.BuildBytes(), w.Error
+}
+
+// MarshalEasyJSON supports easyjson.Marshaler interface
+func (v Metricas) MarshalEasyJSON(w *jwriter.Writer) {
+	easyjson6252c418EncodeGithubComThefrolKyshKyshMeowInternalMetrica(w, v)
+}
+
+// UnmarshalJSON supports json.Unmarshaler interface
+func (v *Metricas) UnmarshalJSON(data []byte) error {
+	r := jlexer.Lexer{Data: data}
+	easyjson6252c418DecodeGithubComThefrolKyshKyshMeowInternalMetrica(&r, v)
+	return r.Error()
+}
+
+// UnmarshalEasyJSON supports easyjson.Unmarshaler interface
+func (v *Metricas) UnmarshalEasyJSON(l *jlexer.Lexer) {
+	easyjson6252c418DecodeGithubComThefrolKyshKyshMeowInternalMetrica(l, v)
+}
+func easyjson6252c418DecodeGithubComThefrolKyshKyshMeowInternalMetrica1(in *jlexer.Lexer, out *Metrica) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -70,7 +136,7 @@ func easyjson6252c418DecodeGithubComThefrolKyshKyshMeowInternalMetrica(in *jlexe
 		in.Consumed()
 	}
 }
-func easyjson6252c418EncodeGithubComThefrolKyshKyshMeowInternalMetrica(out *jwriter.Writer, in Metrica) {
+func easyjson6252c418EncodeGithubComThefrolKyshKyshMeowInternalMetrica1(out *jwriter.Writer, in Metrica) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -100,23 +166,23 @@ func easyjson6252c418EncodeGithubComThefrolKyshKyshMeowInternalMetrica(out *jwri
 // MarshalJSON supports json.Marshaler interface
 func (v Metrica) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjson6252c418EncodeGithubComThefrolKyshKyshMeowInternalMetrica(&w, v)
+	easyjson6252c418EncodeGithubComThefrolKyshKyshMeowInternalMetrica1(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v Metrica) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjson6252c418EncodeGithubComThefrolKyshKyshMeowInternalMetrica(w, v)
+	easyjson6252c418EncodeGithubComThefrolKyshKyshMeowInternalMetrica1(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *Metrica) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjson6252c418DecodeGithubComThefrolKyshKyshMeowInternalMetrica(&r, v)
+	easyjson6252c418DecodeGithubComThefrolKyshKyshMeowInternalMetrica1(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *Metrica) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjson6252c418DecodeGithubComThefrolKyshKyshMeowInternalMetrica(l, v)
+	easyjson6252c418DecodeGithubComThefrolKyshKyshMeowInternalMetrica1(l, v)
 }
