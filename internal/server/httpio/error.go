@@ -18,3 +18,16 @@ func HTTPErrorWithLogging(w http.ResponseWriter, statusCode int, format string, 
 	log.Error().Msg(s)
 	http.Error(w, s, statusCode)
 }
+
+func HTTPError(w http.ResponseWriter, statusCode int, message string) {
+	w.WriteHeader(statusCode)
+	w.Write([]byte(message))
+}
+
+func NotFound(w http.ResponseWriter, err error) {
+	HTTPError(w, http.StatusNotFound, err.Error())
+}
+
+func BadRequest(w http.ResponseWriter, err error) {
+	HTTPError(w, http.StatusBadRequest, err.Error())
+}
