@@ -33,6 +33,6 @@ func (a *ForQuery) IncrementCounter(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	httpio.SetContentType(w, httpio.TypeTextPlain)
+	w.Header().Set("Content-Type", httpio.TypeTextPlain)
 	w.Write([]byte(strconv.FormatInt(v, 10)))
 }
