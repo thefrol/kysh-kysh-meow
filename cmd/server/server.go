@@ -11,7 +11,11 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/thefrol/kysh-kysh-meow/internal/config"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/app/dbping"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/app/manager"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/app/metricas"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/app/scan"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/router"
+	"github.com/thefrol/kysh-kysh-meow/internal/storage"
 	"github.com/thefrol/kysh-kysh-meow/lib/graceful"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -45,6 +49,30 @@ func main() {
 		return
 	}
 
+	// готовим репозитории
+	counters := storage.CounterAdapter{
+		Op: s,
+	}
+
+	gauges := storage.GaugeAdapter{
+		Op: s,
+	}
+
+	// готовим прикладной уровень
+	labels := scan.Labels{
+		Counters: &counters,
+		Gauges:   &gauges,
+	}
+
+	reg := manager.Registry{
+		Counters: &counters,
+		Gauges:   &gauges,
+	}
+
+	man := metricas.Manager{
+		Registry: reg,
+	}
+
 	// создаем пингер
 	//
 	// у него будет свое соединение!
@@ -54,12 +82,22 @@ func main() {
 		os.Exit(1)
 	}
 
+	// вообще пингер загадочная штука, поэтому у него свой юзкейс
 	pinger := dbping.Pinger{
 		Connection: db,
 	}
 
 	// создаем роутер
-	router := router.MeowRouter(s, pinger, string(cfg.Key.ValueFunc()()))
+	r := router.API{
+		Manager:   man,
+		Registry:  reg,
+		Dashboard: labels,
+		Pinger:    pinger,
+
+		Key: string(cfg.Key.ValueFunc()()), // todo это лол
+	}
+
+	router := r.MeowRouter()
 
 	// Запускаем сервер с поддержкой нежного завершения,
 	// занимаем текущий поток до вызова сигналов выключения
