@@ -7,6 +7,11 @@ import (
 	"github.com/mailru/easyjson"
 )
 
+type FileData struct {
+	Counters IntMap
+	Gauges   FloatMap
+}
+
 // Dump сохраняет хранилище в файл
 func (s *MemStore) Dump() error {
 	if s.FilePath == "" {
@@ -17,9 +22,16 @@ func (s *MemStore) Dump() error {
 	// запишем джесон в файл
 	// блокируем вот так, чтобы не мешать другим процессам,
 	// пока мы уже в файл будем писать
+	d := FileData{
+		Counters: s.Counters,
+		Gauges:   s.Gauges,
+	}
+
 	s.cmt.RLock()
-	buf, err := easyjson.Marshal(s.Counters)
+	s.gmt.RLock()
+	buf, err := easyjson.Marshal(d)
 	s.cmt.RUnlock()
+	s.gmt.RUnlock()
 	if err != nil {
 		s.Log.Error().
 			Err(err).
@@ -66,10 +78,8 @@ func (s *MemStore) Restore() error {
 		return fmt.Errorf("mem: %w", err)
 	}
 
-	s.cmt.Lock()
-	err = easyjson.Unmarshal(buf, &s.Counters) // todo нужно проверить как это будет себя вести, когда тут мы перезаписываем, а там читаем. Что и куда он перезапишет)
-	s.cmt.Unlock()
-	if err != nil {
+	var d FileData
+	if err = easyjson.Unmarshal(buf, &d); err != nil {
 		s.Log.Error().
 			Err(err).
 			Msg("Ошибка демаршалинга данных в хранилище")
@@ -81,6 +91,17 @@ func (s *MemStore) Restore() error {
 		Err(err).
 		Str("file", s.FilePath).
 		Msg("хранилище прочитано")
+
+	// заменяем каунтеры
+	if s.Counters != nil {
+		s.Log.Info().Msg("мапа с канутерами не пустая, и будет заменена")
+	}
+	s.Counters = d.Counters
+
+	if s.Gauges != nil {
+		s.Log.Info().Msg("мапа с гаужами не пустая, и будет заменена")
+	}
+	s.Gauges = d.Gauges
 
 	return nil
 }

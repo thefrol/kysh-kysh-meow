@@ -136,10 +136,18 @@ func Test_FileSave(t *testing.T) {
 		}
 
 		_, err = ms.CounterIncrement(ctx, counterID, int64(counterValue))
-		require.NoError(t, err, "не удалось записать счетчик")
+		assert.NoError(t, err, "не удалось записать счетчик")
 
 		_, err = ms.GaugeUpdate(ctx, gaugeID, float64(gaugeValue))
-		require.NoError(t, err, "не удалось записать гауж")
+		assert.NoError(t, err, "не удалось записать гауж")
+
+		defer func() {
+			// почистим за собой
+			err = os.Remove(file)
+			if err != nil && !errors.Is(err, os.ErrNotExist) {
+				t.Errorf("Не могу удалить тестовый файл %s", file)
+			}
+		}()
 
 		// теперь создаем второй стораж,
 		// и прочитаем из файла
@@ -153,18 +161,12 @@ func Test_FileSave(t *testing.T) {
 
 		// теперь проверим что мы получили
 		c, err := ls.Counter(ctx, counterID)
-		require.NoError(t, err, "не найден счетчик после загрузки")
+		assert.NoError(t, err, "не найден счетчик после загрузки")
 		assert.EqualValues(t, counterValue, c)
 
-		g, err := ls.Gauge(ctx, counterID)
-		require.NoError(t, err, "не найден гауж после загрузки")
+		g, err := ls.Gauge(ctx, gaugeID)
+		assert.NoError(t, err, "не найден гауж после загрузки")
 		assert.EqualValues(t, gaugeValue, g)
-
-		// почистим за собой
-		err = os.Remove(file)
-		if err != nil && !errors.Is(err, os.ErrNotExist) {
-			t.Errorf("Не могу удалить тестовый файл %s", file)
-		}
 
 	})
 }
