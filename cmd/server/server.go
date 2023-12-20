@@ -14,7 +14,7 @@ import (
 	"github.com/thefrol/kysh-kysh-meow/internal/server/app/metricas"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/app/scan"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/router"
-	"github.com/thefrol/kysh-kysh-meow/internal/storage"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/storage"
 	"github.com/thefrol/kysh-kysh-meow/lib/graceful"
 
 	_ "github.com/jackc/pgx/v5/stdlib"

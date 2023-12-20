@@ -12,7 +12,7 @@ import (
 	"github.com/thefrol/kysh-kysh-meow/internal/server/app/manager"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/app/metricas"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/app/scan"
-	"github.com/thefrol/kysh-kysh-meow/internal/storage"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/storage"
 )
 
 func Test_MeowRouter(t *testing.T) {

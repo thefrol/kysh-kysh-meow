@@ -12,7 +12,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/router/httpio"
-	"github.com/thefrol/kysh-kysh-meow/internal/storage"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/storage"
 )
 
 type Server struct {
