@@ -147,7 +147,7 @@ func Test_Counters(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run("Инкрементируем только положительные", func(t *testing.T) {
+		t.Run(tt.name, func(t *testing.T) {
 			var ms MemStore
 
 			// мапу не инициализировали, но запишем в нее
@@ -161,6 +161,52 @@ func Test_Counters(t *testing.T) {
 			v, err := ms.Counter(ctx, tt.id)
 			assert.NoError(t, err, ErrorNilStore)
 			assert.EqualValues(t, tt.sum, v)
+		})
+
+	}
+}
+
+// протестируем гаужи
+func Test_Gauges(t *testing.T) {
+
+	ctx := context.Background()
+
+	tests := []struct {
+		name   string
+		values []float64
+		got    float64
+		id     string
+	}{
+		{
+			name:   "набор 1",
+			values: []float64{1, 3, 4},
+			got:    4,
+			id:     "yo",
+		},
+
+		{
+			name:   "набор 2",
+			values: []float64{1, 3, -4.0000000001},
+			got:    float64(-4.0000000001),
+			id:     "yo",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var ms MemStore
+
+			// мапу не инициализировали, но запишем в нее
+			for _, v := range tt.values {
+				_, err := ms.GaugeUpdate(ctx, tt.id, v)
+				assert.NoError(t, err, ErrorNilStore)
+
+			}
+
+			// и прочитаем!
+			v, err := ms.Gauge(ctx, tt.id)
+			assert.NoError(t, err, ErrorNilStore)
+			assert.EqualValues(t, tt.got, v)
 		})
 
 	}
@@ -197,5 +243,4 @@ func Test_Labels(t *testing.T) {
 	// и ничего лишнего
 	assert.Equal(t, gaugeCount, len(l["gauges"]), "полученное количество гаужей должено быть другим")
 	assert.Equal(t, counterCount, len(l["counters"]), "полученное количество счетчиков должено быть другим")
-
 }

@@ -47,7 +47,7 @@ func (s *MemStore) GaugeUpdate(ctx context.Context, id string, value float64) (f
 	// получается как будто
 	// она равна нулю
 	s.gmt.Lock()
-	s.Gauges[id] += value
+	s.Gauges[id] = value
 	s.gmt.Unlock()
 
 	// запишем обновления в файл
