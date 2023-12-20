@@ -106,7 +106,66 @@ func Test_FileSave(t *testing.T) {
 	})
 
 	t.Run("запишем и прочитаем", func(t *testing.T) {
-		t.Error("not implemented")
+		var (
+			file = "./file.test"
+
+			gaugeID    = "g"
+			gaugeValue = 3
+
+			counterID    = "c"
+			counterValue = 6
+		)
+
+		ctx := context.Background()
+
+		err := os.Remove(file)
+		if err != nil && !errors.Is(err, os.ErrNotExist) {
+			t.Errorf("Не могу удалить тестовый файл %s", file)
+		}
+
+		// удостоверимся, что файла реально нет
+		_, err = os.Stat(file)
+		assert.ErrorIs(t, err, os.ErrNotExist)
+
+		// создадим первый стораж,
+		// который пишет в файл
+		// и запишем в файл
+
+		var ms = MemStore{
+			FilePath: file,
+		}
+
+		_, err = ms.CounterIncrement(ctx, counterID, int64(counterValue))
+		require.NoError(t, err, "не удалось записать счетчик")
+
+		_, err = ms.GaugeUpdate(ctx, gaugeID, float64(gaugeValue))
+		require.NoError(t, err, "не удалось записать гауж")
+
+		// теперь создаем второй стораж,
+		// и прочитаем из файла
+
+		var ls = MemStore{
+			FilePath: file,
+		}
+
+		err = ls.Restore()
+		require.NoError(t, err, "ошибка загрузки из файла")
+
+		// теперь проверим что мы получили
+		c, err := ls.Counter(ctx, counterID)
+		require.NoError(t, err, "не найден счетчик после загрузки")
+		assert.EqualValues(t, counterValue, c)
+
+		g, err := ls.Gauge(ctx, counterID)
+		require.NoError(t, err, "не найден гауж после загрузки")
+		assert.EqualValues(t, gaugeValue, g)
+
+		// почистим за собой
+		err = os.Remove(file)
+		if err != nil && !errors.Is(err, os.ErrNotExist) {
+			t.Errorf("Не могу удалить тестовый файл %s", file)
+		}
+
 	})
 }
 

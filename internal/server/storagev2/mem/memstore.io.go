@@ -29,7 +29,7 @@ func (s *MemStore) Dump() error {
 	}
 
 	// записываем в файл
-	err = os.WriteFile(s.FilePath, buf, os.ModeExclusive)
+	err = os.WriteFile(s.FilePath, buf, 0644)
 	if err != nil {
 		s.Log.Error().
 			Err(err).
