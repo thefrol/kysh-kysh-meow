@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/thefrol/kysh-kysh-meow/internal/server/app/scan"
-	"github.com/thefrol/kysh-kysh-meow/internal/server/httpio"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/router/httpio"
 )
 
 const htmlTemplate = `

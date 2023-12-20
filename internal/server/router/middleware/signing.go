@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/rs/zerolog/log"
-	"github.com/thefrol/kysh-kysh-meow/internal/server/httpio"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/router/httpio"
 	"github.com/thefrol/kysh-kysh-meow/internal/sign"
 	"github.com/thefrol/kysh-kysh-meow/lib/intercept"
 )

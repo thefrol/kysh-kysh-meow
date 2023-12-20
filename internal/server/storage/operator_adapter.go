@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/thefrol/kysh-kysh-meow/internal/metrica"
-	"github.com/thefrol/kysh-kysh-meow/internal/server/httpio"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/router/httpio"
 )
 
 // OperatorAdapter оборачивает классы на старом апи хранилища oldAPI,

@@ -6,10 +6,10 @@ import (
 	"fmt"
 
 	"github.com/thefrol/kysh-kysh-meow/internal/metrica"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/app"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/app/manager"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/app/scan"
-	"github.com/thefrol/kysh-kysh-meow/internal/server/domain"
-	"github.com/thefrol/kysh-kysh-meow/internal/server/httpio"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/router/httpio"
 )
 
 var (
@@ -54,7 +54,7 @@ func (adapter *CounterAdapter) Get(ctx context.Context, id string) (int64, error
 	v, err := adapter.Op.Get(ctx, d)
 	if err != nil {
 		if errors.Is(err, httpio.ErrorNotFoundMetric) {
-			return 0, fmt.Errorf("in CounterAdapter: %w: %v", domain.ErrorMetricNotFound, err)
+			return 0, fmt.Errorf("in CounterAdapter: %w: %v", app.ErrorMetricNotFound, err)
 		}
 		return 0, err
 	}
@@ -84,7 +84,7 @@ func (adapter *CounterAdapter) Increment(ctx context.Context, id string, delta i
 	v, err := adapter.Op.Update(ctx, d)
 	if err != nil {
 		if errors.Is(err, httpio.ErrorNotFoundMetric) {
-			return 0, fmt.Errorf("in CounterAdapter: %w: %v", domain.ErrorMetricNotFound, err)
+			return 0, fmt.Errorf("in CounterAdapter: %w: %v", app.ErrorMetricNotFound, err)
 		}
 		return 0, err
 	}
@@ -136,7 +136,7 @@ func (adapter *GaugeAdapter) Get(ctx context.Context, id string) (float64, error
 	v, err := adapter.Op.Get(ctx, d)
 	if err != nil {
 		if errors.Is(err, httpio.ErrorNotFoundMetric) {
-			return 0, fmt.Errorf("in GaugeAdapter: %w: %v", domain.ErrorMetricNotFound, err)
+			return 0, fmt.Errorf("in GaugeAdapter: %w: %v", app.ErrorMetricNotFound, err)
 		}
 		return 0, err
 	}
@@ -166,7 +166,7 @@ func (adapter *GaugeAdapter) Update(ctx context.Context, id string, value float6
 	v, err := adapter.Op.Update(ctx, d)
 	if err != nil {
 		if errors.Is(err, httpio.ErrorNotFoundMetric) {
-			return 0, fmt.Errorf("in GaugeAdapter: %w: %v", domain.ErrorMetricNotFound, err)
+			return 0, fmt.Errorf("in GaugeAdapter: %w: %v", app.ErrorMetricNotFound, err)
 		}
 		return 0, err
 	}

@@ -6,8 +6,8 @@ import (
 
 	"github.com/mailru/easyjson"
 	"github.com/thefrol/kysh-kysh-meow/internal/metrica"
-	"github.com/thefrol/kysh-kysh-meow/internal/server/domain"
-	"github.com/thefrol/kysh-kysh-meow/internal/server/httpio"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/app"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/router/httpio"
 )
 
 func (h *ForBatch) Update(w http.ResponseWriter, r *http.Request) {
@@ -30,7 +30,7 @@ func (h *ForBatch) Update(w http.ResponseWriter, r *http.Request) {
 	for _, m := range b {
 		v, err := h.Manager.UpdateMetrica(r.Context(), m)
 		if err != nil {
-			if errors.Is(err, domain.ErrorMetricNotFound) {
+			if errors.Is(err, app.ErrorMetricNotFound) {
 				httpio.HTTPErrorWithLogging(w,
 					http.StatusNotFound,
 					"Не удалось найти метрику %v типа %v: %v", m.ID, m.MType, err)

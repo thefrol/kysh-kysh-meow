@@ -6,8 +6,8 @@ import (
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/thefrol/kysh-kysh-meow/internal/server/domain"
-	"github.com/thefrol/kysh-kysh-meow/internal/server/httpio"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/app"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/router/httpio"
 )
 
 func (a *ForQuery) UpdateGauge(w http.ResponseWriter, r *http.Request) {
@@ -30,7 +30,7 @@ func (a *ForQuery) UpdateGauge(w http.ResponseWriter, r *http.Request) {
 
 	v, err = a.Registry.UpdateGauge(r.Context(), id, v)
 	if err != nil {
-		if errors.Is(err, domain.ErrorMetricNotFound) {
+		if errors.Is(err, app.ErrorMetricNotFound) {
 			httpio.HTTPErrorWithLogging(w,
 				http.StatusNotFound,
 				"handler: UpdateGauge() не найдена гаужа %v: %v", id, err)

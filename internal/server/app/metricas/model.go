@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/thefrol/kysh-kysh-meow/internal/metrica"
-	"github.com/thefrol/kysh-kysh-meow/internal/server/domain"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/app"
 )
 
 type Metrica = metrica.Metrica
@@ -14,7 +14,7 @@ type Metrica = metrica.Metrica
 // возможно о таких случаях даже стоит логгировать как-то
 func ValidateRequest(m Metrica) error {
 	if m.ID == "" {
-		return fmt.Errorf("%w: пустой айдишник", domain.ErrorBadID)
+		return fmt.Errorf("%w: пустой айдишник", app.ErrorBadID)
 	}
 
 	return nil

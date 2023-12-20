@@ -11,8 +11,8 @@ import (
 	"github.com/caarlos0/env/v6"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	"github.com/thefrol/kysh-kysh-meow/internal/server/httpio"
-	"github.com/thefrol/kysh-kysh-meow/internal/storage"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/router/httpio"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/storage"
 )
 
 type Server struct {
