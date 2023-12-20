@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // тестируем работу с неинициализированными стораджами
@@ -163,4 +164,38 @@ func Test_Counters(t *testing.T) {
 		})
 
 	}
+}
+
+// протестируем получение названий счетчиков
+func Test_Labels(t *testing.T) {
+	var m = MemStore{
+		Counters: make(IntMap),
+		Gauges:   make(FloatMap),
+	}
+
+	var (
+		// метрики, которые мы установим
+		gaugeID   = "g"
+		counterID = "c"
+
+		// количество гаужей и счетчиков по итогу тестов
+		gaugeCount   = 1
+		counterCount = 1
+	)
+
+	m.Counters[counterID] = 1
+	m.Gauges[gaugeID] = 1
+
+	// эту функцию мы и тестируем
+	l, err := m.Labels(context.Background())
+	require.NoError(t, err)
+
+	// в результатах должны быть наши метрики
+	assert.Contains(t, l["gauges"], gaugeID, "В гаужаж не найдена проставленная метрика")
+	assert.Contains(t, l["counters"], counterID, "в счетчиках не найдена проставленна метрика")
+
+	// и ничего лишнего
+	assert.Equal(t, gaugeCount, len(l["gauges"]), "полученное количество гаужей должено быть другим")
+	assert.Equal(t, counterCount, len(l["counters"]), "полученное количество счетчиков должено быть другим")
+
 }
