@@ -4,4 +4,4 @@ package mem
 type IntMap map[string]int64
 
 // easyjson:json
-type GaugesMap map[string]float64
+type FloatMap map[string]float64

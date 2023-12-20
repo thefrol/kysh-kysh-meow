@@ -12,6 +12,7 @@ import (
 
 var (
 	_ manager.CounterRepository = (*MemStore)(nil)
+	_ manager.GaugeRepository   = (*MemStore)(nil)
 	_ scan.CounterLister        = (*MemStore)(nil)
 )
 

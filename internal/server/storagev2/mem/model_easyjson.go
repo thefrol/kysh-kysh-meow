@@ -17,13 +17,13 @@ var (
 	_ easyjson.Marshaler
 )
 
-func easyjsonC80ae7adDecodeGithubComThefrolKyshKyshMeowInternalServerStoragev2Mem(in *jlexer.Lexer, out *GaugesMap) {
+func easyjsonC80ae7adDecodeGithubComThefrolKyshKyshMeowInternalServerStoragev2Mem(in *jlexer.Lexer, out *FloatMap) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		in.Skip()
 	} else {
 		in.Delim('{')
-		*out = make(GaugesMap)
+		*out = make(FloatMap)
 		for !in.IsDelim('}') {
 			key := string(in.String())
 			in.WantColon()
@@ -38,7 +38,7 @@ func easyjsonC80ae7adDecodeGithubComThefrolKyshKyshMeowInternalServerStoragev2Me
 		in.Consumed()
 	}
 }
-func easyjsonC80ae7adEncodeGithubComThefrolKyshKyshMeowInternalServerStoragev2Mem(out *jwriter.Writer, in GaugesMap) {
+func easyjsonC80ae7adEncodeGithubComThefrolKyshKyshMeowInternalServerStoragev2Mem(out *jwriter.Writer, in FloatMap) {
 	if in == nil && (out.Flags&jwriter.NilMapAsEmpty) == 0 {
 		out.RawString(`null`)
 	} else {
@@ -59,26 +59,26 @@ func easyjsonC80ae7adEncodeGithubComThefrolKyshKyshMeowInternalServerStoragev2Me
 }
 
 // MarshalJSON supports json.Marshaler interface
-func (v GaugesMap) MarshalJSON() ([]byte, error) {
+func (v FloatMap) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
 	easyjsonC80ae7adEncodeGithubComThefrolKyshKyshMeowInternalServerStoragev2Mem(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
-func (v GaugesMap) MarshalEasyJSON(w *jwriter.Writer) {
+func (v FloatMap) MarshalEasyJSON(w *jwriter.Writer) {
 	easyjsonC80ae7adEncodeGithubComThefrolKyshKyshMeowInternalServerStoragev2Mem(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
-func (v *GaugesMap) UnmarshalJSON(data []byte) error {
+func (v *FloatMap) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
 	easyjsonC80ae7adDecodeGithubComThefrolKyshKyshMeowInternalServerStoragev2Mem(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
-func (v *GaugesMap) UnmarshalEasyJSON(l *jlexer.Lexer) {
+func (v *FloatMap) UnmarshalEasyJSON(l *jlexer.Lexer) {
 	easyjsonC80ae7adDecodeGithubComThefrolKyshKyshMeowInternalServerStoragev2Mem(l, v)
 }
 func easyjsonC80ae7adDecodeGithubComThefrolKyshKyshMeowInternalServerStoragev2Mem1(in *jlexer.Lexer, out *IntMap) {
