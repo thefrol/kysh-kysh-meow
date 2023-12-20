@@ -13,7 +13,7 @@ import (
 var (
 	_ manager.CounterRepository = (*MemStore)(nil)
 	_ manager.GaugeRepository   = (*MemStore)(nil)
-	_ scan.CounterLister        = (*MemStore)(nil)
+	_ scan.Labler               = (*MemStore)(nil)
 )
 
 type MemStore struct {
@@ -28,24 +28,41 @@ type MemStore struct {
 }
 
 // All implements scan.CounterLister.
-func (s *MemStore) All(context.Context) (map[string]int64, error) {
+func (s *MemStore) Labels(context.Context) (map[string][]string, error) {
 	// проверять, что мапа инициализирована, не нужно
 	// но надо проверить, что сам MemStore не нулевой
 	if s == nil {
 		return nil, fmt.Errorf("MemStore: %w", ErrorNilStore)
 	}
 
-	m := make(map[string]int64, len(s.Counters))
+	const typeCount = 2 // это сколько типов метрик
+	m := make(map[string][]string, typeCount)
 
-	// заблокируем
-	s.cmt.Lock()
-	defer s.cmt.Unlock()
+	// займемся счетчиками
 
-	// скопируем мапу в новую мапу
-	for k, v := range s.Counters {
-		m[k] = v
+	cl := make([]string, len(s.Counters))
+
+	s.cmt.RLock()
+	for c := range s.Counters {
+		cl = append(cl, c)
 	}
+	s.cmt.RUnlock()
 
-	// вернем копию
+	m["counters"] = cl
+
+	// теперь займемся гаужами
+
+	gl := make([]string, len(s.Gauges))
+
+	s.gmt.RLock()
+	for g := range s.Gauges {
+		gl = append(cl, g)
+	}
+	s.gmt.RUnlock()
+
+	m["gauges"] = gl
+
+	//
+
 	return m, nil
 }

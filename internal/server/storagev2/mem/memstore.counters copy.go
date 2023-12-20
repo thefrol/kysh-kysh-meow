@@ -5,13 +5,6 @@ import (
 	"fmt"
 
 	"github.com/thefrol/kysh-kysh-meow/internal/server/app"
-	"github.com/thefrol/kysh-kysh-meow/internal/server/app/manager"
-	"github.com/thefrol/kysh-kysh-meow/internal/server/app/scan"
-)
-
-var (
-	_ manager.CounterRepository = (*MemStore)(nil)
-	_ scan.CounterLister        = (*MemStore)(nil)
 )
 
 // Counter implements manager.CounterRepository.
