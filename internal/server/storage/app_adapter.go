@@ -32,7 +32,7 @@ func (adapter *CounterAdapter) All(ctx context.Context) (map[string]int64, error
 		return nil, err
 	}
 	for _, l := range counters {
-		v, err := adapter.Get(ctx, l)
+		v, err := adapter.Counter(ctx, l)
 		if err != nil {
 			return nil, err
 		}
@@ -42,8 +42,8 @@ func (adapter *CounterAdapter) All(ctx context.Context) (map[string]int64, error
 	return res, nil
 }
 
-// Get implements manager.CounterRepository.
-func (adapter *CounterAdapter) Get(ctx context.Context, id string) (int64, error) {
+// Counter implements manager.CounterRepository.
+func (adapter *CounterAdapter) Counter(ctx context.Context, id string) (int64, error) {
 	// это запрос по сути
 	d := metrica.Metrica{
 		MType: "counter",
@@ -71,8 +71,8 @@ func (adapter *CounterAdapter) Get(ctx context.Context, id string) (int64, error
 	return *v[0].Delta, nil
 }
 
-// Increment implements manager.CounterRepository.
-func (adapter *CounterAdapter) Increment(ctx context.Context, id string, delta int64) (int64, error) {
+// CounterIncrement implements manager.CounterRepository.
+func (adapter *CounterAdapter) CounterIncrement(ctx context.Context, id string, delta int64) (int64, error) {
 	// это запрос по сути
 	d := metrica.Metrica{
 		MType: "counter",
@@ -114,7 +114,7 @@ func (adapter *GaugeAdapter) All(ctx context.Context) (map[string]float64, error
 		return nil, err
 	}
 	for _, l := range gauges {
-		v, err := adapter.Get(ctx, l)
+		v, err := adapter.Gauge(ctx, l)
 		if err != nil {
 			return nil, err
 		}
@@ -124,8 +124,8 @@ func (adapter *GaugeAdapter) All(ctx context.Context) (map[string]float64, error
 	return res, nil
 }
 
-// Get implements manager.GaugeRepository.
-func (adapter *GaugeAdapter) Get(ctx context.Context, id string) (float64, error) {
+// Gauge implements manager.GaugeRepository.
+func (adapter *GaugeAdapter) Gauge(ctx context.Context, id string) (float64, error) {
 	// это запрос по сути
 	d := metrica.Metrica{
 		MType: "gauge",
@@ -154,7 +154,7 @@ func (adapter *GaugeAdapter) Get(ctx context.Context, id string) (float64, error
 }
 
 // Increment implements manager.GaugeRepository.
-func (adapter *GaugeAdapter) Update(ctx context.Context, id string, value float64) (float64, error) {
+func (adapter *GaugeAdapter) GaugeUpdate(ctx context.Context, id string, value float64) (float64, error) {
 	// это запрос по сути
 	d := metrica.Metrica{
 		MType: "gauge",

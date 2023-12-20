@@ -27,7 +27,7 @@ func (suite *AdapterSuite) SetupTest() {
 func (suite *AdapterSuite) TestGauges() {
 	ctx := context.Background()
 	suite.Run("not found", func() {
-		_, err := suite.gauges.Get(ctx, "some_id")
+		_, err := suite.gauges.Gauge(ctx, "some_id")
 		suite.ErrorIs(err, app.ErrorMetricNotFound)
 	})
 
@@ -38,19 +38,19 @@ func (suite *AdapterSuite) TestGauges() {
 			val2 = 1.02
 		)
 
-		v, err := suite.gauges.Update(ctx, id, val1)
+		v, err := suite.gauges.GaugeUpdate(ctx, id, val1)
 		suite.NoError(err)
 		suite.Equal(val1, v)
 
-		v, err = suite.gauges.Get(ctx, id)
+		v, err = suite.gauges.Gauge(ctx, id)
 		suite.NoError(err)
 		suite.Equal(val1, v)
 
-		v, err = suite.gauges.Update(ctx, id, val2)
+		v, err = suite.gauges.GaugeUpdate(ctx, id, val2)
 		suite.NoError(err)
 		suite.Equal(val2, v)
 
-		v, err = suite.gauges.Get(ctx, id)
+		v, err = suite.gauges.Gauge(ctx, id)
 		suite.NoError(err)
 		suite.Equal(val2, v)
 
@@ -60,7 +60,7 @@ func (suite *AdapterSuite) TestGauges() {
 func (suite *AdapterSuite) TestCounters() {
 	ctx := context.Background()
 	suite.Run("not found", func() {
-		_, err := suite.counters.Get(ctx, "some_id")
+		_, err := suite.counters.Counter(ctx, "some_id")
 		suite.ErrorIs(err, app.ErrorMetricNotFound)
 	})
 
@@ -71,19 +71,19 @@ func (suite *AdapterSuite) TestCounters() {
 			val2 = 2
 		)
 
-		v, err := suite.counters.Increment(ctx, id, val1)
+		v, err := suite.counters.CounterIncrement(ctx, id, val1)
 		suite.NoError(err)
 		suite.EqualValues(val1, int64(v))
 
-		v, err = suite.counters.Get(ctx, id)
+		v, err = suite.counters.Counter(ctx, id)
 		suite.NoError(err)
 		suite.EqualValues(val1, int64(v))
 
-		v, err = suite.counters.Increment(ctx, id, val2)
+		v, err = suite.counters.CounterIncrement(ctx, id, val2)
 		suite.NoError(err)
 		suite.EqualValues(val2+val1, int64(v))
 
-		v, err = suite.counters.Get(ctx, id)
+		v, err = suite.counters.Counter(ctx, id)
 		suite.NoError(err)
 		suite.EqualValues(val2+val1, int64(v))
 

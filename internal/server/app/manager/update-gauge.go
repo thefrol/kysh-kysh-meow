@@ -12,5 +12,5 @@ func (r Registry) UpdateGauge(ctx context.Context, id string, value float64) (fl
 		return 0, fmt.Errorf("%w: %v", app.ErrorBadID, err)
 	}
 
-	return r.Gauges.Update(ctx, id, value) // todo обернуть ошибку??
+	return r.Gauges.GaugeUpdate(ctx, id, value) // todo обернуть ошибку??
 }

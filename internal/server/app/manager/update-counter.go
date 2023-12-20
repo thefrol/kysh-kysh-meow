@@ -12,5 +12,5 @@ func (r Registry) IncrementCounter(ctx context.Context, id string, delta int64) 
 		return 0, fmt.Errorf("%w: %v", app.ErrorBadID, err)
 	}
 
-	return r.Counters.Increment(ctx, id, delta) // todo обернуть ошибку??
+	return r.Counters.CounterIncrement(ctx, id, delta) // todo обернуть ошибку??
 }

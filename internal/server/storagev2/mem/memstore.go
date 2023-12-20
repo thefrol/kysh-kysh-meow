@@ -49,8 +49,8 @@ func (s *MemStore) All(context.Context) (map[string]int64, error) {
 	return m, nil
 }
 
-// Get implements manager.CounterRepository.
-func (s *MemStore) Get(ctx context.Context, id string) (int64, error) {
+// Counter implements manager.CounterRepository.
+func (s *MemStore) Counter(ctx context.Context, id string) (int64, error) {
 	// проверять, что мапа инициализирована, не нужно
 	// но надо проверить, что сам MemStore не нулевой
 	if s == nil {
@@ -69,8 +69,8 @@ func (s *MemStore) Get(ctx context.Context, id string) (int64, error) {
 	return v, nil
 }
 
-// Increment implements manager.CounterRepository.
-func (s *MemStore) Increment(ctx context.Context, id string, delta int64) (int64, error) {
+// CounterIncrement implements manager.CounterRepository.
+func (s *MemStore) CounterIncrement(ctx context.Context, id string, delta int64) (int64, error) {
 	// но надо проверить, что сам MemStore не нулевой
 	// и мапа
 	if s == nil {
