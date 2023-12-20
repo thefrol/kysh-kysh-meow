@@ -9,7 +9,7 @@ import (
 	"github.com/thefrol/kysh-kysh-meow/internal/server/app/manager"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/app/scan"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/domain"
-	"github.com/thefrol/kysh-kysh-meow/internal/server/httpio"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/router/httpio"
 )
 
 var (

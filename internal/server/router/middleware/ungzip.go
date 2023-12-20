@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/thefrol/kysh-kysh-meow/internal/server/httpio"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/router/httpio"
 )
 
 // UnGZIP распаковывает запросы, закодированные при помощи GZIP, и пропускает все

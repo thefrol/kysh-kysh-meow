@@ -8,10 +8,10 @@ import (
 	"github.com/thefrol/kysh-kysh-meow/internal/server/app/manager"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/app/metricas"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/app/scan"
-	handler "github.com/thefrol/kysh-kysh-meow/internal/server/handlers"
-	"github.com/thefrol/kysh-kysh-meow/internal/server/httpio"
+	handler "github.com/thefrol/kysh-kysh-meow/internal/server/router/handlers"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/router/httpio"
 
-	"github.com/thefrol/kysh-kysh-meow/internal/server/middleware"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/router/middleware"
 )
 
 const (

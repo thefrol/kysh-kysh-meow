@@ -7,7 +7,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/domain"
-	"github.com/thefrol/kysh-kysh-meow/internal/server/httpio"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/router/httpio"
 )
 
 func (a *ForQuery) UpdateGauge(w http.ResponseWriter, r *http.Request) {

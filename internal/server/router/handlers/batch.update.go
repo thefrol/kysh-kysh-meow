@@ -7,7 +7,7 @@ import (
 	"github.com/mailru/easyjson"
 	"github.com/thefrol/kysh-kysh-meow/internal/metrica"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/domain"
-	"github.com/thefrol/kysh-kysh-meow/internal/server/httpio"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/router/httpio"
 )
 
 func (h *ForBatch) Update(w http.ResponseWriter, r *http.Request) {

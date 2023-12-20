@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/thefrol/kysh-kysh-meow/internal/server/httpio"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/router/httpio"
 )
 
 type ForPing struct {
