@@ -43,7 +43,7 @@ func MeowLogging() func(http.Handler) http.Handler {
 
 			log.Info().
 				Int("statusCode", faker.StatusCode()).
-				Str("Content-Type", w.Header().Get("Content-Type")). // todo bug не возвращает content-type при ошибках. Всмысле я его и не записываю
+				Str("Content-Type", w.Header().Get("Content-Type")).
 				Str("Sign", w.Header().Get(sign.SignHeaderName)).
 				Int("Size", faker.BytesWritten()).
 				// todo add gzipped response flag

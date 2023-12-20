@@ -16,10 +16,13 @@ import (
 func HTTPErrorWithLogging(w http.ResponseWriter, statusCode int, format string, params ...interface{}) {
 	s := fmt.Sprintf(format, params...)
 	log.Error().Msg(s)
+
+	w.Header().Set("Content-Type", TypeTextPlain)
 	http.Error(w, s, statusCode)
 }
 
 func HTTPError(w http.ResponseWriter, statusCode int, message string) {
+	w.Header().Set("Content-Type", TypeTextPlain)
 	w.WriteHeader(statusCode)
 	w.Write([]byte(message))
 }
