@@ -1,63 +1,73 @@
+// Пакет для аккуратного выключения сервера
 package graceful
 
 import (
 	"context"
+	"fmt"
 	"net/http"
-	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
-	"github.com/rs/zerolog/log"
+	"golang.org/x/sync/errgroup"
 )
 
-// Serve запускает сервер с поддержкой нежного завершения. Сервер можно будет выключить через
-// SIGINT, SIGTERM, SIGQUIT
-func Serve(addr string, router http.Handler) {
-	server := http.Server{Addr: addr, Handler: router}
+const timeout = 30 * time.Second
 
-	// запустим горутину, которая будет слушать сигналы от системы, и при получении
-	// начнет процедуру остановки сервера
-	go func() {
-		<-RequestStop()
-		log.Debug().Msg("server wants to shut down")
+// ListenAndServe копирует функциональность http.ListenAndServe
+// но только с завершением по сигналам операционной системы, таким как:
+// syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT
+//
+// Позволяет задать базовый контекст, который работает так: если ctx
+// выключится, это спровоцирует аккуратную остановку сервера.
+func ListenAndServe(ctx context.Context, addr string, handler http.Handler) error {
+	// сделаем сервер
+	s := http.Server{
+		Addr:    addr,
+		Handler: handler,
+	}
 
-		shutdownCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	// подготовим выключение
+	ctx, stop := signal.NotifyContext(ctx,
+		syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+	defer stop()
+
+	// запускаем горутину, которая будет ждать и получения сигнала на остановку
+	// из контекста ctx. При этом нам очень важно дождаться завершения
+	// server.Shutdown() - после этого сервер точно остановился
+	eg := errgroup.Group{}
+	eg.Go(func() error {
+		// ждем, что придет сигнал на остановку
+		<-ctx.Done()
+
+		// даем ему 30 секунд на остановку
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
 		defer cancel()
 
-		ShutdownGracefullyContext(shutdownCtx, &server)
-	}()
+		// наша основная задача, дождаться когда завершится эта функция, и лишь
+		// потом выходить из функции
 
-	log.Info().Msgf("^.^ Мяу, сервер запускается по адресу %v!", addr)
-	if err := server.ListenAndServe(); err != http.ErrServerClosed {
-		log.Error().Msgf("^0^ не могу запустить сервер: %v \n", err)
-	}
-	log.Error().Msg("Run() остановлен")
-
-	// если ошибка при запуске сервера, то горутина не не получит сигнал, но в общем её вырубит система как бэ
-}
-
-// RequestStop возвращает канал через который придёт сообщение, что операционная система запросила завершение работы
-func RequestStop() chan os.Signal {
-	sig := make(chan os.Signal, 1)
-	signal.Notify(sig, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
-	return sig
-}
-
-func ShutdownGracefullyContext(ctx context.Context, serv *http.Server) {
-	go func() {
-		<-ctx.Done()
-		if ctx.Err() == context.DeadlineExceeded {
-			log.Fatal().Msg("Время вышло, сервер будет завершен принудительно")
-			return
+		// todo
+		//
+		// а что если сервер так и не запустился??
+		err := s.Shutdown(ctx)
+		if err != nil {
+			return err
 		}
-	}()
 
-	// Trigger graceful shutdown
-	err := serv.Shutdown(ctx)
-	if err != nil {
-		log.Fatal().Msg(err.Error())
-		panic(err)
+		return nil
+	})
+
+	err := s.ListenAndServe()
+	if err != http.ErrServerClosed {
+		stop() // если сервер не удалось запустить запускаем процедуру остановки
+		return fmt.Errorf("server stop: %w", err)
 	}
-	log.Info().Msg("^-^ рутина остановки сервера завершилась")
+
+	// теперь ожидаем остановки сервера
+	err = eg.Wait()
+	if err != nil {
+		return fmt.Errorf("server stop: server shutdown gouroutine: %w", err)
+	}
+	return nil
 }

@@ -3,7 +3,9 @@ package main
 import (
 	"context"
 	"os"
+	"os/signal"
 	"runtime"
+	"syscall"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -11,7 +13,6 @@ import (
 	"github.com/thefrol/kysh-kysh-meow/internal/collector/report"
 	"github.com/thefrol/kysh-kysh-meow/internal/collector/report/compress"
 	"github.com/thefrol/kysh-kysh-meow/internal/config"
-	"github.com/thefrol/kysh-kysh-meow/lib/graceful"
 )
 
 const (
@@ -50,28 +51,16 @@ func main() {
 	report.CompressMinLength = CompressMinLength
 
 	//Создадим контекст, который будет завершен по сигналу ОС
-	ctx := graceful.WithSignal(context.Background())
-	graceful.SetForcedShutdown(ctx, GracefulShutdownPeriod)
+	// подготовим выключение
+	ctx, stop := signal.NotifyContext(context.Background(),
+		syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+	defer stop()
 
 	// Запускаем работу
+	// после получения сигнала агент отправит последние
+	// метрики и завершится
 	collector.FetchAndReport(ctx, config, updateRoute)
 
 	// Все завершилось, выведем последнюю статистику
 	log.Info().Int("goroutines active", runtime.NumGoroutine()).Msgf("Работа завершена нежно")
-
-	// todo на данный момент в конце работают три горутины:
-	// + текущая(main())
-	// + горутина graceful.ForcedShutdown() - при желании можно остановить
-	// + горутина signal.Notify() при желании можно тоже остановить, наверно
-	//
-	// То есть, 3 оставшиеся горутины значит, что все эти бесконечные остальные
-	// горутины нормально у меня закрываются
 }
-
-// todo
-//
-// было бы прикольно ещё придумать способ, как бы сделать так, чтобы
-// report.Send не занимал семафоры, пока идёт ожидание отправки,
-// например, туда можно было бы передавать этот семафор как раз.
-// Но тогда семаформы и всякие примитивы понадобится выделить
-// в отдельный пакет

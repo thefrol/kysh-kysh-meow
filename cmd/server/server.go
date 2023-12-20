@@ -6,7 +6,6 @@ import (
 	"context"
 	"database/sql"
 	"os"
-	"time"
 
 	"github.com/rs/zerolog/log"
 	"github.com/thefrol/kysh-kysh-meow/internal/config"
@@ -101,16 +100,17 @@ func main() {
 
 	// Запускаем сервер с поддержкой нежного завершения,
 	// занимаем текущий поток до вызова сигналов выключения
-	graceful.Serve(cfg.Addr, router)
+	err = graceful.ListenAndServe(context.Background(), cfg.Addr, router)
+	if err != nil {
+		log.Error().Err(err).Msg("Ошибка запуска сервера")
+	}
+	log.Info().Msg("Сервер остановлен")
 
 	// Останавливаем хранилище, интервальную запись в файл и все остальное
 	// или соединения с БД
+	log.Info().Msg("Останавливаем хранилище")
 	stopStorage()
-
-	// Даем ему время
-	time.Sleep(time.Second)
 
 	log.Info().Msg("^.^ Сервер завершен нежно")
 	// Wait for server context to be stopped
-
 }
