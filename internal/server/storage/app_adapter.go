@@ -14,9 +14,9 @@ import (
 
 var (
 	_ manager.CounterRepository = (*CounterAdapter)(nil)
-	_ scan.CounterLister        = (*CounterAdapter)(nil)
 	_ manager.GaugeRepository   = (*GaugeAdapter)(nil)
-	_ scan.GaugeLister          = (*GaugeAdapter)(nil)
+
+	_ scan.Labler = (*LabelsAdapter)(nil)
 )
 
 type CounterAdapter struct {
@@ -181,4 +181,23 @@ func (adapter *GaugeAdapter) GaugeUpdate(ctx context.Context, id string, value f
 	}
 
 	return *v[0].Value, nil
+}
+
+type LabelsAdapter struct {
+	Op httpio.Operator
+}
+
+// Labels implements scan.Labler.
+func (adapter *LabelsAdapter) Labels(ctx context.Context) (map[string][]string, error) {
+	cn, gn, err := adapter.Op.List(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("LabelsAdapter: %w", err)
+	}
+
+	res := map[string][]string{
+		"counters": cn,
+		"gauges":   gn,
+	}
+
+	return res, nil
 }

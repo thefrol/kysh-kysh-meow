@@ -618,8 +618,7 @@ func NewMemRouter() http.Handler {
 
 	// готовим прикладной уровень
 	labels := scan.Labels{
-		Counters: &counters,
-		Gauges:   &gauges,
+		Labels: &storage.LabelsAdapter{Op: s},
 	}
 
 	reg := manager.Registry{

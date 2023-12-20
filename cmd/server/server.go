@@ -57,10 +57,13 @@ func main() {
 		Op: s,
 	}
 
+	labels := storage.LabelsAdapter{
+		Op: s,
+	}
+
 	// готовим прикладной уровень
-	labels := scan.Labels{
-		Counters: &counters,
-		Gauges:   &gauges,
+	scanner := scan.Labels{
+		Labels: &labels,
 	}
 
 	reg := manager.Registry{
@@ -90,7 +93,7 @@ func main() {
 	r := router.API{
 		Manager:   man,
 		Registry:  reg,
-		Dashboard: labels,
+		Dashboard: scanner,
 		Pinger:    pinger,
 
 		Key: string(cfg.Key.ValueFunc()()), // todo это лол
