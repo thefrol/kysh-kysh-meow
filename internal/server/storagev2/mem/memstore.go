@@ -23,8 +23,9 @@ type MemStore struct {
 	gmt    sync.RWMutex // мьютекс для счетчиков
 	Gauges FloatMap
 
-	Log      zerolog.Logger
 	FilePath string
+
+	Log zerolog.Logger
 }
 
 // All implements scan.CounterLister.
@@ -40,7 +41,7 @@ func (s *MemStore) Labels(context.Context) (map[string][]string, error) {
 
 	// займемся счетчиками
 
-	cl := make([]string, len(s.Counters))
+	cl := make([]string, 0, len(s.Counters))
 
 	s.cmt.RLock()
 	for c := range s.Counters {
@@ -52,11 +53,11 @@ func (s *MemStore) Labels(context.Context) (map[string][]string, error) {
 
 	// теперь займемся гаужами
 
-	gl := make([]string, len(s.Gauges))
+	gl := make([]string, 0, len(s.Gauges))
 
 	s.gmt.RLock()
 	for g := range s.Gauges {
-		gl = append(cl, g)
+		gl = append(gl, g)
 	}
 	s.gmt.RUnlock()
 
