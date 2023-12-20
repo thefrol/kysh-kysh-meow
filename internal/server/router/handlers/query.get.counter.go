@@ -7,7 +7,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog/log"
-	"github.com/thefrol/kysh-kysh-meow/internal/server/domain"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/app"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/router/httpio"
 )
 
@@ -25,7 +25,7 @@ func (a *ForQuery) GetCounter(w http.ResponseWriter, r *http.Request) {
 
 	v, err := a.Registry.Counter(r.Context(), id)
 	if err != nil {
-		if errors.Is(err, domain.ErrorMetricNotFound) {
+		if errors.Is(err, app.ErrorMetricNotFound) {
 			logger.Error().Err(err).Send() // httpio.To(log).To(w).NotFound(err)
 			httpio.NotFound(w, err)        // что если httpio.ToWriter(w).WithLog(logger).NotFound(w)
 			return

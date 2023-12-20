@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/thefrol/kysh-kysh-meow/internal/server/domain"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/app"
 )
 
 func (mgr Manager) GetMetrica(ctx context.Context, m Metrica) (Metrica, error) {
@@ -20,19 +20,19 @@ func (mgr Manager) GetMetrica(ctx context.Context, m Metrica) (Metrica, error) {
 	case "counter":
 		v, err := mgr.Registry.Counter(ctx, m.ID)
 		if err != nil {
-			return m, fmt.Errorf("MetricaManager: %w", domain.ErrorMetricNotFound)
+			return m, fmt.Errorf("MetricaManager: %w", app.ErrorMetricNotFound)
 		}
 
 		m.Delta = &v
 	case "gauge":
 		v, err := mgr.Registry.Gauge(ctx, m.ID)
 		if err != nil {
-			return m, fmt.Errorf("MetricaManager: %w", domain.ErrorMetricNotFound)
+			return m, fmt.Errorf("MetricaManager: %w", app.ErrorMetricNotFound)
 		}
 
 		m.Value = &v
 	default:
-		return m, fmt.Errorf("MetricaManager: %w %v ", domain.ErrorUnknownMetric, m.MType)
+		return m, fmt.Errorf("MetricaManager: %w %v ", app.ErrorUnknownMetric, m.MType)
 	}
 
 	// возвращаем

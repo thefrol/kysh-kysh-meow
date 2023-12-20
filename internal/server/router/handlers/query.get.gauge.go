@@ -6,7 +6,7 @@ import (
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/thefrol/kysh-kysh-meow/internal/server/domain"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/app"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/router/httpio"
 )
 
@@ -24,7 +24,7 @@ func (a *ForQuery) GetGauge(w http.ResponseWriter, r *http.Request) {
 	v, err := a.Registry.Gauge(r.Context(), id)
 	if err != nil {
 		// если метрика не найдена, то мы пишем в ответ статус 404
-		if errors.Is(err, domain.ErrorMetricNotFound) {
+		if errors.Is(err, app.ErrorMetricNotFound) {
 			httpio.HTTPErrorWithLogging(w,
 				http.StatusNotFound,
 				"handler: GetGauge() не найдена метрика %v: %v", id, err)

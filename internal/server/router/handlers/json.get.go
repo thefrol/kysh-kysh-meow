@@ -6,7 +6,7 @@ import (
 
 	"github.com/mailru/easyjson"
 	"github.com/thefrol/kysh-kysh-meow/internal/metrica"
-	"github.com/thefrol/kysh-kysh-meow/internal/server/domain"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/app"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/router/httpio"
 )
 
@@ -23,7 +23,7 @@ func (h *ForJSON) Get(w http.ResponseWriter, r *http.Request) {
 
 	v, err := h.Manager.GetMetrica(r.Context(), m)
 	if err != nil {
-		if errors.Is(err, domain.ErrorMetricNotFound) {
+		if errors.Is(err, app.ErrorMetricNotFound) {
 			httpio.HTTPErrorWithLogging(w,
 				http.StatusNotFound,
 				"Не удалось найти метрику %v типа %v: %v", m.ID, m.MType, err)

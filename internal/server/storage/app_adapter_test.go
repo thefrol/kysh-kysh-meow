@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/suite"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/app"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/app/manager"
-	"github.com/thefrol/kysh-kysh-meow/internal/server/domain"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/storage"
 )
 
@@ -28,7 +28,7 @@ func (suite *AdapterSuite) TestGauges() {
 	ctx := context.Background()
 	suite.Run("not found", func() {
 		_, err := suite.gauges.Get(ctx, "some_id")
-		suite.ErrorIs(err, domain.ErrorMetricNotFound)
+		suite.ErrorIs(err, app.ErrorMetricNotFound)
 	})
 
 	suite.Run("Set&Get", func() {
@@ -61,7 +61,7 @@ func (suite *AdapterSuite) TestCounters() {
 	ctx := context.Background()
 	suite.Run("not found", func() {
 		_, err := suite.counters.Get(ctx, "some_id")
-		suite.ErrorIs(err, domain.ErrorMetricNotFound)
+		suite.ErrorIs(err, app.ErrorMetricNotFound)
 	})
 
 	suite.Run("Set&Get", func() {
