@@ -47,7 +47,7 @@ func TestSigning(t *testing.T) {
 
 	// создадим запрос
 	r := httptest.NewRequest(http.MethodGet, route, bytes.NewBuffer([]byte(body)))
-	r.Header.Set(sign.SignHeaderName, requestSign)
+	r.Header.Set(sign.HeaderName, requestSign)
 
 	// запускаем запрос
 	w := httptest.NewRecorder()
@@ -58,7 +58,7 @@ func TestSigning(t *testing.T) {
 	defer res.Body.Close()
 
 	assert.Equal(t, statusCode, res.StatusCode)
-	assert.Equal(t, responseSign, res.Header.Get(sign.SignHeaderName))
+	assert.Equal(t, responseSign, res.Header.Get(sign.HeaderName))
 }
 
 // тест проверяет работу подписывающей мидлвари.
@@ -91,7 +91,7 @@ func Test_Signing_BadSign(t *testing.T) {
 
 	// создадим запрос
 	r := httptest.NewRequest(http.MethodGet, route, bytes.NewBuffer([]byte(body)))
-	r.Header.Set(sign.SignHeaderName, requestSign)
+	r.Header.Set(sign.HeaderName, requestSign)
 
 	// запускаем запрос
 	w := httptest.NewRecorder()

@@ -132,12 +132,12 @@ func (api API) MeowRouter() (router chi.Router) {
 	// Тут добавляем стилизованные под кошки-мышки ответы сервера при 404 и 400,
 	// Кроме того, мы подменяем MethodNotAllowed на NotFound
 	router.MethodNotAllowed(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Add("Content-Type", "text/plain")
+		w.Header().Add(httpio.HeaderContentType, "text/plain")
 		w.WriteHeader(404)
 		w.Write([]byte("^0^ оуууоо! такой метод не дотупен по этому адресу"))
 	})
 	router.NotFound(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Add("Content-Type", "text/plain")
+		w.Header().Add(httpio.HeaderContentType, "text/plain")
 		w.WriteHeader(404)
 		w.Write([]byte("^0^ оуууоо! Нет такой страницы"))
 	})

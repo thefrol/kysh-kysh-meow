@@ -95,7 +95,7 @@ func (server *testHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	// разархивируем если надо
-	if strings.Contains(r.Header.Get("Content-Encoding"), "gzip") {
+	if strings.Contains(r.Header.Get(report.HeaderContentEncoding), "gzip") {
 		unzipped, _ := gzip.NewReader(r.Body)
 		defer unzipped.Close()
 		bb, _ = io.ReadAll(unzipped)

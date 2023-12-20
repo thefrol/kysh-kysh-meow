@@ -45,7 +45,7 @@ func encoded(r *http.Request, encoder string) bool {
 	// указываются в последовательности их применения, а значит нам нужно читать последний
 	// заголовок Content-Encoding, и если он gzip, то расшифровать
 
-	hh := r.Header.Values("Content-Encoding")
+	hh := r.Header.Values(httpio.HeaderContentEncoding)
 	// Если вообще нет таких заголовков, то возвращаем false
 	if len(hh) == 0 {
 		return false

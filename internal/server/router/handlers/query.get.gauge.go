@@ -40,6 +40,6 @@ func (a *ForQuery) GetGauge(w http.ResponseWriter, r *http.Request) {
 
 	// если метрика получена, то ставим контент тайп
 	// и пишем прям в тело ответа значение
-	w.Header().Set("Content-Type", httpio.TypeTextPlain)
+	w.Header().Set(httpio.HeaderContentType, httpio.TypeTextPlain)
 	w.Write([]byte(strconv.FormatFloat(v, 'g', -1, 64))) // todo эта функция могла бы быть частью domain или моделей, чего-то такого более общего
 }

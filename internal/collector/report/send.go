@@ -19,6 +19,10 @@ var (
 	ErrorRequestRejected = errors.New("запрос не принят, статус код не 200")
 )
 
+const (
+	HeaderContentEncoding = "Content-Encoding"
+)
+
 // это клиент, которым будет пользоваться наш пакет для отправки
 var сlient = resty.New()
 
@@ -53,7 +57,7 @@ func Send(metricas []metrica.Metrica, url string) error {
 		if err != nil {
 			return fmt.Errorf("ошибка компрессии: %w", err)
 		}
-		preparedRequest.Header.Set("Content-Encoding", "gzip")
+		preparedRequest.Header.Set(HeaderContentEncoding, "gzip")
 	}
 
 	if len(signingKey) != 0 {
@@ -61,7 +65,7 @@ func Send(metricas []metrica.Metrica, url string) error {
 		if err != nil {
 			return fmt.Errorf("ошибка подписывания: %w", err)
 		}
-		preparedRequest.Header.Set(sign.SignHeaderName, s)
+		preparedRequest.Header.Set(sign.HeaderName, s)
 		log.Info().Str("sign", s).Msg("Тело сообщения подписано")
 
 		// мда, канеш цену за отсуствие мидлвари приходится платить

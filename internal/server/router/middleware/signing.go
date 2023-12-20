@@ -29,7 +29,7 @@ func CheckSignature(key string) func(http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 			// получаем подпись из заголовков
-			receivedSign := r.Header.Get(sign.SignHeaderName)
+			receivedSign := r.Header.Get(sign.HeaderName)
 
 			// так получилось, в тестах, если запрос
 			// передал пустой ключ подписи, то мы
@@ -96,7 +96,7 @@ func SignResponse(key string) func(http.Handler) http.Handler {
 			}
 
 			// Теперь запишем в заголовки ответа подпись
-			w.Header().Set(sign.SignHeaderName, s)
+			w.Header().Set(sign.HeaderName, s)
 			log.Info().Str("sign", s).Msg("Запрос подписан")
 
 			// записываем из буфера в оригинальный райтер

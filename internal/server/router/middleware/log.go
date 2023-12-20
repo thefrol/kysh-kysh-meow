@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/rs/zerolog/log"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/router/httpio"
 	"github.com/thefrol/kysh-kysh-meow/internal/sign"
 	"github.com/thefrol/kysh-kysh-meow/lib/intercept"
 )
@@ -28,7 +29,7 @@ func MeowLogging() func(http.Handler) http.Handler {
 					Str("method", r.Method).
 					Str("uri", r.RequestURI).
 					Bool("gzippedRequest", encoded(r, "gzip")).
-					Str("Sign", r.Header.Get(sign.SignHeaderName)). // todo sign.HeaderName
+					Str("Sign", r.Header.Get(sign.HeaderName)). // todo sign.HeaderName
 					Dur("Duration", d).
 					Msgf("PANIC -> %v", msg)
 			}()
@@ -37,14 +38,14 @@ func MeowLogging() func(http.Handler) http.Handler {
 				Str("method", r.Method).
 				Str("uri", r.RequestURI).
 				Bool("gzippedRequest", encoded(r, "gzip")).
-				Str("Sign", r.Header.Get(sign.SignHeaderName)). // todo sign.HeaderName
+				Str("Sign", r.Header.Get(sign.HeaderName)). // todo sign.HeaderName
 				Dur("Duration", d).
 				Msg("Request ->")
 
 			log.Info().
 				Int("statusCode", faker.StatusCode()).
-				Str("Content-Type", w.Header().Get("Content-Type")).
-				Str("Sign", w.Header().Get(sign.SignHeaderName)).
+				Str(httpio.HeaderContentType, w.Header().Get(httpio.HeaderContentType)).
+				Str("Sign", w.Header().Get(sign.HeaderName)).
 				Int("Size", faker.BytesWritten()).
 				// todo add gzipped response flag
 				Msg("Response ->")

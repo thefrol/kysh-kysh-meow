@@ -42,6 +42,6 @@ func (a *ForQuery) UpdateGauge(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", httpio.TypeTextPlain)
+	w.Header().Set(httpio.HeaderContentType, httpio.TypeTextPlain)
 	w.Write([]byte(strconv.FormatFloat(v, 'g', -1, 64)))
 }

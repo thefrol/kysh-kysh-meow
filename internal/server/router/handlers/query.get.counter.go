@@ -35,6 +35,6 @@ func (a *ForQuery) GetCounter(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", httpio.TypeTextPlain)
+	w.Header().Set(httpio.HeaderContentType, httpio.TypeTextPlain)
 	w.Write([]byte(strconv.FormatInt(v, 10)))
 }

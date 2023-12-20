@@ -12,6 +12,7 @@ import (
 	"github.com/thefrol/kysh-kysh-meow/internal/server/app/manager"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/app/metricas"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/app/scan"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/router/httpio"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/storage"
 )
 
@@ -287,7 +288,7 @@ func Test_MeowRouter(t *testing.T) {
 			// сделаем подготовительные запросы, которые
 			// приведут сервер в правильное состояние
 			for _, u := range tt.prePosts {
-				_, err := client.R().SetHeader("Content-Type", "text/plain").Post(server.URL + u)
+				_, err := client.R().SetHeader(httpio.HeaderContentType, "text/plain").Post(server.URL + u)
 				assert.NoError(t, err, "error on preparing data for final request")
 			}
 
@@ -298,7 +299,7 @@ func Test_MeowRouter(t *testing.T) {
 			// проверим вывод
 			assert.Equal(t, tt.response.code, resp.StatusCode())
 			if tt.response.ContentType != "" {
-				assert.Contains(t, resp.Header().Get("Content-Type"), tt.response.ContentType)
+				assert.Contains(t, resp.Header().Get(httpio.HeaderContentType), tt.response.ContentType)
 			}
 
 			if tt.response.body != "" {
@@ -391,7 +392,7 @@ func Test_updateCounter(t *testing.T) {
 
 			// проверим ответ
 			assert.Equal(t, tt.response.code, result.StatusCode)
-			assert.Contains(t, result.Header.Get("Content-Type"), tt.response.ContentType)
+			assert.Contains(t, result.Header.Get(httpio.HeaderContentType), tt.response.ContentType)
 			require.Equal(t, "", tt.response.body, "Тесты содержащие Body сейчас не поддерживаеются")
 		})
 	}
@@ -518,7 +519,7 @@ func Test_updateGauge(t *testing.T) {
 			defer result.Body.Close()
 
 			assert.Equal(t, tt.response.code, result.StatusCode)
-			assert.Contains(t, result.Header.Get("Content-Type"), tt.response.ContentType)
+			assert.Contains(t, result.Header.Get(httpio.HeaderContentType), tt.response.ContentType)
 			require.Equal(t, "", tt.response.body, "Тесты содержащие Body сейчас не поддерживаеются")
 		})
 	}
@@ -595,7 +596,7 @@ func Test_updateUnknownType(t *testing.T) {
 
 			// проверим результат
 			assert.Equal(t, tt.response.code, result.StatusCode)
-			assert.Contains(t, result.Header.Get("Content-Type"), tt.response.ContentType)
+			assert.Contains(t, result.Header.Get(httpio.HeaderContentType), tt.response.ContentType)
 			require.Equal(t, "", tt.response.body, "Тесты содержащие Body сейчас не поддерживаеются")
 		})
 	}

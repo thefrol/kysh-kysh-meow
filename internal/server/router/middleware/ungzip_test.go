@@ -12,6 +12,7 @@ import (
 	"github.com/go-resty/resty/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/router/httpio"
 )
 
 func TestUncompress(t *testing.T) {
@@ -69,7 +70,7 @@ func TestUncompress(t *testing.T) {
 			}
 
 			resp, err := client.R().
-				SetHeader("Content-Encoding", tt.request.contentEncoding).
+				SetHeader(httpio.HeaderContentEncoding, tt.request.contentEncoding).
 				SetBody(body).
 				Execute(http.MethodPost, serv.URL)
 			require.NoError(t, err, "An error on request")

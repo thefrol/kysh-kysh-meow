@@ -44,7 +44,7 @@ func GZIP(minLen int, bufSize int) func(http.Handler) http.Handler {
 
 			notZippable := buf.Len() < minLen ||
 				faker.StatusCode() >= 300 ||
-				!contentTypeZippable(w.Header().Get("Content-Type"))
+				!contentTypeZippable(w.Header().Get(httpio.HeaderContentType))
 
 			if notZippable {
 				// записываем все в оригинальный врайтер, не сжимая
@@ -56,8 +56,8 @@ func GZIP(minLen int, bufSize int) func(http.Handler) http.Handler {
 			// для начала запишем новый заголовок,
 			// и запишем код ответа
 
-			w.Header().Add("Content-Encoding", "gzip")
-			w.Header().Del("Content-Length") // очень важно, иначе будет ошибка при попытке закрыть врайтер компрессора
+			w.Header().Add(httpio.HeaderContentEncoding, "gzip")
+			w.Header().Del(httpio.HeaderContentLength) // очень важно, иначе будет ошибка при попытке закрыть врайтер компрессора
 
 			if faker.StatusCode() != 0 {
 				w.WriteHeader(faker.StatusCode())

@@ -36,7 +36,7 @@ type ForHTML struct {
 }
 
 func (html ForHTML) Dashboard(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", httpio.TypeTextHTML)
+	w.Header().Set(httpio.HeaderContentType, httpio.TypeTextHTML)
 
 	tmpl, err := template.New("simple").Parse(htmlTemplate)
 	if err != nil {
