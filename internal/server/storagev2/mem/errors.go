@@ -1,8 +1,11 @@
 package mem
 
-import "errors"
+import (
+	"errors"
+)
 
 var (
-	ErrorNilStore = errors.New("обращение к хранилищу по nil указалелю")
-	ErrorNilMap   = errors.New("мапа в хранилище не инищиализирована")
+	ErrorNilRef     = errors.New("нулевая ссылка")
+	ErrorNotStarted = errors.New("не запущено")
+	ErrorBadConfig  = errors.New("неправильно установлено")
 )

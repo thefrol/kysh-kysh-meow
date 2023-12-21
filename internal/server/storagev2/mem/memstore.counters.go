@@ -7,6 +7,11 @@ import (
 	"github.com/thefrol/kysh-kysh-meow/internal/server/app"
 )
 
+var (
+	ErrorNilStore = fmt.Errorf("обращение к хранилищу по nil указалелю: %w", ErrorNilRef)
+	ErrorNilMap   = fmt.Errorf("мапа в хранилище не инищиализирована: %w", ErrorNilRef)
+)
+
 // Counter implements manager.CounterRepository.
 func (s *MemStore) Counter(ctx context.Context, id string) (int64, error) {
 	// проверять, что мапа инициализирована, не нужно

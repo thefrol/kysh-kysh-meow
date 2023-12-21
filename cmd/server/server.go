@@ -90,46 +90,25 @@ func main() {
 		if cfg.StoreIntervalSeconds == 0 {
 			s.FilePath = cfg.FileStoragePath
 		} else {
-			// а иначе запускаем горутину, которая будет каждый сколько-то секунд это
-			// делать
-			dur := time.Duration(cfg.StoreIntervalSeconds) * time.Second
-			t := time.NewTicker(dur)
 
-			// в конце она скажет что остановилась через этот канал
-			stopped := make(chan struct{})
+			// если мы используем интервальное сохранение
+			// то у нас для этого есть специальный класс
+			i := mem.IntervalicSaver{
+				Store:    &s,
+				File:     cfg.FileStoragePath,
+				Interval: time.Duration(cfg.StoreIntervalSeconds) * time.Second,
+			}
 
-			go func() {
-			loop:
-				for {
-					select {
-
-					// если сработал таймер - записываем
-					case <-t.C:
-						s.Dump(cfg.FileStoragePath)
-
-					// иначе завершаем
-					case <-storageContext.Done():
-						s.Dump(cfg.FileStoragePath) // сохранимся обязательно ещё раз перед выходом
-						break loop
-					}
-				}
-				log.Info().Msg("Хранилище остановлено")
-				close(stopped)
-			}()
-
-			defer func() {
-				// дадим на все про все 3 секунды
-				sctx, sc := context.WithTimeout(context.Background(), 3*time.Second)
-				defer sc()
-
-				// дождемся остановки хранилища
-				select {
-				case <-stopped:
-				case <-sctx.Done():
-					log.Error().Msg("Хранилище не остановлено")
-				}
-
-			}()
+			// Запускаем интервальное сохранение
+			// и на выходе из мейна поставим ожидание
+			err := i.Run()
+			if err != nil {
+				log.Error().
+					Err(err).
+					Msg("не запущено интервальное сохранение")
+				os.Exit(1)
+			}
+			defer i.Stop()
 
 		}
 		counters = &s
