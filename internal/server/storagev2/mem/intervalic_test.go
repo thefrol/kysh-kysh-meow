@@ -1,6 +1,8 @@
 package mem
 
 import (
+	"errors"
+	"os"
 	"testing"
 	"time"
 
@@ -19,6 +21,16 @@ func TestStartAndStop(t *testing.T) {
 
 	err = s.Stop()
 	assert.NoError(t, err, "не удалось остановить хранилище")
+
+	// файл должен создасться с конце, хоть там ничего может и не быть
+	// потому что в конце мы все равно записываем последние изменения
+	_, err = os.Stat(s.File)
+	assert.NoError(t, err, "файл должен создасться путь мы в него и ничего не писали")
+
+	err = os.Remove(s.File)
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
+		t.Errorf("Не могу удалить тестовый файл %s", s.File)
+	}
 }
 func TestEmptyFile(t *testing.T) {
 	var s = IntervalicSaver{
