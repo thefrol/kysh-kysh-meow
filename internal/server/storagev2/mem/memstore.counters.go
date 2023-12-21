@@ -48,10 +48,11 @@ func (s *MemStore) CounterIncrement(ctx context.Context, id string, delta int64)
 	// она равна нулю
 	s.cmt.Lock()
 	s.Counters[id] += delta
+	v := s.Counters[id]
 	s.cmt.Unlock()
 
 	// запишем обновления в файл
 	s.Dump("")
 
-	return s.Counters[id], nil
+	return v, nil
 }

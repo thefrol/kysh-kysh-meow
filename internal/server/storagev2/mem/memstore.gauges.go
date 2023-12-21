@@ -53,5 +53,5 @@ func (s *MemStore) GaugeUpdate(ctx context.Context, id string, value float64) (f
 	// запишем обновления в файл
 	s.Dump("")
 
-	return s.Gauges[id], nil
+	return value, nil
 }
