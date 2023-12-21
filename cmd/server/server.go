@@ -92,27 +92,49 @@ func main() {
 		} else {
 			// а иначе запускаем горутину, которая будет каждый сколько-то секунд это
 			// делать
+			dur := time.Duration(cfg.StoreIntervalSeconds) * time.Second
+			t := time.NewTicker(dur)
+
+			// в конце она скажет что остановилась через этот канал
+			stopped := make(chan struct{})
+
 			go func() {
 			loop:
 				for {
-					time.Sleep(time.Duration(cfg.StoreIntervalSeconds) * time.Second)
-					s.Dump(cfg.FileStoragePath)
 					select {
+
+					// если сработал таймер - записываем
+					case <-t.C:
+						s.Dump(cfg.FileStoragePath)
+
+					// иначе завершаем
 					case <-storageContext.Done():
 						break loop
-					default:
 					}
 				}
 				log.Info().Msg("Хранилище остановлено")
+				close(stopped)
 			}()
-		}
 
+			defer func() {
+				// дадим на все про все 3 секунды
+				sctx, sc := context.WithTimeout(context.Background(), 3*time.Second)
+				defer sc()
+
+				// дождемся остановки хранилища
+				select {
+				case <-stopped:
+				case <-sctx.Done():
+					log.Error().Msg("Хранилище не остановлено")
+				}
+
+			}()
+
+		}
 		counters = &s
 		gauges = &s
 		labels = &s
-
 	} else {
-
 		s, err := cfg.MakeStorage(storageContext)
 		if err != nil {
 			log.Error().Msgf("Не удалось создать хранилише: %v", err)
@@ -178,13 +200,15 @@ func main() {
 	if err != nil {
 		log.Error().Err(err).Msg("Ошибка запуска сервера")
 	}
-	log.Info().Msg("Сервер остановлен")
+	log.Info().Msg("Апи остановлен")
 
 	// Останавливаем хранилище, интервальную запись в файл и все остальное
-	// или соединения с БД
+	// или соединения с БД. Для этого мы завершаем контекст хранилища
+	// при помощи функции остановки stopStorage()
 	log.Info().Msg("Останавливаем хранилище")
 	stopStorage()
 
-	log.Info().Msg("^.^ Сервер завершен нежно")
-	// Wait for server context to be stopped
+	// конец. парам па-па пам
+	log.Info().Msg("^.^ Сервер завершен нежно, остались деферы")
+
 }
