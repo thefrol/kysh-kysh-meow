@@ -23,6 +23,9 @@ type MemStore struct {
 	gmt    sync.RWMutex // мьютекс для счетчиков
 	Gauges FloatMap
 
+	// Если указан FilePath, то сюда будут
+	// синхронно писаться данные. При этом
+	// Чтение просиходит не отсюда
 	FilePath string
 
 	Log zerolog.Logger

@@ -58,18 +58,19 @@ func (s *MemStore) Dump() error {
 	return nil
 }
 
-// Restore перезаписываем хранилище из файла
-func (s *MemStore) Restore() error {
-	if s.FilePath == "" {
-		// не пишем в файл
-		return nil
+// Restore перезаписываем хранилище из файла path
+// при этом не использует filePath из самой структуры
+func (s *MemStore) RestoreFrom(path string) error {
+	if path == "" {
+		// не читаем
+		return fmt.Errorf("файл для чтения не может быть пустым")
 	}
 
-	buf, err := os.ReadFile(s.FilePath)
+	buf, err := os.ReadFile(path)
 	if err != nil {
 		s.Log.Error().
 			Err(err).
-			Str("file", s.FilePath).
+			Str("file", path).
 			Msg("ошибка чтения файла")
 		return fmt.Errorf("MemStore: %w", err)
 	}
@@ -89,19 +90,23 @@ func (s *MemStore) Restore() error {
 
 	s.Log.Info().
 		Err(err).
-		Str("file", s.FilePath).
+		Str("file", path).
 		Msg("хранилище прочитано")
 
 	// заменяем каунтеры
 	if s.Counters != nil {
 		s.Log.Info().Msg("мапа с канутерами не пустая, и будет заменена")
 	}
+	s.cmt.Lock()
 	s.Counters = d.Counters
+	s.cmt.Unlock()
 
 	if s.Gauges != nil {
 		s.Log.Info().Msg("мапа с гаужами не пустая, и будет заменена")
 	}
+	s.gmt.Lock()
 	s.Gauges = d.Gauges
+	s.gmt.Unlock()
 
 	return nil
 }

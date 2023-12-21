@@ -101,7 +101,7 @@ func Test_FileSave(t *testing.T) {
 		}
 
 		// записываем хранилище в файл
-		err = ms.Restore()
+		err = ms.RestoreFrom(file)
 		assert.ErrorIs(t, err, os.ErrNotExist)
 	})
 
@@ -156,7 +156,7 @@ func Test_FileSave(t *testing.T) {
 			FilePath: file,
 		}
 
-		err = ls.Restore()
+		err = ls.RestoreFrom(file)
 		require.NoError(t, err, "ошибка загрузки из файла")
 
 		// теперь проверим что мы получили

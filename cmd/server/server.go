@@ -65,7 +65,7 @@ func main() {
 		}
 
 		if cfg.Restore {
-			err := s.Restore()
+			err := s.RestoreFrom(cfg.FileStoragePath)
 			if err != nil {
 				log.Error().
 					Err(err).
