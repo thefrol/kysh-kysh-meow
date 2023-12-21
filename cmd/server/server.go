@@ -37,12 +37,6 @@ func main() {
 		os.Exit(2)
 	}
 
-	// storageContext это контекст бд, он нужен чтобы
-	// остановить горутины, который пишут в файл, а
-	// так же закрыть соединение с бд при остановку сервера
-	storageContext, stopStorage := context.WithCancel(
-		context.Background())
-
 	// создаем хранилище
 	// сейчас мы создадим его так, что
 	// 1. Если dsn не указал, то используем
@@ -115,6 +109,13 @@ func main() {
 		gauges = &s
 		labels = &s
 	} else {
+
+		// storageContext это уже устаревшая тема, нам не нужен
+		// какой-то крейзи контекст БД
+		storageContext, stopStorage := context.WithCancel(
+			context.Background())
+		defer stopStorage()
+
 		s, err := cfg.MakeStorage(storageContext)
 		if err != nil {
 			log.Error().Msgf("Не удалось создать хранилише: %v", err)
@@ -181,12 +182,6 @@ func main() {
 		log.Error().Err(err).Msg("Ошибка запуска сервера")
 	}
 	log.Info().Msg("Апи остановлен")
-
-	// Останавливаем хранилище, интервальную запись в файл и все остальное
-	// или соединения с БД. Для этого мы завершаем контекст хранилища
-	// при помощи функции остановки stopStorage()
-	log.Info().Msg("Останавливаем хранилище")
-	stopStorage()
 
 	// конец. парам па-па пам
 	log.Info().Msg("^.^ Сервер завершен нежно, остались деферы")
