@@ -16,6 +16,14 @@ var (
 	_ scan.Labler               = (*MemStore)(nil)
 )
 
+// MemStore хранит метрики в памяти, и сбрасывает
+// их на диск
+//
+// Если указан FileStorage, то при каждом изменении счетчика
+// счетчик будет записан в файл.
+//
+// Если нужна интервальная запись, то стоит воспользоваться
+// IntervalicSaver
 type MemStore struct {
 	cmt      sync.RWMutex // мьютекс для счетчиков
 	Counters IntMap
