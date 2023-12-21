@@ -24,6 +24,12 @@ type IntervalicSaver struct {
 	Log zerolog.Logger
 }
 
+// Run запускает процесс записи в файл, каждые Interval секунд
+// в файл будут сброшены все метрики.
+//
+// Если err!=nil значит функция запустилась и должна быть
+// остановлена функцией Stop(). Если же err!=nil, то
+// интервальная запись не была запущена. И можно не оставливать
 func (is *IntervalicSaver) Run() error {
 	if is == nil {
 		return fmt.Errorf("запуск записывателя: %w", ErrorNilSaver)
@@ -92,6 +98,12 @@ func (is *IntervalicSaver) Run() error {
 	return nil
 }
 
+// Stop останавливает интервальную запись и дожидается
+// произведения последней записи. В случае успеха вернётся
+// err!=nil. Если интервальная запись не была запущена,
+// вернет ErrorNotStarted
+//
+// todo было бы ещё неплохо указать дедлайт остановки через контекст
 func (is *IntervalicSaver) Stop() error {
 	if is == nil {
 		return fmt.Errorf("остановка записывателя: %w", ErrorNilSaver)
