@@ -16,6 +16,10 @@ type FileData struct {
 // если path не указан будет использован
 // s.FilePath
 func (s *MemStore) Dump(path string) error {
+	if s == nil {
+		return fmt.Errorf("запись в файл: %w", ErrorNilStore)
+	}
+
 	if path == "" {
 		path = s.FilePath
 	}
@@ -62,6 +66,10 @@ func (s *MemStore) Dump(path string) error {
 // Restore перезаписываем хранилище из файла path
 // при этом не использует filePath из самой структуры
 func (s *MemStore) RestoreFrom(path string) error {
+	if s == nil {
+		return fmt.Errorf("чтение из файла : %w", ErrorNilStore)
+	}
+
 	if path == "" {
 		// не читаем
 		return fmt.Errorf("файл для чтения не может быть пустым")
@@ -94,19 +102,30 @@ func (s *MemStore) RestoreFrom(path string) error {
 		Str("file", path).
 		Msg("хранилище прочитано")
 
-	// заменяем каунтеры
-	if s.Counters != nil {
-		s.Log.Info().Msg("мапа с канутерами не пустая, и будет заменена")
-	}
+	// читаем из прочитанной мапы d и записываем в свою
 	s.cmt.Lock()
-	s.Counters = d.Counters
+	for i, c := range d.Counters {
+		if _, ok := s.Counters[i]; ok {
+			s.Log.Info().
+				Str("id", i).
+				Str("file", path).
+				Msg("счетчик будет переписан из файла")
+		}
+		s.Counters[i] = c
+	}
 	s.cmt.Unlock()
 
-	if s.Gauges != nil {
-		s.Log.Info().Msg("мапа с гаужами не пустая, и будет заменена")
-	}
+	// теперь то же самое с гаужами сделаем
 	s.gmt.Lock()
-	s.Gauges = d.Gauges
+	for i, g := range d.Gauges {
+		if _, ok := s.Gauges[i]; ok {
+			s.Log.Info().
+				Str("id", i).
+				Str("file", path).
+				Msg("гауж будет переписан из файла")
+		}
+		s.Gauges[i] = g
+	}
 	s.gmt.Unlock()
 
 	return nil
