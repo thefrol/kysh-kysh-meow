@@ -13,10 +13,11 @@ type FileData struct {
 }
 
 // Dump сохраняет хранилище в файл
-func (s *MemStore) Dump() error {
-	if s.FilePath == "" {
-		// не пишем в файл
-		return nil
+// если path не указан будет использован
+// s.FilePath
+func (s *MemStore) Dump(path string) error {
+	if path == "" {
+		path = s.FilePath
 	}
 
 	// запишем джесон в файл
@@ -41,18 +42,18 @@ func (s *MemStore) Dump() error {
 	}
 
 	// записываем в файл
-	err = os.WriteFile(s.FilePath, buf, 0644)
+	err = os.WriteFile(path, buf, 0644)
 	if err != nil {
 		s.Log.Error().
 			Err(err).
-			Str("file", s.FilePath).
+			Str("file", path).
 			Msg("Ошибка записи в файл")
 
 		return fmt.Errorf("MemStore: %w", err)
 	}
 
 	s.Log.Debug().
-		Str("file", s.FilePath).
+		Str("file", path).
 		Msg("Хранилище записано в файл")
 
 	return nil

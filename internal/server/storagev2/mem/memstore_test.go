@@ -70,7 +70,7 @@ func Test_FileSave(t *testing.T) {
 		}
 
 		// записываем хранилище в файл
-		err = ms.Dump()
+		err = ms.Dump("")
 		assert.NoError(t, err)
 
 		_, err = os.Stat(file)

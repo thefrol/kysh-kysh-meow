@@ -6,6 +6,7 @@ import (
 	"context"
 	"database/sql"
 	"os"
+	"time"
 
 	"github.com/rs/zerolog/log"
 	"github.com/thefrol/kysh-kysh-meow/internal/config"
@@ -64,6 +65,8 @@ func main() {
 			Log: log.With().Str("storage", "memStoreV2").Logger(),
 		}
 
+		// если указан флаг restore, то читаем из нашего
+		// файла
 		if cfg.Restore {
 			err := s.RestoreFrom(cfg.FileStoragePath)
 			if err != nil {
@@ -79,6 +82,29 @@ func main() {
 				// надо как-то копировать их, а не просто заменять
 			}
 
+		}
+
+		// теперь разберемся с сохранением,
+		// если интевал нулевой - делае					fmt.Print("123")м сохранение
+		// синхронным, силами структуры
+		if cfg.StoreIntervalSeconds == 0 {
+			s.FilePath = cfg.FileStoragePath
+		} else {
+			// а иначе запускаем горутину, которая будет каждый сколько-то секунд это
+			// делать
+			go func() {
+			loop:
+				for {
+					time.Sleep(time.Duration(cfg.StoreIntervalSeconds) * time.Second)
+					s.Dump(cfg.FileStoragePath)
+					select {
+					case <-storageContext.Done():
+						break loop
+					default:
+					}
+				}
+				log.Info().Msg("Хранилище остановлено")
+			}()
 		}
 
 		counters = &s
