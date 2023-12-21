@@ -15,6 +15,7 @@ import (
 	"github.com/thefrol/kysh-kysh-meow/internal/server/app/scan"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/router"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/storage"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/storagev2/mem"
 	"github.com/thefrol/kysh-kysh-meow/lib/graceful"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -42,33 +43,77 @@ func main() {
 		context.Background())
 
 	// создаем хранилище
-	s, err := cfg.MakeStorage(storageContext)
-	if err != nil {
-		log.Error().Msgf("Не удалось создать хранилише: %v", err)
-		return
-	}
+	// сейчас мы создадим его так, что
+	// 1. Если dsn не указал, то используем
+	// storagev2
+	// 2. Иначе, исползуем старый вариант
 
-	// готовим репозитории
-	counters := storage.CounterAdapter{
-		Op: s,
-	}
+	var (
+		counters manager.CounterRepository
+		gauges   manager.GaugeRepository
+		labels   scan.Labler
+	)
 
-	gauges := storage.GaugeAdapter{
-		Op: s,
-	}
+	if cfg.DatabaseDSN.Get() == "" {
+		log.Info().Msg("используется storagev2")
 
-	labels := storage.LabelsAdapter{
-		Op: s,
-	}
+		s := mem.MemStore{
+			Counters: make(mem.IntMap, 50),
+			Gauges:   make(mem.FloatMap, 50),
 
+			Log: log.With().Str("storage", "memStoreV2").Logger(),
+		}
+
+		if cfg.Restore {
+			err := s.Restore()
+			if err != nil {
+				log.Error().
+					Err(err).
+					Msg("не удалось загрузить storage из файла")
+
+				os.Exit(1)
+
+				//todo
+				//
+				// resore заменит уже созданные мапы, на те, что куче
+				// надо как-то копировать их, а не просто заменять
+			}
+
+		}
+
+		counters = &s
+		gauges = &s
+		labels = &s
+
+	} else {
+
+		s, err := cfg.MakeStorage(storageContext)
+		if err != nil {
+			log.Error().Msgf("Не удалось создать хранилише: %v", err)
+			return
+		}
+
+		// готовим репозитории
+		counters = &storage.CounterAdapter{
+			Op: s,
+		}
+
+		gauges = &storage.GaugeAdapter{
+			Op: s,
+		}
+
+		labels = &storage.LabelsAdapter{
+			Op: s,
+		}
+	}
 	// готовим прикладной уровень
 	scanner := scan.Labels{
-		Labels: &labels,
+		Labels: labels,
 	}
 
 	reg := manager.Registry{
-		Counters: &counters,
-		Gauges:   &gauges,
+		Counters: counters,
+		Gauges:   gauges,
 	}
 
 	man := metricas.Manager{
