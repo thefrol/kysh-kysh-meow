@@ -109,6 +109,7 @@ func main() {
 
 					// иначе завершаем
 					case <-storageContext.Done():
+						s.Dump(cfg.FileStoragePath) // сохранимся обязательно ещё раз перед выходом
 						break loop
 					}
 				}
