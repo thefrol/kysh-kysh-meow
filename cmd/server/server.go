@@ -6,6 +6,7 @@ import (
 	"context"
 	"database/sql"
 	"os"
+	"time"
 
 	"github.com/rs/zerolog/log"
 	"github.com/thefrol/kysh-kysh-meow/internal/config"
@@ -15,6 +16,7 @@ import (
 	"github.com/thefrol/kysh-kysh-meow/internal/server/app/scan"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/router"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/storage"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/storagev2/mem"
 	"github.com/thefrol/kysh-kysh-meow/lib/graceful"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -35,37 +37,112 @@ func main() {
 		os.Exit(2)
 	}
 
-	// storageContext это контекст бд, он нужен чтобы
-	// остановить горутины, который пишут в файл, а
-	// так же закрыть соединение с бд при остановку сервера
-	storageContext, stopStorage := context.WithCancel(
-		context.Background())
-
 	// создаем хранилище
-	s, err := cfg.MakeStorage(storageContext)
-	if err != nil {
-		log.Error().Msgf("Не удалось создать хранилише: %v", err)
-		return
-	}
+	// сейчас мы создадим его так, что
+	// 1. Если dsn не указал, то используем
+	// storagev2
+	// 2. Иначе, исползуем старый вариант
 
-	// готовим репозитории
-	counters := storage.CounterAdapter{
-		Op: s,
-	}
+	var (
+		counters manager.CounterRepository
+		gauges   manager.GaugeRepository
+		labels   scan.Labler
+	)
 
-	gauges := storage.GaugeAdapter{
-		Op: s,
-	}
+	if cfg.DatabaseDSN.Get() == "" {
+		log.Info().Msg("используется storagev2")
 
+		s := mem.MemStore{
+			Counters: make(mem.IntMap, 50),
+			Gauges:   make(mem.FloatMap, 50),
+
+			Log: log.With().Str("storage", "memStoreV2").Logger(),
+		}
+
+		// если указан флаг restore, то читаем из нашего
+		// файла
+		if cfg.Restore {
+			err := s.RestoreFrom(cfg.FileStoragePath)
+			if err != nil {
+				log.Error().
+					Err(err).
+					Msg("не удалось загрузить storage из файла")
+
+				os.Exit(1)
+
+				//todo
+				//
+				// resore заменит уже созданные мапы, на те, что куче
+				// надо как-то копировать их, а не просто заменять
+			}
+
+		}
+
+		// теперь разберемся с сохранением,
+		// если интевал нулевой - делае					fmt.Print("123")м сохранение
+		// синхронным, силами структуры
+		if cfg.StoreIntervalSeconds == 0 {
+			s.FilePath = cfg.FileStoragePath
+		} else {
+
+			// если мы используем интервальное сохранение
+			// то у нас для этого есть специальный класс
+			i := mem.IntervalicSaver{
+				Store:    &s,
+				File:     cfg.FileStoragePath,
+				Interval: time.Duration(cfg.StoreIntervalSeconds) * time.Second,
+			}
+
+			// Запускаем интервальное сохранение
+			// и на выходе из мейна поставим ожидание
+			err := i.Run()
+			if err != nil {
+				log.Error().
+					Err(err).
+					Msg("не запущено интервальное сохранение")
+				os.Exit(1)
+			}
+			defer i.Stop()
+
+		}
+		counters = &s
+		gauges = &s
+		labels = &s
+	} else {
+
+		// storageContext это уже устаревшая тема, нам не нужен
+		// какой-то крейзи контекст БД
+		storageContext, stopStorage := context.WithCancel(
+			context.Background())
+		defer stopStorage()
+
+		s, err := cfg.MakeStorage(storageContext)
+		if err != nil {
+			log.Error().Msgf("Не удалось создать хранилише: %v", err)
+			return
+		}
+
+		// готовим репозитории
+		counters = &storage.CounterAdapter{
+			Op: s,
+		}
+
+		gauges = &storage.GaugeAdapter{
+			Op: s,
+		}
+
+		labels = &storage.LabelsAdapter{
+			Op: s,
+		}
+	}
 	// готовим прикладной уровень
-	labels := scan.Labels{
-		Counters: &counters,
-		Gauges:   &gauges,
+	scanner := scan.Labels{
+		Labels: labels,
 	}
 
 	reg := manager.Registry{
-		Counters: &counters,
-		Gauges:   &gauges,
+		Counters: counters,
+		Gauges:   gauges,
 	}
 
 	man := metricas.Manager{
@@ -90,7 +167,7 @@ func main() {
 	r := router.API{
 		Manager:   man,
 		Registry:  reg,
-		Dashboard: labels,
+		Dashboard: scanner,
 		Pinger:    pinger,
 
 		Key: string(cfg.Key.ValueFunc()()), // todo это лол
@@ -104,13 +181,9 @@ func main() {
 	if err != nil {
 		log.Error().Err(err).Msg("Ошибка запуска сервера")
 	}
-	log.Info().Msg("Сервер остановлен")
+	log.Info().Msg("Апи остановлен")
 
-	// Останавливаем хранилище, интервальную запись в файл и все остальное
-	// или соединения с БД
-	log.Info().Msg("Останавливаем хранилище")
-	stopStorage()
+	// конец. парам па-па пам
+	log.Info().Msg("^.^ Сервер завершен нежно, остались деферы")
 
-	log.Info().Msg("^.^ Сервер завершен нежно")
-	// Wait for server context to be stopped
 }

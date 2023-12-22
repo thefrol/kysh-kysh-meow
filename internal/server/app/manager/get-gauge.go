@@ -12,5 +12,5 @@ func (r Registry) Gauge(ctx context.Context, id string) (float64, error) {
 		return 0, fmt.Errorf("%w: %v", app.ErrorBadID, err)
 	}
 
-	return r.Gauges.Get(ctx, id)
+	return r.Gauges.Gauge(ctx, id)
 }

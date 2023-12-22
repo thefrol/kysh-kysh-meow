@@ -3,13 +3,13 @@ package manager
 import "context"
 
 type CounterRepository interface {
-	Get(ctx context.Context, id string) (int64, error)
-	Increment(ctx context.Context, id string, delta int64) (int64, error)
+	Counter(ctx context.Context, id string) (int64, error)
+	CounterIncrement(ctx context.Context, id string, delta int64) (int64, error)
 }
 
 type GaugeRepository interface {
-	Get(ctx context.Context, id string) (float64, error)
-	Update(ctx context.Context, id string, value float64) (float64, error)
+	Gauge(ctx context.Context, id string) (float64, error)
+	GaugeUpdate(ctx context.Context, id string, value float64) (float64, error)
 }
 
 // Registry это реестр метрик,

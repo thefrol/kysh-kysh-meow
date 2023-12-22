@@ -12,5 +12,5 @@ func (r Registry) Counter(ctx context.Context, id string) (int64, error) {
 		return 0, fmt.Errorf("%w: %v", app.ErrorBadID, err)
 	}
 
-	return r.Counters.Get(ctx, id)
+	return r.Counters.Counter(ctx, id)
 }
