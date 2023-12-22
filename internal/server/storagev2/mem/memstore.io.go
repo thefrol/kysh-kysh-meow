@@ -84,10 +84,6 @@ func (s *MemStore) RestoreFrom(path string) error {
 		return fmt.Errorf("MemStore: %w", err)
 	}
 
-	if err != nil {
-		return fmt.Errorf("mem: %w", err)
-	}
-
 	var d FileData
 	if err = easyjson.Unmarshal(buf, &d); err != nil {
 		s.Log.Error().
