@@ -5,13 +5,13 @@ CREATE TABLE
 	IF NOT EXISTS 
 	counters(
 		id TEXT PRIMARY KEY,
-		delta BIGINT);
+		value BIGINT NOT NULL);
 
 CREATE TABLE
     IF NOT EXISTS
 	gauges(
 		id TEXT PRIMARY KEY,
-		value DOUBLE PRECISION);
+		value DOUBLE PRECISION NOT NULL);
 
 -- +goose StatementEnd
 

@@ -4,16 +4,14 @@
 
 package sqlrepo
 
-import (
-	"github.com/jackc/pgx/v5/pgtype"
-)
+import ()
 
 type Counter struct {
 	ID    string
-	Delta pgtype.Int8
+	Value int64
 }
 
 type Gauge struct {
 	ID    string
-	Value pgtype.Float8
+	Value float64
 }

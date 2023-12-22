@@ -7,14 +7,12 @@ package sqlrepo
 
 import (
 	"context"
-
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const counter = `-- name: Counter :one
 SELECT
     id,
-    delta
+    value
 FROM
     counters
 WHERE
@@ -24,7 +22,7 @@ WHERE
 func (q *Queries) Counter(ctx context.Context, id string) (Counter, error) {
 	row := q.db.QueryRow(ctx, counter, id)
 	var i Counter
-	err := row.Scan(&i.ID, &i.Delta)
+	err := row.Scan(&i.ID, &i.Value)
 	return i, err
 }
 
@@ -47,25 +45,25 @@ func (q *Queries) Gauge(ctx context.Context, id string) (Gauge, error) {
 
 const incrementCounter = `-- name: IncrementCounter :one
 INSERT INTO
-    counters(id, delta) --todo какая ещё дельта????
+    counters(id, value)
 VALUES
     ($1,$2)
 ON CONFLICT (id)
     DO
     UPDATE SET
         value=$2
-RETURNING id, delta
+RETURNING id, value
 `
 
 type IncrementCounterParams struct {
 	ID    string
-	Delta pgtype.Int8
+	Value int64
 }
 
 func (q *Queries) IncrementCounter(ctx context.Context, arg IncrementCounterParams) (Counter, error) {
-	row := q.db.QueryRow(ctx, incrementCounter, arg.ID, arg.Delta)
+	row := q.db.QueryRow(ctx, incrementCounter, arg.ID, arg.Value)
 	var i Counter
-	err := row.Scan(&i.ID, &i.Delta)
+	err := row.Scan(&i.ID, &i.Value)
 	return i, err
 }
 
@@ -120,7 +118,7 @@ RETURNING id, value
 
 type UpdateGaugeParams struct {
 	ID    string
-	Value pgtype.Float8
+	Value float64
 }
 
 func (q *Queries) UpdateGauge(ctx context.Context, arg UpdateGaugeParams) (Gauge, error) {

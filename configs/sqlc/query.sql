@@ -1,7 +1,7 @@
 -- name: Counter :one
 SELECT
     id,
-    delta
+    value
 FROM
     counters
 WHERE
@@ -29,7 +29,7 @@ FROM gauges;
 
 -- name: IncrementCounter :one
 INSERT INTO
-    counters(id, delta) --todo какая ещё дельта????
+    counters(id, value)
 VALUES
     ($1,$2)
 ON CONFLICT (id)
