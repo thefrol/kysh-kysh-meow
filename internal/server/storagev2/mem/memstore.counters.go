@@ -8,8 +8,8 @@ import (
 )
 
 var (
-	ErrorNilStore = fmt.Errorf("обращение к хранилищу по nil указалелю: %w", ErrorNilRef)
-	ErrorNilMap   = fmt.Errorf("мапа в хранилище не инищиализирована: %w", ErrorNilRef)
+	ErrorNilStore = fmt.Errorf("обращение к хранилищу по nil указалелю: %w", app.ErrorNilReference)
+	ErrorNilMap   = fmt.Errorf("мапа в хранилище не инищиализирована: %w", app.ErrorNilReference)
 )
 
 // Counter implements manager.CounterRepository.

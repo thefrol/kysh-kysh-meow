@@ -5,6 +5,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"os"
 	"time"
 
@@ -15,8 +16,8 @@ import (
 	"github.com/thefrol/kysh-kysh-meow/internal/server/app/metricas"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/app/scan"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/router"
-	"github.com/thefrol/kysh-kysh-meow/internal/server/storage"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/storagev2/mem"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/storagev2/sqlrepo"
 	"github.com/thefrol/kysh-kysh-meow/lib/graceful"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -30,18 +31,33 @@ var defaultConfig = config.Server{
 }
 
 func main() {
+	log.Info().
+		Msg("запускается сервер")
+
+	// Часть 0
+	// --------
+	//
+	// Конфигурирование.
 	// Парсим командную строку и переменные окружения
+	//
+
 	cfg := config.Server{}
 	if err := cfg.Parse(defaultConfig); err != nil {
 		log.Error().Msgf("Ошибка парсинга конфига: %v", err)
 		os.Exit(2)
 	}
 
-	// создаем хранилище
-	// сейчас мы создадим его так, что
-	// 1. Если dsn не указал, то используем
-	// storagev2
-	// 2. Иначе, исползуем старый вариант
+	log.Info().
+		Str("addr", cfg.Addr).
+		Uint("saveInterval", cfg.StoreIntervalSeconds).
+		Stringer("dsn", cfg.DatabaseDSN).
+		Msg("конфиг сервера")
+
+	// Часть 1.
+	// --------
+	//
+	// Создание хранилища. Тут мы создаем или хранилище в памяти
+	// или в БД в зависимости от настроек и сохраняем в интерфейсах
 
 	var (
 		counters manager.CounterRepository
@@ -60,10 +76,15 @@ func main() {
 		}
 
 		// если указан флаг restore, то читаем из нашего
-		// файла
+		// файла. Если файла не существует то ничего страшного
+		// а если сущестует то читаем
 		if cfg.Restore {
 			err := s.RestoreFrom(cfg.FileStoragePath)
-			if err != nil {
+			if errors.Is(err, os.ErrNotExist) {
+				log.Info().
+					Str("file", cfg.FileStoragePath).
+					Msg("Файл хранилища не существует")
+			} else if err != nil {
 				log.Error().
 					Err(err).
 					Msg("не удалось загрузить storage из файла")
@@ -109,33 +130,27 @@ func main() {
 		gauges = &s
 		labels = &s
 	} else {
-
-		// storageContext это уже устаревшая тема, нам не нужен
-		// какой-то крейзи контекст БД
-		storageContext, stopStorage := context.WithCancel(
-			context.Background())
-		defer stopStorage()
-
-		s, err := cfg.MakeStorage(storageContext)
+		conn, err := sqlrepo.StartPostgres(cfg.DatabaseDSN.Get())
 		if err != nil {
-			log.Error().Msgf("Не удалось создать хранилише: %v", err)
-			return
+			log.Fatal().Err(err)
 		}
 
-		// готовим репозитории
-		counters = &storage.CounterAdapter{
-			Op: s,
+		s := sqlrepo.Repository{
+			Q: sqlrepo.New(conn),
 		}
+		counters = &s
+		gauges = &s
+		labels = &s
 
-		gauges = &storage.GaugeAdapter{
-			Op: s,
-		}
-
-		labels = &storage.LabelsAdapter{
-			Op: s,
-		}
 	}
-	// готовим прикладной уровень
+
+	// Часть II
+	// --------
+	//
+	// Создание классов прикладного уровня, тут всякие менеджеры
+	// уровнем выше репозитория, итд, все что лежит в internal/server/app
+	//
+
 	scanner := scan.Labels{
 		Labels: labels,
 	}
@@ -173,15 +188,28 @@ func main() {
 		Key: string(cfg.Key.ValueFunc()()), // todo это лол
 	}
 
+	// Часть III
+	// --------
+	//
+	// Создаем сервер, настраиваем маршруты
+	// и все что надо вплоть до аккуратного выключения
+	//
+
 	router := r.MeowRouter()
 
 	// Запускаем сервер с поддержкой нежного завершения,
 	// занимаем текущий поток до вызова сигналов выключения
+	log.Info().Str("addr", cfg.Addr).Msg("запускается сервер")
 	err = graceful.ListenAndServe(context.Background(), cfg.Addr, router)
 	if err != nil {
 		log.Error().Err(err).Msg("Ошибка запуска сервера")
 	}
-	log.Info().Msg("Апи остановлен")
+
+	// Часть IV
+	// --------
+	//
+	// Тут остались деферы, и сервер будет завершен аккуратно
+	//
 
 	// конец. парам па-па пам
 	log.Info().Msg("^.^ Сервер завершен нежно, остались деферы")

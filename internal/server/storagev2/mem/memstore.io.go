@@ -100,6 +100,14 @@ func (s *MemStore) RestoreFrom(path string) error {
 
 	// читаем из прочитанной мапы d и записываем в свою
 	s.cmt.Lock()
+	// возможно мапа пустая, тогда
+	// создаем новую мапу, но она будет
+	// в куче, а чтобы этого не случилсоь,
+	// её нужно создать заранее
+	if s.Counters == nil {
+		s.Counters = make(IntMap)
+	}
+
 	for i, c := range d.Counters {
 		if _, ok := s.Counters[i]; ok {
 			s.Log.Info().
@@ -113,6 +121,13 @@ func (s *MemStore) RestoreFrom(path string) error {
 
 	// теперь то же самое с гаужами сделаем
 	s.gmt.Lock()
+	// возможно мапа пустая, тогда
+	// создаем новую мапу, но она будет
+	// в куче, а чтобы этого не случилсоь,
+	// её нужно создать заранее
+	if s.Gauges == nil {
+		s.Gauges = make(FloatMap)
+	}
 	for i, g := range d.Gauges {
 		if _, ok := s.Gauges[i]; ok {
 			s.Log.Info().
