@@ -36,8 +36,47 @@ type Repository struct {
 }
 
 // Labels implements scan.Labler.
-func (*Repository) Labels(context.Context) (map[string][]string, error) {
-	panic("unimplemented")
+func (repo *Repository) Labels(ctx context.Context) (map[string][]string, error) {
+	if repo == nil {
+		return nil, fmt.Errorf("postgres.adapter: %w", app.ErrorNilReference)
+	}
+
+	if repo.Q == nil {
+		return nil, fmt.Errorf("postgres.adapter: %w", ErrorNilQueries)
+	}
+
+	l, err := repo.Q.List(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("postgres.adapter: %w", err)
+	}
+
+	// Теперь конвертируем в наш формат вывода
+
+	// массив имен счетчиков
+	var cs []string
+	var gs []string
+
+	for _, v := range l {
+		switch v.Column1 {
+		case "counter":
+			cs = append(cs, v.ID)
+		case "gauge":
+			cs = append(gs, v.ID)
+		default:
+			repo.Log.Error().
+				Str("operation", "List").
+				Str("id", v.ID).
+				Str("type", v.Column1).
+				Msg("неизвестный тип метрики")
+		}
+	}
+
+	m := map[string][]string{
+		"counters": cs,
+		"gauges":   gs,
+	}
+
+	return m, nil
 }
 
 // Gauge implements manager.GaugeRepository.
