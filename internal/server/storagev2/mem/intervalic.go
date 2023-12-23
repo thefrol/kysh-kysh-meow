@@ -6,10 +6,11 @@ import (
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/app"
 )
 
 var (
-	ErrorNilSaver = fmt.Errorf("обращение к нулевому сейверу: %w", ErrorNilRef)
+	ErrorNilSaver = fmt.Errorf("обращение к нулевому сейверу: %w", app.ErrorNilReference)
 )
 
 type IntervalicSaver struct {

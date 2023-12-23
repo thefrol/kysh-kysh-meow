@@ -8,3 +8,7 @@ var (
 	ErrorUnknownMetric   = errors.New("неизвестный тип метрики")
 	ErrorValidationError = errors.New("ошибка валидации")
 )
+
+var (
+	ErrorNilReference = errors.New("обращение по пустой ссылке")
+)
