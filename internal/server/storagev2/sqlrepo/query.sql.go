@@ -20,7 +20,7 @@ WHERE
 `
 
 func (q *Queries) Counter(ctx context.Context, id string) (Counter, error) {
-	row := q.db.QueryRow(ctx, counter, id)
+	row := q.db.QueryRowContext(ctx, counter, id)
 	var i Counter
 	err := row.Scan(&i.ID, &i.Value)
 	return i, err
@@ -37,7 +37,7 @@ WHERE
 `
 
 func (q *Queries) Gauge(ctx context.Context, id string) (Gauge, error) {
-	row := q.db.QueryRow(ctx, gauge, id)
+	row := q.db.QueryRowContext(ctx, gauge, id)
 	var i Gauge
 	err := row.Scan(&i.ID, &i.Value)
 	return i, err
@@ -61,7 +61,7 @@ type IncrementCounterParams struct {
 }
 
 func (q *Queries) IncrementCounter(ctx context.Context, arg IncrementCounterParams) (Counter, error) {
-	row := q.db.QueryRow(ctx, incrementCounter, arg.ID, arg.Value)
+	row := q.db.QueryRowContext(ctx, incrementCounter, arg.ID, arg.Value)
 	var i Counter
 	err := row.Scan(&i.ID, &i.Value)
 	return i, err
@@ -85,7 +85,7 @@ type ListRow struct {
 }
 
 func (q *Queries) List(ctx context.Context) ([]ListRow, error) {
-	rows, err := q.db.Query(ctx, list)
+	rows, err := q.db.QueryContext(ctx, list)
 	if err != nil {
 		return nil, err
 	}
@@ -97,6 +97,9 @@ func (q *Queries) List(ctx context.Context) ([]ListRow, error) {
 			return nil, err
 		}
 		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -122,7 +125,7 @@ type UpdateGaugeParams struct {
 }
 
 func (q *Queries) UpdateGauge(ctx context.Context, arg UpdateGaugeParams) (Gauge, error) {
-	row := q.db.QueryRow(ctx, updateGauge, arg.ID, arg.Value)
+	row := q.db.QueryRowContext(ctx, updateGauge, arg.ID, arg.Value)
 	var i Gauge
 	err := row.Scan(&i.ID, &i.Value)
 	return i, err

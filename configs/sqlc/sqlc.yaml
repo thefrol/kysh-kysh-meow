@@ -7,4 +7,3 @@ sql:
       go:
         package: "sqlrepo"
         out: "../../internal/server/storagev2/sqlrepo"
-        sql_package: "pgx/v5"
