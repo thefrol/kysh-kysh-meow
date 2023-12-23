@@ -11,10 +11,10 @@ import (
 
 	"github.com/rs/zerolog/log"
 	"github.com/thefrol/kysh-kysh-meow/internal/config"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/app/dashboard"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/app/dbping"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/app/manager"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/app/metricas"
-	"github.com/thefrol/kysh-kysh-meow/internal/server/app/scan"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/router"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/storagev2/mem"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/storagev2/sqlrepo"
@@ -59,14 +59,21 @@ func main() {
 	// Создание хранилища. Тут мы создаем или хранилище в памяти
 	// или в БД в зависимости от настроек и сохраняем в интерфейсах
 
+	// это наши интерфейсы,
+	// которые используются на
+	// прикладном уровне
 	var (
 		counters manager.CounterRepository
 		gauges   manager.GaugeRepository
-		labels   scan.Labler
+		labels   dashboard.Labler
 	)
 
 	if cfg.DatabaseDSN.Get() == "" {
-		log.Info().Msg("используется storagev2")
+
+		// Если не указана строка соединения с БД,
+		// то создаем хранилище в памяти
+
+		log.Info().Msg("используется хранилище в памяти")
 
 		s := mem.MemStore{
 			Counters: make(mem.IntMap, 50),
@@ -90,24 +97,16 @@ func main() {
 					Msg("не удалось загрузить storage из файла")
 
 				os.Exit(1)
-
-				//todo
-				//
-				// resore заменит уже созданные мапы, на те, что куче
-				// надо как-то копировать их, а не просто заменять
 			}
 
 		}
 
 		// теперь разберемся с сохранением,
-		// если интевал нулевой - делае					fmt.Print("123")м сохранение
+		// если интевал нулевой - делаем сохранение
 		// синхронным, силами структуры
 		if cfg.StoreIntervalSeconds == 0 {
 			s.FilePath = cfg.FileStoragePath
 		} else {
-
-			// если мы используем интервальное сохранение
-			// то у нас для этого есть специальный класс
 			i := mem.IntervalicSaver{
 				Store:    &s,
 				File:     cfg.FileStoragePath,
@@ -115,7 +114,6 @@ func main() {
 			}
 
 			// Запускаем интервальное сохранение
-			// и на выходе из мейна поставим ожидание
 			err := i.Run()
 			if err != nil {
 				log.Error().
@@ -123,25 +121,40 @@ func main() {
 					Msg("не запущено интервальное сохранение")
 				os.Exit(1)
 			}
+
+			// и на выходе из мейна поставим
+			// аккуратно даждемся завершения интервального сохранения
 			defer i.Stop()
 
 		}
+
+		// это наши интерфейсы,
+		// которые используются на
+		// прикладном уровне
 		counters = &s
 		gauges = &s
 		labels = &s
 	} else {
+
+		// Теперь переходим к БД
+		//
+		// Если же у нас все же указана строка соединения с БД,
+		// то соединяемся с базой данных, в данном случае
+		// база данных постгрес
+
 		conn, err := sqlrepo.StartPostgres(cfg.DatabaseDSN.Get())
 		if err != nil {
 			log.Fatal().Err(err)
 		}
 
 		s := sqlrepo.Repository{
-			Q: sqlrepo.New(conn),
+			Q:   sqlrepo.New(conn),
+			Log: log.With().Str("storage", "sql v2").Logger(),
 		}
+
 		counters = &s
 		gauges = &s
 		labels = &s
-
 	}
 
 	// Часть II
@@ -151,7 +164,7 @@ func main() {
 	// уровнем выше репозитория, итд, все что лежит в internal/server/app
 	//
 
-	scanner := scan.Labels{
+	board := dashboard.Labels{
 		Labels: labels,
 	}
 
@@ -182,7 +195,7 @@ func main() {
 	r := router.API{
 		Manager:   man,
 		Registry:  reg,
-		Dashboard: scanner,
+		Dashboard: board,
 		Pinger:    pinger,
 
 		Key: string(cfg.Key.ValueFunc()()), // todo это лол

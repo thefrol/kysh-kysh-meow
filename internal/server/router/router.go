@@ -4,10 +4,10 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/app/dashboard"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/app/dbping"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/app/manager"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/app/metricas"
-	"github.com/thefrol/kysh-kysh-meow/internal/server/app/scan"
 	handler "github.com/thefrol/kysh-kysh-meow/internal/server/router/handlers"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/router/httpio"
 
@@ -23,7 +23,7 @@ type API struct {
 	Manager   metricas.Manager
 	Registry  manager.Registry // todo названия жесть
 	Pinger    dbping.Pinger
-	Dashboard scan.Labels
+	Dashboard dashboard.Labels
 
 	// ключ шифрования
 	Key string

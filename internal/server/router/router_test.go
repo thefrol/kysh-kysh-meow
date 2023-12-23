@@ -9,11 +9,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/thefrol/kysh-kysh-meow/internal/server/app/dashboard"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/app/manager"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/app/metricas"
-	"github.com/thefrol/kysh-kysh-meow/internal/server/app/scan"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/router/httpio"
-	"github.com/thefrol/kysh-kysh-meow/internal/server/storage"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/storagev2/mem"
 )
 
 func Test_MeowRouter(t *testing.T) {
@@ -604,26 +604,16 @@ func Test_updateUnknownType(t *testing.T) {
 }
 
 func NewMemRouter() http.Handler {
-	s := storage.AsOperator(storage.New())
-
-	// приготовим приложение
-	// готовим репозитории
-	counters := storage.CounterAdapter{
-		Op: s,
-	}
-
-	gauges := storage.GaugeAdapter{
-		Op: s,
-	}
+	s := mem.MemStore{}
 
 	// готовим прикладной уровень
-	labels := scan.Labels{
-		Labels: &storage.LabelsAdapter{Op: s},
+	labels := dashboard.Labels{
+		Labels: &s,
 	}
 
 	reg := manager.Registry{
-		Counters: &counters,
-		Gauges:   &gauges,
+		Counters: &s,
+		Gauges:   &s,
 	}
 
 	man := metricas.Manager{

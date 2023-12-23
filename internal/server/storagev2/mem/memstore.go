@@ -6,14 +6,14 @@ import (
 	"sync"
 
 	"github.com/rs/zerolog"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/app/dashboard"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/app/manager"
-	"github.com/thefrol/kysh-kysh-meow/internal/server/app/scan"
 )
 
 var (
 	_ manager.CounterRepository = (*MemStore)(nil)
 	_ manager.GaugeRepository   = (*MemStore)(nil)
-	_ scan.Labler               = (*MemStore)(nil)
+	_ dashboard.Labler          = (*MemStore)(nil)
 )
 
 // MemStore хранит метрики в памяти, и сбрасывает
