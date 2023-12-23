@@ -8,8 +8,7 @@ import (
 
 	"github.com/go-resty/resty/v2"
 	"github.com/rs/zerolog/log"
-	"github.com/thefrol/kysh-kysh-meow/internal/collector/internal/pollcount"
-	"github.com/thefrol/kysh-kysh-meow/internal/compress"
+	"github.com/thefrol/kysh-kysh-meow/internal/collector/report/compress"
 	"github.com/thefrol/kysh-kysh-meow/internal/metrica"
 	"github.com/thefrol/kysh-kysh-meow/internal/sign"
 	"github.com/thefrol/kysh-kysh-meow/lib/retry"
@@ -20,7 +19,12 @@ var (
 	ErrorRequestRejected = errors.New("запрос не принят, статус код не 200")
 )
 
-var defaultClient = resty.New()
+const (
+	HeaderContentEncoding = "Content-Encoding"
+)
+
+// это клиент, которым будет пользоваться наш пакет для отправки
+var сlient = resty.New()
 
 // Send отправляет метрики из указанного хранилища store на сервер host.
 // При возникновении ошибок будет стараться отправить как можно больше метрик,
@@ -37,7 +41,7 @@ func Send(metricas []metrica.Metrica, url string) error {
 		4. Попробовать отправить preparedRequest, если не получится, то ничего страшного
 		5. Если получилось, обнуляем pollCounter
 	*/
-	preparedRequest := defaultClient.R()
+	preparedRequest := сlient.R()
 	preparedRequest.Header.Set("Content-Type", "application/json")
 
 	var b []byte // тут будет тело, которое в итоге запишем в сообщение
@@ -53,7 +57,7 @@ func Send(metricas []metrica.Metrica, url string) error {
 		if err != nil {
 			return fmt.Errorf("ошибка компрессии: %w", err)
 		}
-		preparedRequest.Header.Set("Content-Encoding", "gzip")
+		preparedRequest.Header.Set(HeaderContentEncoding, "gzip")
 	}
 
 	if len(signingKey) != 0 {
@@ -61,7 +65,7 @@ func Send(metricas []metrica.Metrica, url string) error {
 		if err != nil {
 			return fmt.Errorf("ошибка подписывания: %w", err)
 		}
-		preparedRequest.Header.Set(sign.SignHeaderName, s)
+		preparedRequest.Header.Set(sign.HeaderName, s)
 		log.Info().Str("sign", s).Msg("Тело сообщения подписано")
 
 		// мда, канеш цену за отсуствие мидлвари приходится платить
@@ -112,9 +116,6 @@ func Send(metricas []metrica.Metrica, url string) error {
 
 		return fmt.Errorf("%w: сервер вернул %v: %v", ErrorRequestRejected, resp.StatusCode(), string(resp.Body()))
 	}
-
-	// Если сервер принял, то сбрасываем счетчик
-	pollcount.Drop()
 
 	return nil
 }

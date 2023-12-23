@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"reflect"
-	"regexp"
 	"strings"
 	"testing"
 
@@ -96,7 +95,7 @@ func (server *testHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	// разархивируем если надо
-	if strings.Contains(r.Header.Get("Content-Encoding"), "gzip") {
+	if strings.Contains(r.Header.Get(report.HeaderContentEncoding), "gzip") {
 		unzipped, _ := gzip.NewReader(r.Body)
 		defer unzipped.Close()
 		bb, _ = io.ReadAll(unzipped)
@@ -111,45 +110,13 @@ func (server *testHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// которая работает как замыкаение
 	r.GetBody = func() (io.ReadCloser, error) {
 		return io.NopCloser(bytes.NewBuffer(bb)), nil
-	}
+	} // todo а вот тут могла бы и пригодиться подмена
 
 	// добавляем запросы в массив запросов. Теперь каждый такой запрос помнит и тело своего запроса
 	server.requests = append(server.requests, r)
 }
 
-// routesUsed возвращает марштуры по которым проходили запросы
-func (server testHandler) routesUsed() (routes []string) {
-	for _, r := range server.requests {
-		routes = append(routes, r.URL.Path)
-	}
-	return
-}
-
-// containsRoute возвращает true, если в принятых сервером маршрутах находится такой.
-// Задается регулярным вырежаением pattern
-func (server testHandler) containsRoute(pattern string) (bool, error) {
-	for _, r := range server.requests {
-		found, err := regexp.MatchString(pattern, r.URL.Path)
-		if err != nil {
-			return false, err
-		}
-		if found {
-			return true, nil
-		}
-	}
-	return false, nil
-}
-
 // возвращает количество полученных запросов
 func (server testHandler) NumRequests() int {
 	return len(server.requests)
-}
-
-// stringerWrap позволяет использовать интерфейс стрингер в полях структуры. Позволяя запихивать туда люую переменную, которую можно обратить в строку
-type stringerWrap struct {
-	text string
-}
-
-func (s stringerWrap) String() string {
-	return s.text
 }

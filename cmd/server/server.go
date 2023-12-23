@@ -4,12 +4,20 @@ package main
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"os"
 	"time"
 
 	"github.com/rs/zerolog/log"
 	"github.com/thefrol/kysh-kysh-meow/internal/config"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/app/dashboard"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/app/dbping"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/app/manager"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/app/metricas"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/router"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/storagev2/mem"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/storagev2/sqlrepo"
 	"github.com/thefrol/kysh-kysh-meow/lib/graceful"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -23,41 +31,200 @@ var defaultConfig = config.Server{
 }
 
 func main() {
+	log.Info().
+		Msg("запускается сервер")
+
+	// Часть 0
+	// --------
+	//
+	// Конфигурирование.
 	// Парсим командную строку и переменные окружения
+	//
+
 	cfg := config.Server{}
 	if err := cfg.Parse(defaultConfig); err != nil {
 		log.Error().Msgf("Ошибка парсинга конфига: %v", err)
 		os.Exit(2)
 	}
 
-	// storageContext это контекст бд, он нужен чтобы
-	// остановить горутины, который пишут в файл, а
-	// так же закрыть соединение с бд при остановку сервера
-	storageContext, stopStorage := context.WithCancel(
-		context.Background())
+	log.Info().
+		Str("addr", cfg.Addr).
+		Uint("saveInterval", cfg.StoreIntervalSeconds).
+		Stringer("dsn", cfg.DatabaseDSN).
+		Msg("конфиг сервера")
 
-	// создаем хранилище
-	s, err := cfg.MakeStorage(storageContext)
+	// Часть 1.
+	// --------
+	//
+	// Создание хранилища. Тут мы создаем или хранилище в памяти
+	// или в БД в зависимости от настроек и сохраняем в интерфейсах
+
+	// это наши интерфейсы,
+	// которые используются на
+	// прикладном уровне
+	var (
+		counters manager.CounterRepository
+		gauges   manager.GaugeRepository
+		labels   dashboard.Labler
+	)
+
+	if cfg.DatabaseDSN.Get() == "" {
+
+		// Если не указана строка соединения с БД,
+		// то создаем хранилище в памяти
+
+		log.Info().Msg("используется хранилище в памяти")
+
+		s := mem.MemStore{
+			Counters: make(mem.IntMap, 50),
+			Gauges:   make(mem.FloatMap, 50),
+
+			Log: log.With().Str("storage", "memStoreV2").Logger(),
+		}
+
+		// если указан флаг restore, то читаем из нашего
+		// файла. Если файла не существует то ничего страшного
+		// а если сущестует то читаем
+		if cfg.Restore {
+			err := s.RestoreFrom(cfg.FileStoragePath)
+			if errors.Is(err, os.ErrNotExist) {
+				log.Info().
+					Str("file", cfg.FileStoragePath).
+					Msg("Файл хранилища не существует")
+			} else if err != nil {
+				log.Error().
+					Err(err).
+					Msg("не удалось загрузить storage из файла")
+
+				os.Exit(1)
+			}
+
+		}
+
+		// теперь разберемся с сохранением,
+		// если интевал нулевой - делаем сохранение
+		// синхронным, силами структуры
+		if cfg.StoreIntervalSeconds == 0 {
+			s.FilePath = cfg.FileStoragePath
+		} else {
+			i := mem.IntervalicSaver{
+				Store:    &s,
+				File:     cfg.FileStoragePath,
+				Interval: time.Duration(cfg.StoreIntervalSeconds) * time.Second,
+			}
+
+			// Запускаем интервальное сохранение
+			err := i.Run()
+			if err != nil {
+				log.Error().
+					Err(err).
+					Msg("не запущено интервальное сохранение")
+				os.Exit(1)
+			}
+
+			// и на выходе из мейна поставим
+			// аккуратно даждемся завершения интервального сохранения
+			defer i.Stop()
+
+		}
+
+		// это наши интерфейсы,
+		// которые используются на
+		// прикладном уровне
+		counters = &s
+		gauges = &s
+		labels = &s
+	} else {
+
+		// Теперь переходим к БД
+		//
+		// Если же у нас все же указана строка соединения с БД,
+		// то соединяемся с базой данных, в данном случае
+		// база данных постгрес
+
+		conn, err := sqlrepo.StartPostgres(cfg.DatabaseDSN.Get())
+		if err != nil {
+			log.Fatal().Err(err)
+		}
+
+		s := sqlrepo.Repository{
+			Q:   sqlrepo.New(conn),
+			Log: log.With().Str("storage", "sql v2").Logger(),
+		}
+
+		counters = &s
+		gauges = &s
+		labels = &s
+	}
+
+	// Часть II
+	// --------
+	//
+	// Создание классов прикладного уровня, тут всякие менеджеры
+	// уровнем выше репозитория, итд, все что лежит в internal/server/app
+	//
+
+	board := dashboard.Labels{
+		Labels: labels,
+	}
+
+	reg := manager.Registry{
+		Counters: counters,
+		Gauges:   gauges,
+	}
+
+	man := metricas.Manager{
+		Registry: reg,
+	}
+
+	// создаем пингер
+	//
+	// у него будет свое соединение!
+	db, err := sql.Open("pgx", cfg.DatabaseDSN.Get())
 	if err != nil {
-		log.Error().Msgf("Не удалось создать хранилише: %v", err)
-		return
+		log.Error().Msgf("не могу создать соединение с БД: %v", err)
+		os.Exit(1)
+	}
+
+	// вообще пингер загадочная штука, поэтому у него свой юзкейс
+	pinger := dbping.Pinger{
+		Connection: db,
 	}
 
 	// создаем роутер
-	router := router.MeowRouter(s, string(cfg.Key.ValueFunc()()))
+	r := router.API{
+		Manager:   man,
+		Registry:  reg,
+		Dashboard: board,
+		Pinger:    pinger,
+
+		Key: string(cfg.Key.ValueFunc()()), // todo это лол
+	}
+
+	// Часть III
+	// --------
+	//
+	// Создаем сервер, настраиваем маршруты
+	// и все что надо вплоть до аккуратного выключения
+	//
+
+	router := r.MeowRouter()
 
 	// Запускаем сервер с поддержкой нежного завершения,
 	// занимаем текущий поток до вызова сигналов выключения
-	graceful.Serve(cfg.Addr, router)
+	log.Info().Str("addr", cfg.Addr).Msg("запускается сервер")
+	err = graceful.ListenAndServe(context.Background(), cfg.Addr, router)
+	if err != nil {
+		log.Error().Err(err).Msg("Ошибка запуска сервера")
+	}
 
-	// Останавливаем хранилище, интервальную запись в файл и все остальное
-	// или соединения с БД
-	stopStorage()
+	// Часть IV
+	// --------
+	//
+	// Тут остались деферы, и сервер будет завершен аккуратно
+	//
 
-	// Даем ему время
-	time.Sleep(time.Second)
-
-	log.Info().Msg("^.^ Сервер завершен нежно")
-	// Wait for server context to be stopped
+	// конец. парам па-па пам
+	log.Info().Msg("^.^ Сервер завершен нежно, остались деферы")
 
 }

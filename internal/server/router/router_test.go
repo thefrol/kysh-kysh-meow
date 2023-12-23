@@ -9,7 +9,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/thefrol/kysh-kysh-meow/internal/storage"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/app/dashboard"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/app/manager"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/app/metricas"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/router/httpio"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/storagev2/mem"
 )
 
 func Test_MeowRouter(t *testing.T) {
@@ -272,20 +276,30 @@ func Test_MeowRouter(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			server := httptest.NewServer(MeowRouter(storage.AsOperator(storage.New()), ""))
+
+			// создадим сервер
+			router := NewMemRouter()
+			server := httptest.NewServer(router)
 			defer server.Close()
+
+			// создадим клиента
 			client := resty.New()
+
+			// сделаем подготовительные запросы, которые
+			// приведут сервер в правильное состояние
 			for _, u := range tt.prePosts {
-				_, err := client.R().SetHeader("Content-Type", "text/plain").Post(server.URL + u)
+				_, err := client.R().SetHeader(httpio.HeaderContentType, "text/plain").Post(server.URL + u)
 				assert.NoError(t, err, "error on preparing data for final request")
 			}
 
+			// выполним тестирующий запрос
 			resp, err := client.R().SetBody(tt.body).Execute(tt.method, server.URL+tt.route)
 			require.NoErrorf(t, err, "error on final request %+v", err)
 
+			// проверим вывод
 			assert.Equal(t, tt.response.code, resp.StatusCode())
 			if tt.response.ContentType != "" {
-				assert.Contains(t, resp.Header().Get("Content-Type"), tt.response.ContentType)
+				assert.Contains(t, resp.Header().Get(httpio.HeaderContentType), tt.response.ContentType)
 			}
 
 			if tt.response.body != "" {
@@ -365,16 +379,20 @@ func Test_updateCounter(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-
+			// подготовим сервер и запрос
 			r := httptest.NewRequest(tt.method, tt.route, nil)
 			w := httptest.NewRecorder()
-			MeowRouter(storage.AsOperator(storage.New()), "").ServeHTTP(w, r)
 
+			// выполним запрос
+			NewMemRouter().ServeHTTP(w, r)
+
+			// получим ответ
 			result := w.Result()
 			defer result.Body.Close()
 
+			// проверим ответ
 			assert.Equal(t, tt.response.code, result.StatusCode)
-			assert.Contains(t, result.Header.Get("Content-Type"), tt.response.ContentType)
+			assert.Contains(t, result.Header.Get(httpio.HeaderContentType), tt.response.ContentType)
 			require.Equal(t, "", tt.response.body, "Тесты содержащие Body сейчас не поддерживаеются")
 		})
 	}
@@ -492,13 +510,16 @@ func Test_updateGauge(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			r := httptest.NewRequest(tt.method, tt.route, nil)
 			w := httptest.NewRecorder()
-			MeowRouter(storage.AsOperator(storage.New()), "").ServeHTTP(w, r)
 
+			// запустим запрос
+			NewMemRouter().ServeHTTP(w, r)
+
+			// обработаем результат
 			result := w.Result()
 			defer result.Body.Close()
 
 			assert.Equal(t, tt.response.code, result.StatusCode)
-			assert.Contains(t, result.Header.Get("Content-Type"), tt.response.ContentType)
+			assert.Contains(t, result.Header.Get(httpio.HeaderContentType), tt.response.ContentType)
 			require.Equal(t, "", tt.response.body, "Тесты содержащие Body сейчас не поддерживаеются")
 		})
 	}
@@ -562,17 +583,49 @@ func Test_updateUnknownType(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// подготовим тест-окружение
 			r := httptest.NewRequest(tt.method, tt.route, nil)
 			w := httptest.NewRecorder()
-			MeowRouter(storage.AsOperator(storage.New()), "").ServeHTTP(w, r)
 
+			// запустим запрос
+			NewMemRouter().ServeHTTP(w, r)
+
+			// получим ответ
 			result := w.Result()
 			defer result.Body.Close()
 
+			// проверим результат
 			assert.Equal(t, tt.response.code, result.StatusCode)
-			assert.Contains(t, result.Header.Get("Content-Type"), tt.response.ContentType)
+			assert.Contains(t, result.Header.Get(httpio.HeaderContentType), tt.response.ContentType)
 			require.Equal(t, "", tt.response.body, "Тесты содержащие Body сейчас не поддерживаеются")
 		})
 	}
 
+}
+
+func NewMemRouter() http.Handler {
+	s := mem.MemStore{}
+
+	// готовим прикладной уровень
+	labels := dashboard.Labels{
+		Labels: &s,
+	}
+
+	reg := manager.Registry{
+		Counters: &s,
+		Gauges:   &s,
+	}
+
+	man := metricas.Manager{
+		Registry: reg,
+	}
+
+	// создаем роутер
+	r := API{
+		Manager:   man,
+		Registry:  reg,
+		Dashboard: labels,
+	}
+
+	return r.MeowRouter()
 }

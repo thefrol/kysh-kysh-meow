@@ -1,3 +1,4 @@
 package sign
 
-const SignHeaderName = "HashSHA256"
+// Заголовок, в который будет записана подпись
+const HeaderName = "HashSHA256"
