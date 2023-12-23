@@ -15,8 +15,8 @@ import (
 	"github.com/thefrol/kysh-kysh-meow/internal/server/app/metricas"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/app/scan"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/router"
-	"github.com/thefrol/kysh-kysh-meow/internal/server/storage"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/storagev2/mem"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/storagev2/sqlrepo"
 	"github.com/thefrol/kysh-kysh-meow/lib/graceful"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -109,31 +109,18 @@ func main() {
 		gauges = &s
 		labels = &s
 	} else {
-
-		// storageContext это уже устаревшая тема, нам не нужен
-		// какой-то крейзи контекст БД
-		storageContext, stopStorage := context.WithCancel(
-			context.Background())
-		defer stopStorage()
-
-		s, err := cfg.MakeStorage(storageContext)
+		conn, err := sqlrepo.StartPostgres(cfg.DatabaseDSN.Get())
 		if err != nil {
-			log.Error().Msgf("Не удалось создать хранилише: %v", err)
-			return
+			log.Fatal().Err(err)
 		}
 
-		// готовим репозитории
-		counters = &storage.CounterAdapter{
-			Op: s,
+		s := sqlrepo.Repository{
+			Q: sqlrepo.New(conn),
 		}
+		counters = &s
+		gauges = &s
+		labels = &s
 
-		gauges = &storage.GaugeAdapter{
-			Op: s,
-		}
-
-		labels = &storage.LabelsAdapter{
-			Op: s,
-		}
 	}
 	// готовим прикладной уровень
 	scanner := scan.Labels{
