@@ -5,6 +5,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"os"
 	"time"
 
@@ -75,10 +76,15 @@ func main() {
 		}
 
 		// если указан флаг restore, то читаем из нашего
-		// файла
+		// файла. Если файла не существует то ничего страшного
+		// а если сущестует то читаем
 		if cfg.Restore {
 			err := s.RestoreFrom(cfg.FileStoragePath)
-			if err != nil {
+			if errors.Is(err, os.ErrNotExist) {
+				log.Info().
+					Str("file", cfg.FileStoragePath).
+					Msg("Файл хранилища не существует")
+			} else if err != nil {
 				log.Error().
 					Err(err).
 					Msg("не удалось загрузить storage из файла")
