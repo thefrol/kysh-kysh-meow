@@ -4,7 +4,7 @@ import (
 	"html/template"
 	"net/http"
 
-	"github.com/thefrol/kysh-kysh-meow/internal/server/app/scan"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/app/dashboard"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/router/httpio"
 )
 
@@ -32,7 +32,7 @@ const htmlTemplate = `
 `
 
 type ForHTML struct {
-	Labels scan.Labels
+	Labels dashboard.Labels
 }
 
 func (html ForHTML) Dashboard(w http.ResponseWriter, r *http.Request) {

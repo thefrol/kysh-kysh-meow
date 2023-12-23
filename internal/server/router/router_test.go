@@ -9,9 +9,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/thefrol/kysh-kysh-meow/internal/server/app/dashboard"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/app/manager"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/app/metricas"
-	"github.com/thefrol/kysh-kysh-meow/internal/server/app/scan"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/router/httpio"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/storagev2/mem"
 )
@@ -607,7 +607,7 @@ func NewMemRouter() http.Handler {
 	s := mem.MemStore{}
 
 	// готовим прикладной уровень
-	labels := scan.Labels{
+	labels := dashboard.Labels{
 		Labels: &s,
 	}
 

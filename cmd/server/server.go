@@ -11,10 +11,10 @@ import (
 
 	"github.com/rs/zerolog/log"
 	"github.com/thefrol/kysh-kysh-meow/internal/config"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/app/dashboard"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/app/dbping"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/app/manager"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/app/metricas"
-	"github.com/thefrol/kysh-kysh-meow/internal/server/app/scan"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/router"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/storagev2/mem"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/storagev2/sqlrepo"
@@ -65,7 +65,7 @@ func main() {
 	var (
 		counters manager.CounterRepository
 		gauges   manager.GaugeRepository
-		labels   scan.Labler
+		labels   dashboard.Labler
 	)
 
 	if cfg.DatabaseDSN.Get() == "" {
@@ -164,7 +164,7 @@ func main() {
 	// уровнем выше репозитория, итд, все что лежит в internal/server/app
 	//
 
-	scanner := scan.Labels{
+	board := dashboard.Labels{
 		Labels: labels,
 	}
 
@@ -195,7 +195,7 @@ func main() {
 	r := router.API{
 		Manager:   man,
 		Registry:  reg,
-		Dashboard: scanner,
+		Dashboard: board,
 		Pinger:    pinger,
 
 		Key: string(cfg.Key.ValueFunc()()), // todo это лол

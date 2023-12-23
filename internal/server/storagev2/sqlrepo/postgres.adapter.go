@@ -8,14 +8,14 @@ import (
 
 	"github.com/rs/zerolog"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/app"
+	"github.com/thefrol/kysh-kysh-meow/internal/server/app/dashboard"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/app/manager"
-	"github.com/thefrol/kysh-kysh-meow/internal/server/app/scan"
 )
 
 var (
 	_ manager.CounterRepository = (*Repository)(nil)
 	_ manager.GaugeRepository   = (*Repository)(nil)
-	_ scan.Labler               = (*Repository)(nil)
+	_ dashboard.Labler          = (*Repository)(nil)
 )
 
 var (
