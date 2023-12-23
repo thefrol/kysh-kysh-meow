@@ -136,8 +136,10 @@ func main() {
 		}
 
 		s := sqlrepo.Repository{
-			Q: sqlrepo.New(conn),
+			Q:   sqlrepo.New(conn),
+			Log: log.With().Str("storage", "sql v2").Logger(),
 		}
+
 		counters = &s
 		gauges = &s
 		labels = &s

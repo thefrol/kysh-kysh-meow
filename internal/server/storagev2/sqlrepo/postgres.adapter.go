@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/rs/zerolog"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/app"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/app/manager"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/app/scan"
@@ -30,6 +31,8 @@ var (
 // и возвращаемые ошибки, мы хотим привести это к некоему стандарту
 type Repository struct {
 	Q *Queries
+
+	Log zerolog.Logger
 }
 
 // Labels implements scan.Labler.
