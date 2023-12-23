@@ -51,7 +51,7 @@ VALUES
 ON CONFLICT (id)
     DO
     UPDATE SET
-        value=$2
+        value=counters.value+$2
 RETURNING id, value
 `
 
