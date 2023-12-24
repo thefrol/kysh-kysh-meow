@@ -58,6 +58,7 @@ func main() {
 		Str("addr", cfg.Addr).
 		Uint("saveInterval", cfg.StoreIntervalSeconds).
 		Stringer("dsn", cfg.DatabaseDSN).
+		Bool("profiling", cfg.EnableProfiling).
 		Msg("конфиг сервера")
 
 	// Часть 1.
@@ -237,19 +238,22 @@ func main() {
 	}()
 
 	// и профилировщик
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	if cfg.EnableProfiling {
 
-		log.Info().Str("addr", profilerAddr).Msg("запускается профилировщик")
-		err = graceful.ListenAndServe(context.Background(), profilerAddr, nil)
-		if err != nil {
-			log.Error().Err(err).Msg("Ошибка запуска профилировщика")
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
 
-		}
+			log.Info().Str("addr", profilerAddr).Msg("запускается профилировщик")
+			err = graceful.ListenAndServe(context.Background(), profilerAddr, nil)
+			if err != nil {
+				log.Error().Err(err).Msg("Ошибка запуска профилировщика")
 
-		log.Info().Str("addr", profilerAddr).Msg("профилировщик остановлен")
-	}()
+			}
+
+			log.Info().Str("addr", profilerAddr).Msg("профилировщик остановлен")
+		}()
+	}
 
 	// Часть IV
 	// --------

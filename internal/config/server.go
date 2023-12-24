@@ -15,6 +15,7 @@ type Server struct {
 	Restore              bool             `env:"RESTORE"`
 	DatabaseDSN          ConnectionString `env:"DATABASE_DSN"`
 	Key                  Secret           `env:"KEY"`
+	EnableProfiling      bool             `env:"ENABLE_PROFILING"`
 }
 
 // Parse парсит командную строку и переменные окружения, чтобы выдать структуру с конфигурацией сервера.
@@ -33,6 +34,7 @@ func (cfg *Server) Parse(defaults Server) error {
 	flag.UintVar(&cfg.StoreIntervalSeconds, "i", defaults.StoreIntervalSeconds, "[время, сек] интервал сохранения показаний. При 0 запись делается почти синхронно")
 	flag.StringVar(&cfg.FileStoragePath, "f", defaults.FileStoragePath, "[строка] путь к файлу, откуда будут читаться при запуске и куда будут сохраняться метрики полученные сервером, если файл пустой, то сохранение будет отменено")
 	flag.BoolVar(&cfg.Restore, "r", defaults.Restore, "[флаг] если установлен, загружает из файла ранее записанные метрики")
+	flag.BoolVar(&cfg.EnableProfiling, "profile", defaults.EnableProfiling, "[флаг] создает хендлеры для профирирования")
 	flag.Var(&cfg.DatabaseDSN, "d", "[строка] подключения к базе данных")
 	flag.Var(&cfg.Key, "k", "строка, секретный ключ подписи")
 
