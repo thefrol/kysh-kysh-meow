@@ -97,7 +97,7 @@ func SignResponse(key string) func(http.Handler) http.Handler {
 
 			// Теперь запишем в заголовки ответа подпись
 			w.Header().Set(sign.HeaderName, s)
-			log.Info().Str("sign", s).Msg("Запрос подписан")
+			log.Info().Str("sign", s).Msg("Ответ подписан")
 
 			// записываем из буфера в оригинальный райтер
 			if err := faker.Flush(); err != nil {
