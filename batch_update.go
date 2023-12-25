@@ -11,7 +11,7 @@ import (
 	"github.com/thefrol/kysh-kysh-meow/internal/metrica"
 )
 
-const batchUrl = "/updates"
+const batchURL = "/updates"
 
 // BatchUpdate передает метрики на сервер addr пачкой в одном запросе.
 // Предварительно метрики надо упаковать в типы С и G
@@ -31,7 +31,7 @@ func BatchUpdate(addr string, metrics ...metrer) error {
 		return fmt.Errorf("batch_update: %w", err)
 	}
 
-	url, err := url.JoinPath(addr, batchUrl)
+	url, err := url.JoinPath(addr, batchURL)
 	if err != nil {
 		return fmt.Errorf("batch_update: %w", err)
 	}

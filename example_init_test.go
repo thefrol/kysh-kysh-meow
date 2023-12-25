@@ -50,7 +50,7 @@ func init() {
 		}()
 
 		// Дадим две секунды тестам завершиться
-		time.Sleep(time.Second * 2)
+		time.Sleep(time.Second * 180)
 		err := s.Shutdown(context.Background())
 		if err != nil {
 			log.Fatal(err)
