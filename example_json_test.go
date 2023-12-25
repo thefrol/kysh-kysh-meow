@@ -1,6 +1,7 @@
 package kyshkyshmeow_test
 
 import (
+	"fmt"
 	"log"
 	"math/rand"
 
@@ -27,7 +28,7 @@ func Example_batch() {
 	}
 
 	// мой сервер находится по адресу
-	addr := "localhost:8080"
+	addr := "http://localhost:8089"
 
 	// отправляем метрики
 	err := kyshkyshmeow.BatchUpdate(addr, g, с)
@@ -35,4 +36,8 @@ func Example_batch() {
 		log.Fatal("не могу обновить: %w", err)
 	}
 
+	fmt.Println("ok")
+
+	// Output:
+	// ok
 }

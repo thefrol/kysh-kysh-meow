@@ -13,15 +13,15 @@ func Example_raw() {
 	// счетчики, которые мы будем отправлять
 	var (
 		MyGauge     = 3.14
-		MyGaugeName = "mygauge"
+		MyGaugeName = "my_gauge"
 
 		MyCounter     = 3
-		MyCounterName = "mycounter"
+		MyCounterName = "my_counter"
 	)
 
 	// адрес сервера
 	var (
-		Addr = "localhost:8080"
+		Addr = "localhost:8089"
 	)
 
 	// Чтобы отправить метрики, можно воспользоваться таким маршрутом
@@ -29,14 +29,14 @@ func Example_raw() {
 
 	// создаем запрос на сохранение метрики gauge
 	url := fmt.Sprintf("http://%v/update/gauge/%v/%v", Addr, MyGaugeName, MyGauge)
-	r, err := http.Post(http.MethodPost, url, nil)
+	r, err := http.Post(url, "text/plain", nil)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer r.Body.Close()
 
 	// создаем запрос на сохранение счетчика
-	url = fmt.Sprintf("http://%v/update/gauge/%v/%v", Addr, MyCounterName, MyCounter)
+	url = fmt.Sprintf("http://%v/update/counter/%v/%v", Addr, MyCounterName, MyCounter)
 	r, err = http.Post(url, "text/plain", nil)
 	if err != nil {
 		log.Fatal(err)
@@ -55,7 +55,7 @@ func Example_raw() {
 	defer r.Body.Close()
 
 	body, err := io.ReadAll(r.Body)
-	fmt.Println("my_gauge:", body)
+	fmt.Println("my_gauge:", string(body))
 
 	// получаем счетчик
 	url = fmt.Sprintf("http://%v/value/counter/%v", Addr, MyCounterName)
@@ -66,6 +66,9 @@ func Example_raw() {
 	defer r.Body.Close()
 
 	body, err = io.ReadAll(r.Body)
-	fmt.Println("my_counter:", body)
+	fmt.Println("my_counter:", string(body))
 
+	// Output:
+	// my_gauge: 3.14
+	// my_counter: 3
 }
