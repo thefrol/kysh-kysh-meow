@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	chimw "github.com/go-chi/chi/v5/middleware"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/app/dashboard"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/app/dbping"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/app/manager"
@@ -12,11 +13,6 @@ import (
 	"github.com/thefrol/kysh-kysh-meow/internal/server/router/httpio"
 
 	"github.com/thefrol/kysh-kysh-meow/internal/server/router/middleware"
-)
-
-const (
-	CompressionTreshold  = 50
-	CompressionBufferLen = 2048
 )
 
 type API struct {
@@ -67,7 +63,8 @@ func (api API) MeowRouter() (router chi.Router) {
 			middleware.SignResponse(api.Key))
 	}
 	router.Use(middleware.UnGZIP)
-	router.Use(middleware.GZIP(CompressionTreshold, CompressionBufferLen))
+	//router.Use(middleware.GZIP(CompressionTreshold, CompressionBufferLen))
+	router.Use(chimw.Compress(5, "text/html", "text/plain", "application/json"))
 
 	// Первая часть маршрутов - из первых спринтов. Тут используются
 	// параметры из маршрута для установки значений метрик, за эти маршруты

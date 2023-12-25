@@ -1,0 +1,25 @@
+# Профилирование
+
+посмотреть результаты можно командой
+
+```bash
+go tool pprof -top -diff_base=./profile/base ./profile/result 
+```
+
+И вот что мы имеем:
+
+```bash
+File: server
+Type: inuse_space
+Time: Dec 24, 2023 at 10:13pm (MSK)
+Duration: 60.01s, Total samples = 2540.76kB 
+Showing nodes accounting for -2929.34kB, 115.29% of 2540.76kB total
+      flat  flat%   sum%        cum   cum%
+-1805.17kB 71.05% 71.05% -3443.35kB 135.52%  compress/flate.NewWriter (inline)
+-1638.17kB 64.48% 135.52% -1638.17kB 64.48%  compress/flate.(*compressor).initDeflate (inline)
+     514kB 20.23% 115.29%      514kB 20.23%  bufio.NewReaderSize (inline)
+```
+
+## Результат
+
+По сути я удалил самописную мидлварь для компрессирования и поставил от `chi`. Всего-лишь то.
