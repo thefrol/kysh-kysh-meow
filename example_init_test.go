@@ -2,6 +2,7 @@ package kyshkyshmeow_test
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -10,6 +11,14 @@ import (
 	"github.com/thefrol/kysh-kysh-meow/internal/server/app/metricas"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/router"
 	"github.com/thefrol/kysh-kysh-meow/internal/server/storagev2/mem"
+)
+
+var (
+	// столько будем ожидать запуска теееееестового сервера для примеров
+	waitForServer = time.Second
+
+	// по этому адресу
+	addr = ":8089"
 )
 
 // инициализируем сервер, чтобы примеры срабатывали
@@ -39,13 +48,13 @@ func init() {
 	// запускаем сервер на две секунды
 	go func() {
 		s := http.Server{
-			Addr:    ":8089",
+			Addr:    addr,
 			Handler: h,
 		}
 		go func() {
 			err := s.ListenAndServe()
 			if err != nil {
-				log.Fatal(err)
+				log.Fatalf("example_server: %v", err)
 			}
 		}()
 
@@ -55,6 +64,13 @@ func init() {
 		if err != nil {
 			log.Fatal(err)
 		}
+
+		fmt.Println("сервер для примеров остановлен")
 	}()
 
+	// Дадим серверу время запуститься
+	// было бы классно реально долждаться, но я не представляю как узнать
+	// что сервер запущен
+
+	time.Sleep(waitForServer)
 }

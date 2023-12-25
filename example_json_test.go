@@ -33,7 +33,7 @@ func Example_batch() {
 	// отправляем метрики
 	err := kyshkyshmeow.BatchUpdate(addr, g, с)
 	if err != nil {
-		log.Fatal("не могу обновить: %w", err)
+		log.Fatalf("не могу обновить: %v", err)
 	}
 
 	fmt.Println("ok")
