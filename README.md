@@ -1,5 +1,7 @@
 # Кыш-кыш-мяу
 
+![покрытие_тестами](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/thefrol/571cee70d9542f9f39127a69ed007706/raw/main.json)
+
 Сервис алертинга и сбора метрик
 
 ----
