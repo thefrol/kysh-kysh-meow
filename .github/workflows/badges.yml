@@ -14,7 +14,10 @@ jobs:
 
       - name: Branch Name
         id: branch_name
-        run: value=$(./scripts/safe-branch-name)
+        run: |
+          BR=$(./scripts/safe-branch-name)
+          echo $BR
+          echo "value=$BR" >> $GITHUB_OUTPUT
 
       - name: Create Awesome Badge
         uses: schneegans/dynamic-badges-action@v1.7.0
