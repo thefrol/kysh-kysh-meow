@@ -57,10 +57,3 @@
 // где будут храниться метрики.  Полный перечень настроек
 // можно посмотреть с флагом "-h".
 package kyshkyshmeow
-
-import "fmt"
-
-func rock() {
-	var basic_func = 33
-	fmt.Print(basic_func)
-}
