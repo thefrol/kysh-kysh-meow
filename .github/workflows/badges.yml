@@ -16,7 +16,7 @@ jobs:
         with:
           auth: ${{ secrets.GIST_TOKEN }}
           gistID: ${{ vars.BADGE_GIST_ID}}
-          filename: ${{ github.ref_name }}.json # Use test.svg if you want to use the SVG mode.
+          filename: test.json # Use test.svg if you want to use the SVG mode.
           label: Hello
           message: World
           color: orange
