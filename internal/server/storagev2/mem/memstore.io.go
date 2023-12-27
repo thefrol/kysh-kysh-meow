@@ -20,8 +20,9 @@ func (s *MemStore) Dump(path string) error {
 		return fmt.Errorf("запись в файл: %w", ErrorNilStore)
 	}
 
+	// если файл пустой, то ничего не пишем
 	if path == "" {
-		path = s.FilePath
+		return nil
 	}
 
 	// запишем джесон в файл

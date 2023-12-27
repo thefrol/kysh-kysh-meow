@@ -57,7 +57,7 @@ func (s *MemStore) CounterIncrement(ctx context.Context, id string, delta int64)
 	s.cmt.Unlock()
 
 	// запишем обновления в файл
-	s.Dump("")
+	s.Dump(s.FilePath)
 
 	return v, nil
 }

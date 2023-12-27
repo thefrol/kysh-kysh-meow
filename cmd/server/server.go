@@ -7,7 +7,10 @@ import (
 	"database/sql"
 	"errors"
 	"os"
+	"sync"
 	"time"
+
+	_ "net/http/pprof"
 
 	"github.com/rs/zerolog/log"
 	"github.com/thefrol/kysh-kysh-meow/internal/config"
@@ -30,6 +33,10 @@ var defaultConfig = config.Server{
 	Restore:              true, // в текущей конфигурации это значение командной строкой никак не поменять, нельзя указать -r 0, флан такое не принимает todo
 }
 
+const (
+	profilerAddr = ":6060"
+)
+
 func main() {
 	log.Info().
 		Msg("запускается сервер")
@@ -51,6 +58,7 @@ func main() {
 		Str("addr", cfg.Addr).
 		Uint("saveInterval", cfg.StoreIntervalSeconds).
 		Stringer("dsn", cfg.DatabaseDSN).
+		Bool("profiling", cfg.EnableProfiling).
 		Msg("конфиг сервера")
 
 	// Часть 1.
@@ -204,18 +212,47 @@ func main() {
 	// Часть III
 	// --------
 	//
-	// Создаем сервер, настраиваем маршруты
-	// и все что надо вплоть до аккуратного выключения
-	//
+	// Создаем наши сервисные приложения, сервер апи
+	// и сервер профилировщика, они завершатся аккуратно
+	// при помощи вейтгрупп
 
-	router := r.MeowRouter()
+	wg := sync.WaitGroup{}
 
-	// Запускаем сервер с поддержкой нежного завершения,
-	// занимаем текущий поток до вызова сигналов выключения
-	log.Info().Str("addr", cfg.Addr).Msg("запускается сервер")
-	err = graceful.ListenAndServe(context.Background(), cfg.Addr, router)
-	if err != nil {
-		log.Error().Err(err).Msg("Ошибка запуска сервера")
+	// сначала сервер апи
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+
+		router := r.MeowRouter()
+
+		// Запускаем сервер с поддержкой нежного завершения,
+		// занимаем текущий поток до вызова сигналов выключения
+		log.Info().Str("addr", cfg.Addr).Msg("запускается сервер")
+		err = graceful.ListenAndServe(context.Background(), cfg.Addr, router)
+		if err != nil {
+			log.Error().Err(err).Msg("Ошибка запуска сервера")
+		}
+
+		log.Info().Str("addr", cfg.Addr).Msg("Апи-сервер остановлен")
+	}()
+
+	// и профилировщик
+	if cfg.EnableProfiling {
+
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+
+			log.Info().Str("addr", profilerAddr).Msg("запускается профилировщик")
+			err = graceful.ListenAndServe(context.Background(), profilerAddr, nil)
+			if err != nil {
+				log.Error().Err(err).Msg("Ошибка запуска профилировщика")
+
+			}
+
+			log.Info().Str("addr", profilerAddr).Msg("профилировщик остановлен")
+		}()
 	}
 
 	// Часть IV
@@ -223,6 +260,7 @@ func main() {
 	//
 	// Тут остались деферы, и сервер будет завершен аккуратно
 	//
+	wg.Wait()
 
 	// конец. парам па-па пам
 	log.Info().Msg("^.^ Сервер завершен нежно, остались деферы")
