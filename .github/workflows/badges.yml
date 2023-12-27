@@ -11,12 +11,17 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+
+      - name: Branch Name
+        id: branch_name
+        run: value=$(./scripts/safe-branch-name)
+
       - name: Create Awesome Badge
         uses: schneegans/dynamic-badges-action@v1.7.0
         with:
           auth: ${{ secrets.GIST_TOKEN }}
           gistID: ${{ vars.BADGE_GIST_ID}}
-          filename: test.json # Use test.svg if you want to use the SVG mode.
+          filename: ${{steps.branch_name.outputs.value}}.json # Use test.svg if you want to use the SVG mode.
           label: Hello
           message: World
           color: orange
