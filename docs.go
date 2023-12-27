@@ -1,3 +1,5 @@
+//lint:file-ignore ST1000 ну не смотрится такое по-русски
+
 // Copyright 2020
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,8 +14,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// # Сервис сбора метрик и алертинга
-//
 // Используется, чтобы собирать метрики с удаленного
 // хоста и хранить их: базе данных, файле или памяти.
 // В отличие от прометеуса, использует push модель,
@@ -57,3 +57,10 @@
 // где будут храниться метрики.  Полный перечень настроек
 // можно посмотреть с флагом "-h".
 package kyshkyshmeow
+
+import "fmt"
+
+func rock() {
+	var basic_func = 33
+	fmt.Print(basic_func)
+}

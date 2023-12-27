@@ -5,9 +5,9 @@ import (
 	"github.com/thefrol/kysh-kysh-meow/internal/server/app/metricas"
 )
 
-// С используется чтобы передавать
+// Gauge используется чтобы передавать
 // изменение величины
-type G struct {
+type Gauge struct {
 	// имя величины
 	ID string
 
@@ -15,7 +15,7 @@ type G struct {
 	Value float64
 }
 
-func (g G) toM() metricas.Metrica {
+func (g Gauge) toM() metricas.Metrica {
 	return metrica.Metrica{
 		MType: metrica.GaugeName,
 		ID:    g.ID,
@@ -23,9 +23,9 @@ func (g G) toM() metricas.Metrica {
 	}
 }
 
-// С используется чтобы передавать
+// Counter используется чтобы передавать
 // изменение счетчика
-type C struct {
+type Counter struct {
 	// имя счетчика
 	ID string
 
@@ -33,7 +33,7 @@ type C struct {
 	Delta int64
 }
 
-func (c C) toM() metricas.Metrica {
+func (c Counter) toM() metricas.Metrica {
 	// BUG(frolenkodima): при упаковке джейсон происходит много аллоков памяти
 	return metrica.Metrica{
 		MType: metrica.CounterName,

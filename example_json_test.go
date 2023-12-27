@@ -16,13 +16,13 @@ func Example_batch() {
 	v := rand.Float64()
 
 	// Упаковываю
-	g := kyshkyshmeow.G{
+	g := kyshkyshmeow.Gauge{
 		ID:    "mygauge",
 		Value: v,
 	}
 
 	// и увеличим счетчик на 10
-	с := kyshkyshmeow.C{
+	с := kyshkyshmeow.Counter{
 		ID:    "mycounter",
 		Delta: 10,
 	}
