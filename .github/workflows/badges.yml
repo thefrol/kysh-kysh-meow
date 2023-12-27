@@ -1,4 +1,4 @@
-name: autotests
+name: generate badges
 
 on:
   pull_request:
